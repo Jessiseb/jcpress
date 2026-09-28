@@ -15,6 +15,8 @@ export function withLatinEmphasis(text: string): ReactNode[] {
     if (/^[A-Za-z][A-Za-z0-9]*$/.test(part)) {
       return <em key={index}>{part}</em>
     }
-    return <span key={index}>{part}</span>
+    // 非 Latin 片段原样返回字符串，不再包 <span>：多一层无语义元素既增加 DOM 噪声，
+    // 也会让 `renderToStaticMarkup` 的产物与源文本不一致（单测因此先红后绿）。
+    return part
   })
 }

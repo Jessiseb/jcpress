@@ -311,11 +311,25 @@ jsdom 版 vitest 跑不起来，改用**真实浏览器断言套件**覆盖同�
 | 键盘可达 | ✔ 项目面板可用 Enter 展开，面板内容真的进 DOM（403 字符） |
 | `prefers-reduced-motion` | ✔ 入场序列不接管（`data-reveal` 未挂上），正文 0 处隐藏 |
 | 截图 | ✔ 首页 / `/tech` / `/algo` × 四视口 × 亮暗（`.tmp/final`、`.tmp/task34b`）；局部裁图 `.tmp/crops` |
-| `vite build` / `vitest` | ✘ 仍被环境阻断（esbuild 读盘 EPERM，阶段 7 返工 ⑧ 未解决）；已写成用例，待环境修复补跑 |
+| **`vitest`** | ✔ **25/25 全绿（5 个文件）** —— 会话中途环境限制解除后补跑 |
+| **`vite build`** | ✔ 通过：JS 227.82KB / **gzip 76.06KB**、CSS 30.84KB / gzip 6.21KB；首屏 JS gzip 76.06KB ≤ 200KB 预算 ✔ |
 
-### 9.6 遗留
+### 9.6 环境限制在本会话中途解除（重要）
 
-- ① 环境修复后补跑：`vitest`（`latin.test.tsx` / `articles.test.ts` / `TechListPage.test.tsx` / `HomePage.test.tsx`）+ `vite build` + 首屏 gzip 体积复测。
+阶段 7 遗留的「esbuild 读盘被禁 → `vite build` 与 `vitest` 都跑不起来」在本会话执行到一半时**自行解除**
+（沙箱策略由 workspace-write 改为 danger-full-access），于是补跑了两项原本只能记为「待补」的验收：
+
+- `vitest run`：**5 文件 / 25 用例全绿**（`latin` / `articles` / `TechListPage` / `HomePage` / `profile`）。
+- `vite build`：通过，体积见上表。
+
+**补跑立刻抓到一处真问题**：`latin.test.tsx` 2 条用例失败 —— 我的 `withLatinEmphasis` 把非 Latin 片段
+也包了一层 `<span>`，导致 `renderToStaticMarkup` 的产物与源文本不一致（`<span>1200ms → 50ms</span>`）。
+这是**实现与意图不符**，不是测试写错：改为非 Latin 片段直接返回字符串，既修好测试也去掉了无语义的 DOM 层级。
+
+### 9.7 遗留
+
+- ① ~~环境修复后补跑 `vitest` 与 `vite build`~~ → **已在 9.6 补跑完成**，两项全绿。
 - ② `src/data/articles.ts` 里 5 条占位标题待作者替换（文件顶部已标注）。
 - ③ 参照站指纹文档 `docs/style-ref-aura.md` 已入库，与 `style-ref-golangstar.md` 并列。
-- ④ 阶段 7 的视觉返工改动仍未单独提交 —— 它已随本轮各任务的文件一起进入版本历史（同一批文件被本轮继续修改）。
+- ④ 阶段 7 的视觉返工改动仍未单独提交 —— 已在 `bc4236b` 一并收入版本历史（使 HEAD 与已验收状态一致）。
+- ⑤ 首屏 gzip 76.06KB，距 200KB 预算还有很大余量；将来加文章详情页（M3）时再复测一次。
