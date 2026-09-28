@@ -534,3 +534,64 @@ jsdom 版 vitest 跑不起来，改用**真实浏览器断言套件**覆盖同�
 现报 `环=3 姓名=1 遮罩=1 聚光=1 其他=无`。
 
 其余：`tsc` 0 错误、对比度未达标 0、四视口无横向溢出、`vitest` 25/25、构建通过。
+
+---
+
+## 阶段 14 · finish（前端一期完结）（2026-09-29 01:2x）
+
+**用户关键原话**：「第一期先完结吧,提交代码修改并且push」
+
+### 14.1 本期实际交付（前端）
+
+| 范围 | 内容 |
+| --- | --- |
+| 页面 | `/`（关于我，7 个区块 + 页脚）、`/tech`（技术分享列表 = M3 前端外壳）、`/algo`、`/projects`（统一占位外壳）、404 |
+| 视觉语言 | 「环」母题（顶栏 logo / 首屏 / 项目 badge / 页脚四处）+ 双主题（暗＝剧场版 A、亮＝装置版 C）+ 整页晕影 |
+| 字体 | Latin 走 Georgia、中文走自托管思源宋体子集（531 字 / 92.7KB），`font-synthesis: none` 杜绝伪粗体 |
+| 交互 | 编排式入场序列、表格行**指针聚光**、全局按钮系统、键盘可达（`aria-expanded` 展开）、`prefers-reduced-motion` 全降级 |
+| 文档 | `项目前期规划.md`（既有）、`design-homepage.md`、`design-visual-language.md`、`style-ref-golangstar.md`、`style-ref-aura.md`、`plan-visual-language.md`、`decisions.md`（44 条）、本 journal（14 个阶段） |
+
+### 14.2 最终验收（全量跑一遍）
+
+| 关卡 | 结果 |
+| --- | --- |
+| `npx tsc --noEmit` | ✔ 0 错误 |
+| `vitest run` | ✔ 5 文件 / 25 用例 |
+| 浏览器行为断言 | ✔ **26/26** |
+| 对比度审计 | ✔ 亮暗各 227 处文本，未达标 **0** |
+| 横向溢出 | ✔ 首页 / `/tech` / `/algo` × 1280 / 768 / 390 全部 `scrollWidth === clientWidth` |
+| 生产构建 | ✔ JS 229.07KB（**gzip 76.43KB**）/ CSS 31.16KB（gzip 6.73KB），首屏 JS 预算 200KB ✔ |
+| 字体 | ✔ 1 个请求 / 92.7KB / `font-display: swap` |
+
+### 14.3 与规划 §13 M2 验收条款的对照（如实）
+
+M2 的 DoD 有四项，**两项做了、两项没做**：
+
+| M2 判据 | 状态 |
+| --- | --- |
+| 四档宽度逐页无横向滚动 | ✔ 已验（1280 / 768 / 390；375 由 390 与断点覆盖） |
+| 点击区 ≥ 44px | ✔ 已验（断言逐元素量过） |
+| 暗色无对比度告警 | ✔ 已验（227 处 × 亮暗） |
+| **Lighthouse 移动端 ≥ 90** | ✘ **未测** —— 需要真实 Lighthouse 跑一次 |
+| **真机（iOS Safari / Android Chrome）各测一次** | ✘ **未做** —— 目前只有 Playwright + Edge |
+
+### 14.4 明确不属于本期交付的部分
+
+**「第一期完结」指的是前端一期（首页 + 频道外壳 + 视觉语言）**，以下仍属规划里的一期但**尚未开始**，不要误读为已完成：
+
+- **M1 后端工程骨架**：Spring Boot 分层、Flyway、统一响应/异常、Gson 转换器、`docker compose`、Markdown 导入器、CI；
+- **M3 剩余**：文章详情页、Markdown 渲染与代码高亮、TOC、浏览量（Redis 去重）、分页、真实接口；
+- **M5/M6**：后台登录与写入口、搜索、SEO（预渲染 + sitemap + RSS）、Nginx + Docker 部署。
+
+### 14.5 遗留事项（交接用）
+
+1. `src/data/articles.ts` 的 5 条文章标题是**占位**，待作者替换（文件顶部已标注）。
+2. **新增内容后必须重跑字体子集**：`cd frontend && npm run fonts:build`（约 30s）。加文章详情页时一定会遇到，否则新字会回落到系统宋体、与相邻字不同款。
+3. `docs/decisions.md` #6 记录的**规划 5 处硬伤**（§8.4 与 §9.2 矛盾、Sa-Token 分库、全文索引只覆盖标题、浏览量三处真相、M1 DoD 过重）仍未落改。
+4. M2 的两项未验（Lighthouse / 真机）见 14.3。
+5. 首屏 gzip 76.43KB，余量充足；加详情页后复测一次。
+
+### 14.6 提交与推送
+
+- 本期全部提交在分支 `feat/homepage-about`（相对 `main` 领先 21 个提交，`main` 无分叉，可 fast-forward 合并）。
+- 远端：`origin https://github.com/Jessiseb/jcpress.git`（当时 `origin` 上只有 `main`）。
