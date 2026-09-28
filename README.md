@@ -48,7 +48,7 @@ jcpress/
 ├── docs/                # 前期规划与决策记录
 ├── design-system/       # 设计 token、提取产物与溯源说明
 ├── content/             # Markdown 源文件（技术文章 / 项目笔记，待创建）
-├── frontend/            # React SPA（待创建）
+├── frontend/            # React SPA，含 /admin 后台路由（待创建）
 ├── backend/             # Spring Boot 应用（待创建）
 └── deploy/              # docker-compose、nginx、Dockerfile（待创建）
 ```
