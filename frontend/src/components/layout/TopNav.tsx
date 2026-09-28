@@ -21,8 +21,15 @@ export default function TopNav() {
       <header className={styles.navbar}>
         <div className={styles.inner}>
           <NavLink to="/" className={styles.brand}>
+            {/* 品牌标记：环母题的最小尺寸变体（4 圈同心环 + 中心点）。
+                换掉原来的实色「庄」方块 —— 环是全站的图案语言，logo 是它出现的第一处。 */}
             <span className={styles.mark} aria-hidden="true">
-              庄
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="8.6" stroke="currentColor" strokeWidth="1" opacity="0.32" />
+                <circle cx="10" cy="10" r="6" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+                <circle cx="10" cy="10" r="3.4" stroke="currentColor" strokeWidth="1" opacity="0.75" />
+                <circle cx="10" cy="10" r="1.1" fill="currentColor" />
+              </svg>
             </span>
             <span className={styles.brandName}>jcpress</span>
           </NavLink>

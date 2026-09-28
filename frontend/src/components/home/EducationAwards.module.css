@@ -1,117 +1,91 @@
-.section {
-  padding-top: var(--ds-space-6);
-}
+/* 教育与荣誉：学校信息一段，奖项一张对齐的列表。
+   去掉原先把学校包起来的卡片 —— 卡片只用来包裹「一块需要独立成块的内容」，
+   这里学校本来就是一个区块，再包一层就是纯装饰。 */
 
-.eduCard {
-  padding: var(--ds-space-5);
-  border: 1px solid var(--ds-c-border-soft);
-  border-radius: var(--ds-radius-lg);
-  background: var(--ds-c-bg-elv);
-  box-shadow: var(--ds-shadow-xs);
-}
-
-.eduHead {
+.edu {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--ds-space-4);
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  padding-top: var(--ds-space-4);
+  border-top: 1px solid var(--ds-c-hairline);
 }
 
 .school {
   font-size: var(--ds-fs-h3);
-  font-weight: var(--ds-fw-semibold);
 }
 
 .major {
-  margin-top: 2px;
   font-size: var(--ds-fs-sm);
   color: var(--ds-c-text-mute);
 }
 
-.eduMeta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--ds-space-1);
-}
-
-.period {
+.meta {
   font-size: var(--ds-fs-xs);
+  font-variant-numeric: tabular-nums;
   color: var(--ds-c-text-subtle);
-}
-
-.rank {
-  padding: 2px var(--ds-space-3);
-  border-radius: var(--ds-radius-pill);
-  background: var(--ds-c-accent-soft);
-  color: var(--ds-c-accent);
-  font-size: var(--ds-fs-xs);
-  font-weight: var(--ds-fw-medium);
 }
 
 .campus {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ds-space-2);
-  margin-top: var(--ds-space-4);
+  gap: var(--ds-space-1) var(--ds-space-3);
+  margin-top: var(--ds-space-1);
+  font-size: var(--ds-fs-sm);
+  color: var(--ds-c-text-mute);
 }
 
 .campusItem {
-  padding: 2px var(--ds-space-3);
-  border-radius: var(--ds-radius-pill);
-  background: var(--ds-c-control);
-  color: var(--ds-c-text-mute);
-  font-size: var(--ds-fs-xs);
+  display: inline-flex;
+  align-items: center;
 }
 
-/* 荣誉条：窄屏横向滚动，不折行破版（规划 §2.8 表格/长列表同策略） */
+/* 项与项之间用中点分隔，不额外加边框或底色 */
+.campusItem:not(:last-child)::after {
+  content: '·';
+  margin-left: var(--ds-space-3);
+  color: var(--ds-c-text-subtle);
+}
+
 .awards {
-  display: flex;
-  gap: var(--ds-space-3);
-  margin-top: var(--ds-space-4);
-  overflow-x: auto;
-  padding-bottom: var(--ds-space-2);
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
+  margin-top: var(--ds-space-5);
+  border-top: 1px solid var(--ds-c-hairline);
 }
 
 .award {
-  flex: 0 0 auto;
-  scroll-snap-align: start;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 13rem;
-  padding: var(--ds-space-3) var(--ds-space-4);
-  border-radius: var(--ds-radius-lg);
-  background: var(--ds-c-bg-alt);
-  border: 1px solid var(--ds-c-border-soft);
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--ds-space-4);
+  padding-block: var(--ds-space-3);
+  border-bottom: 1px solid var(--ds-c-hairline);
 }
 
 .awardYear {
+  font-family: var(--ds-font-mono);
   font-size: var(--ds-fs-xs);
+  font-variant-numeric: tabular-nums;
   color: var(--ds-c-text-subtle);
 }
 
 .awardName {
   font-size: var(--ds-fs-sm);
-  font-weight: var(--ds-fw-semibold);
   color: var(--ds-c-text);
-  line-height: 1.5;
 }
 
 .awardLevel {
-  font-size: var(--ds-fs-xs);
-  color: var(--ds-c-accent);
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-fs-sm);
+  color: var(--ds-c-text-mute);
 }
 
 @media (max-width: 719px) {
-  .eduCard {
-    padding: var(--ds-space-4);
+  .award {
+    grid-template-columns: 3rem minmax(0, 1fr);
+    gap: var(--ds-space-1) var(--ds-space-3);
   }
 
-  .eduMeta {
-    align-items: flex-start;
+  /* 窄屏把等级换到第二行，避免长奖项名被挤成多行 */
+  .awardLevel {
+    grid-column: 2;
   }
 }

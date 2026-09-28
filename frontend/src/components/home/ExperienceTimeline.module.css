@@ -1,163 +1,114 @@
-.section {
-  padding-top: var(--ds-space-6);
-}
+/* 实习经历：左时间栏 + 右正文栏。
+   去掉轴线、圆点、卡片嵌套与时间胶囊 —— 两栏对齐本身就读得出时间先后。
+   每段之间只用一条发丝线，跟技术栈区共用同一套分块语言。 */
 
-.timeline {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--ds-space-5);
-  padding-left: var(--ds-space-5);
-}
-
-.timeline::before {
-  content: '';
-  position: absolute;
-  left: 5px;
-  top: 8px;
-  bottom: 8px;
-  width: 2px;
-  background: var(--ds-c-border-soft);
+.list {
+  margin: 0;
+  border-top: 1px solid var(--ds-c-hairline);
 }
 
 .item {
-  position: relative;
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr);
+  gap: var(--ds-space-6);
+  padding-block: var(--ds-space-5);
+  border-bottom: 1px solid var(--ds-c-hairline);
 }
 
-.dot {
-  position: absolute;
-  left: calc(-1 * var(--ds-space-5) + 1px);
-  top: 1.4rem;
-  width: 12px;
-  height: 12px;
-  border-radius: var(--ds-radius-full);
-  background: var(--ds-c-accent);
-  box-shadow: 0 0 0 4px var(--ds-c-accent-soft);
-}
-
-.card {
-  padding: var(--ds-space-5);
-  border: 1px solid var(--ds-c-border-soft);
-  border-radius: var(--ds-radius-lg);
-  background: var(--ds-c-bg-elv);
-  box-shadow: var(--ds-shadow-xs);
-  transition: box-shadow var(--ds-t-transform), transform var(--ds-t-transform);
-}
-
-@media (hover: hover) {
-  .card:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--ds-shadow-hover);
-  }
-}
-
-.head {
+.rail {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--ds-space-4);
-  flex-wrap: wrap;
-}
-
-.company {
-  font-size: var(--ds-fs-h3);
-  font-weight: var(--ds-fw-semibold);
-}
-
-.position {
-  margin-top: 2px;
-  font-size: var(--ds-fs-sm);
-  color: var(--ds-c-text-mute);
+  flex-direction: column;
+  gap: var(--ds-space-1);
 }
 
 .period {
-  font-size: var(--ds-fs-xs);
-  color: var(--ds-c-text-subtle);
-  padding: var(--ds-space-1) var(--ds-space-3);
-  border-radius: var(--ds-radius-pill);
-  background: var(--ds-c-control);
-  white-space: nowrap;
-}
-
-.project {
-  margin-top: var(--ds-space-3);
-  padding: var(--ds-space-3) var(--ds-space-4);
-  border-left: 3px solid var(--ds-c-accent);
-  border-radius: var(--ds-radius-sm);
-  background: var(--ds-c-bg-alt);
   font-size: var(--ds-fs-sm);
-}
-
-.projectName {
-  display: block;
-  font-weight: var(--ds-fw-semibold);
+  font-weight: var(--ds-fw-medium);
+  font-variant-numeric: tabular-nums;
   color: var(--ds-c-text);
 }
 
-.projectIntro {
-  display: block;
-  margin-top: 2px;
-  color: var(--ds-c-text-mute);
-  line-height: 1.7;
+.meta {
+  font-size: var(--ds-fs-xs);
+  color: var(--ds-c-text-subtle);
 }
 
-.highlights {
-  margin-top: var(--ds-space-3);
+.body {
   display: flex;
   flex-direction: column;
   gap: var(--ds-space-2);
 }
 
-.highlight {
-  position: relative;
-  padding-left: var(--ds-space-4);
+.company {
+  font-family: var(--ds-font-display);
+  font-size: calc(var(--ds-fs-h3) + 2px);
+  font-weight: var(--ds-fw-display);
+}
+
+.position {
   font-size: var(--ds-fs-sm);
   color: var(--ds-c-text-mute);
+}
+
+.project {
+  max-width: var(--ds-measure-prose);
+  font-size: var(--ds-fs-sm);
+  color: var(--ds-c-text-mute);
+}
+
+.projectName {
+  margin-right: var(--ds-space-2);
+  font-weight: var(--ds-fw-semibold);
+  color: var(--ds-c-text);
+}
+
+.highlights {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  margin-top: var(--ds-space-1);
+}
+
+/* 项目符号用一段发丝短横线，不用彩色圆点 —— 圆点在本站是「模板感」信号 */
+.highlight {
+  position: relative;
+  max-width: var(--ds-measure-prose);
+  padding-left: 1rem;
+  font-size: var(--ds-fs-sm);
   line-height: 1.75;
+  color: var(--ds-c-text-mute);
 }
 
 .highlight::before {
   content: '';
   position: absolute;
+  top: 0.78em;
   left: 0;
-  top: 0.7em;
-  width: 6px;
-  height: 6px;
-  border-radius: var(--ds-radius-full);
-  background: var(--ds-c-accent-soft);
+  width: 0.5rem;
+  height: 1px;
+  background: var(--ds-c-text-subtle);
 }
 
-.highlight strong {
-  color: var(--ds-c-text);
-  font-weight: var(--ds-fw-semibold);
-}
-
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ds-space-2);
-  margin-top: var(--ds-space-4);
-}
-
-.tag {
-  padding: 2px var(--ds-space-3);
-  border-radius: var(--ds-radius-pill);
-  background: var(--ds-c-control);
-  color: var(--ds-c-text-mute);
+.tech {
+  margin-top: var(--ds-space-1);
   font-size: var(--ds-fs-xs);
+  color: var(--ds-c-text-subtle);
 }
 
 @media (max-width: 719px) {
-  .card {
-    padding: var(--ds-space-4);
-  }
-
-  .head {
-    flex-direction: column;
+  .item {
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--ds-space-2);
+    padding-block: var(--ds-space-4);
   }
 
-  .period {
-    align-self: flex-start;
+  /* 窄屏把时间与地点压成一行，避免左栏独占一块留白 */
+  .rail {
+    flex-direction: row;
+    gap: var(--ds-space-3);
+  }
+
+  .company {
+    font-size: 1.1rem;
   }
 }

@@ -6,9 +6,11 @@
   display: flex;
   align-items: center;
   padding-inline: var(--ds-navbar-padding-x);
-  background: var(--ds-c-bg-soft);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--ds-c-border-soft);
+  /* 玻璃底：暗色下 --ds-c-bg-soft 已被 theme 覆盖成 62% 近黑，环可以从顶栏底下透上来 */
+  background: var(--ds-c-glass);
+  backdrop-filter: blur(14px) saturate(1.2);
+  /* 暗色下 --ds-c-border-soft 是纯黑，看不见；改用发丝线令牌 */
+  border-bottom: 1px solid var(--ds-c-hairline);
   /* 刘海屏：顶栏避开安全区（规划 §2.8） */
   padding-top: env(safe-area-inset-top);
 }
@@ -26,25 +28,30 @@
   display: flex;
   align-items: center;
   gap: var(--ds-space-2);
+  /* 触摸目标下限：品牌链接也是可点的回家入口 */
+  min-height: 44px;
   color: var(--ds-c-text);
 }
 
+/* 品牌标记：环母题的最小变体。
+   底色用 accent-soft（强调色 14% 洗过），线用强调色本身 —— 不再用实色填充 + 白字
+   （那样白字压在渐变最亮档只有 4.07:1，且品牌标记与首屏渐变会重复）。 */
 .mark {
   width: 32px;
   height: 32px;
-  border-radius: var(--ds-radius-lg);
-  background: var(--ds-gradient-hero);
-  color: #fff;
   display: grid;
   place-items: center;
-  font-size: 0.9rem;
-  font-weight: var(--ds-fw-bold);
+  border: 1px solid var(--ds-c-hairline);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-c-accent-soft);
+  color: var(--ds-c-accent);
 }
 
 .brandName {
+  font-family: var(--ds-font-display);
   font-size: 1.25rem;
   font-weight: var(--ds-fw-bold);
-  letter-spacing: 0.01em;
+  letter-spacing: -0.01em;
 }
 
 .links {
@@ -88,7 +95,7 @@
   min-height: 44px;
   display: grid;
   place-items: center;
-  border: 1px solid var(--ds-c-border-soft);
+  border: 1px solid var(--ds-c-hairline);
   border-radius: var(--ds-radius-full);
   background: var(--ds-c-control);
   color: var(--ds-c-text);
@@ -104,7 +111,7 @@
   min-width: 44px;
   min-height: 44px;
   place-items: center;
-  border: 1px solid var(--ds-c-border-soft);
+  border: 1px solid var(--ds-c-hairline);
   border-radius: var(--ds-radius-full);
   background: var(--ds-c-control);
   color: var(--ds-c-text);

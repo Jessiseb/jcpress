@@ -1,78 +1,63 @@
-.section {
-  padding-top: var(--ds-space-6);
+/* 关键数字：编辑式列表，不是卡片栅格。
+   三列固定比例让我能对齐数值列 —— 列对齐是「印刷品」的核心特征，
+   一旦让每一项各自居中，就退回到仪表盘卡片了。 */
+
+.list {
+  margin: 0;
+  border-top: 1px solid var(--ds-c-hairline);
 }
 
-.grid {
+.row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--ds-space-4);
-}
-
-.card {
-  padding: var(--ds-space-5) var(--ds-space-4);
-  border: 1px solid var(--ds-c-border-soft);
-  border-radius: var(--ds-radius-lg);
-  background: var(--ds-c-bg-elv);
-  box-shadow: var(--ds-shadow-xs);
-  transition: box-shadow var(--ds-t-transform), transform var(--ds-t-transform);
-}
-
-/* 卡片 hover 上移 1px —— 只在真的有 hover 的设备上生效（规划 §2.8） */
-@media (hover: hover) {
-  .card:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--ds-shadow-hover);
-  }
-}
-
-.value {
-  display: flex;
+  /* 数值列 11rem：22px 衬线下「1200ms → 50ms」约 150px，原来的 8rem（128px）会被撑破、
+     贴到右栏的出处文字上（截图确认过）。列宽留够，同时保持四行数值纵向对齐。 */
+  grid-template-columns: minmax(0, 11rem) minmax(0, 11rem) minmax(0, 1fr);
   align-items: baseline;
-  gap: 2px;
-  font-size: 2rem;
-  font-weight: var(--ds-fw-bold);
-  color: var(--ds-c-accent);
-  font-variant-numeric: tabular-nums;
-}
-
-.suffix {
-  font-size: 1rem;
-  font-weight: var(--ds-fw-semibold);
-  margin-left: 2px;
-}
-
-.arrow {
-  font-size: 1.25rem;
-  color: var(--ds-c-text-subtle);
-  margin-inline: 6px;
+  gap: var(--ds-space-4);
+  padding-block: var(--ds-space-4);
+  border-bottom: 1px solid var(--ds-c-hairline);
 }
 
 .label {
-  margin-top: var(--ds-space-2);
   font-size: var(--ds-fs-body);
   font-weight: var(--ds-fw-semibold);
   color: var(--ds-c-text);
 }
 
-.caption {
-  margin-top: var(--ds-space-1);
-  font-size: var(--ds-fs-xs);
-  color: var(--ds-c-text-subtle);
-  line-height: 1.6;
+/* 数值：衬线 + 强调色 + 22px。
+   刻意保留编辑式行结构，不做四格大数字卡片、不做 count-up（见 docs/decisions.md #20）。
+   对比度：亮色 #0756ab 于白底 7.11:1 ✔；暗色 #4d9bff 于 #08090c 7.05:1 ✔ */
+.value {
+  margin: 0;
+  font-family: var(--ds-font-display);
+  font-size: 1.375rem;
+  font-weight: var(--ds-fw-display);
+  font-variant-numeric: tabular-nums;
+  color: var(--ds-c-accent);
+  white-space: nowrap;
 }
 
-@media (max-width: 959px) {
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.caption {
+  margin: 0;
+  font-size: var(--ds-fs-sm);
+  color: var(--ds-c-text-subtle);
+}
+
+/* 窄屏：三列压成「标签 + 数值」一行，出处换行到下面，避免横向挤压 */
+@media (max-width: 719px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--ds-space-2) var(--ds-space-3);
+    padding-block: var(--ds-space-3);
+  }
+
+  .caption {
+    grid-column: 1 / -1;
   }
 }
 
 @media (max-width: 419px) {
   .value {
-    font-size: 1.65rem;
-  }
-
-  .card {
-    padding: var(--ds-space-4) var(--ds-space-3);
+    font-size: var(--ds-fs-sm);
   }
 }

@@ -1,64 +1,54 @@
-.section {
-  padding-top: var(--ds-space-6);
-}
+/* 技术栈：三列定义列表。
+   没有卡片、没有边框包裹 —— 每组靠一条顶部发丝线定位，横向压成一张「技术索引表」。
+   分组标题刻意用无衬线：正文与区块标题已经是衬线，第三层再上衬线就糊了。 */
 
 .grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--ds-space-4);
+  gap: var(--ds-space-6);
 }
 
-.card {
-  padding: var(--ds-space-4);
-  border: 1px solid var(--ds-c-border-soft);
-  border-radius: var(--ds-radius-lg);
-  background: var(--ds-c-bg-elv);
-  box-shadow: var(--ds-shadow-xs);
+.group {
+  padding-top: var(--ds-space-3);
+  border-top: 1px solid var(--ds-c-hairline);
 }
 
 .groupTitle {
-  font-size: var(--ds-fs-h3);
+  margin-bottom: var(--ds-space-2);
+  font-family: var(--ds-font-sans);
+  font-size: var(--ds-fs-sm);
   font-weight: var(--ds-fw-semibold);
-  margin-bottom: var(--ds-space-3);
-  padding-bottom: var(--ds-space-2);
-  border-bottom: 1px solid var(--ds-c-border-soft);
+  letter-spacing: 0.02em;
+  color: var(--ds-c-text);
 }
 
 .items {
   display: flex;
   flex-direction: column;
-  gap: var(--ds-space-2);
+  /* 限宽：不让档位标签被推到列的最右端，否则标签和技术名之间空出上百像素 */
+  max-width: 22rem;
 }
 
 .item {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: var(--ds-space-3);
+  padding-block: 3px;
   font-size: var(--ds-fs-sm);
-  min-height: 32px;
 }
 
 .itemName {
-  color: var(--ds-c-text);
+  color: var(--ds-c-text-mute);
 }
 
-.dots {
-  display: inline-flex;
-  gap: 3px;
+/* 档位标签：右侧对齐的小字，等信息量但不出声。
+   等宽字：跟区块表头、年份、单位同一档，把「这是一条数据」和「这是一句话」区分开 */
+.level {
   flex-shrink: 0;
-}
-
-.dot,
-.dotOn {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--ds-radius-full);
-  background: var(--ds-c-border);
-}
-
-.dotOn {
-  background: var(--ds-c-accent);
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-fs-xs);
+  color: var(--ds-c-text-subtle);
 }
 
 @media (max-width: 959px) {
@@ -69,6 +59,7 @@
 
 @media (max-width: 719px) {
   .grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ds-space-5);
   }
 }
