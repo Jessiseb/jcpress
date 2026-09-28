@@ -1,63 +1,78 @@
-.section {
-  padding-top: var(--ds-space-6);
-}
+/* 联系我：两栏定义列表。
+   标签列固定宽度让值列全部左对齐 —— 与关键数字区、奖项区共用同一套「对齐即秩序」的思路。 */
 
 .list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--ds-space-3);
+  margin: 0;
+  border-top: 1px solid var(--ds-c-hairline);
 }
 
-.item {
-  display: flex;
+.row {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr);
+  gap: var(--ds-space-4);
   align-items: center;
-  justify-content: space-between;
-  gap: var(--ds-space-3);
-  min-height: 56px;
-  padding: var(--ds-space-3) var(--ds-space-4);
-  border: 1px solid var(--ds-c-border-soft);
-  border-radius: var(--ds-radius-lg);
-  background: var(--ds-c-bg-elv);
+  padding-block: var(--ds-space-1);
+  border-bottom: 1px solid var(--ds-c-hairline);
 }
 
 .label {
-  font-size: var(--ds-fs-xs);
+  font-size: var(--ds-fs-sm);
   color: var(--ds-c-text-subtle);
-  flex-shrink: 0;
 }
 
+/* 固定 44px 高：让所有行等高，同时把复制按钮的可点区域顶到触摸目标下限 */
+.valueCell {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 0;
+}
+
+/* 值与按钮都撑到 44px 高：整行等高，同时把可点区域顶到触摸目标下限 */
 .value {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-size: var(--ds-fs-sm);
   color: var(--ds-c-text);
-  text-align: right;
-  overflow-wrap: anywhere;
 }
 
+/* 复制按钮：玻璃胶囊。
+   暗色下玻璃层让环从底下透上来，是「透明感」最省成本的落点；亮色下它只是一层很薄的磨砂。 */
 .copyBtn {
   display: inline-flex;
   align-items: center;
-  gap: var(--ds-space-2);
+  gap: var(--ds-space-3);
   min-height: 44px;
-  padding-inline: var(--ds-space-3);
-  border: 1px dashed var(--ds-c-border);
+  padding-inline: var(--ds-space-4);
+  border: 1px solid var(--ds-c-hairline);
   border-radius: var(--ds-radius-pill);
-  background: transparent;
-  font-size: var(--ds-fs-sm);
-  color: var(--ds-c-text);
+  background: var(--ds-c-glass);
+  backdrop-filter: blur(10px);
+  text-align: left;
+  transition: border-color var(--ds-t-color);
 }
 
-.copyBtn:hover {
+.copyBtn:hover,
+.copyBtn:focus-visible {
   border-color: var(--ds-c-accent);
-  color: var(--ds-c-accent);
 }
 
+/* hover / focus 才提示「这点得动」：复制提示平时不描边，避免每行都挂一个强调色下划线 */
 .copyHint {
   font-size: var(--ds-fs-xs);
+  color: var(--ds-c-text-subtle);
+  transition: color var(--ds-t-color);
+}
+
+.copyBtn:hover .copyHint,
+.copyBtn:focus-visible .copyHint {
   color: var(--ds-c-accent);
 }
 
 @media (max-width: 719px) {
-  .list {
-    grid-template-columns: 1fr;
+  .row {
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    gap: var(--ds-space-3);
   }
 }

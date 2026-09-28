@@ -1312,8 +1312,11 @@ export default function Footer() {
 
   return (
     <footer className={styles.footer}>
-      {/* 页脚是「下半场布景」：环只露出一段弧线，随内容一起淡入 */}
-      <div className={styles.ringLayer} data-reveal>
+      {/* 页脚是「下半场布景」：环只露出一段弧线。
+          ⚠️ 不要加 data-reveal：useReveal 只观察 HomePage 那棵子树，页脚在它之外，
+          带 data-reveal 会被全局隐藏态压成 opacity:0 且永不揭示（页脚环等于看不见）。
+          执行时由行为断言「入场序列全部触发 43/44」抓到，已修正。 */}
+      <div className={styles.ringLayer}>
         <RingField size={820} opacity={0.75} />
       </div>
 

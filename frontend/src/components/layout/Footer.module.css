@@ -1,9 +1,26 @@
 .footer {
+  position: relative;
+  /* 环层用 z-index:-1，需要页脚自己建立层叠上下文，别让它跑到 body 后面 */
+  isolation: isolate;
+  /* 环宽 820px，窄屏必须裁掉，否则整页横向滚动（audit 会亮红） */
+  overflow: hidden;
   margin-top: var(--ds-space-7);
   padding-block: var(--ds-space-6);
-  border-top: 1px solid var(--ds-c-border-soft);
+  border-top: 1px solid var(--ds-c-hairline);
   background: var(--ds-c-bg-alt);
   padding-bottom: calc(var(--ds-space-6) + env(safe-area-inset-bottom));
+}
+
+.ringLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* 环中心落在页脚上方，只让下缘弧线横穿页脚中部。
+   目标：弧线不切到版权行；截图确认后允许 ±80px 调整。 */
+.ringLayer > * {
+  top: -320px;
 }
 
 .inner {
@@ -12,31 +29,57 @@
   gap: var(--ds-space-5);
 }
 
-.stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--ds-space-3);
-}
-
-.stat {
+.closing {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--ds-space-3) var(--ds-space-4);
-  border-radius: var(--ds-radius-lg);
-  background: var(--ds-c-bg-elv);
-  border: 1px solid var(--ds-c-border-soft);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ds-space-4);
 }
 
-.statValue {
-  font-size: 1.25rem;
-  font-weight: var(--ds-fw-bold);
+.closingLine {
+  font-family: var(--ds-font-display);
+  font-size: 1.375rem;
+  font-weight: var(--ds-fw-display);
+  color: var(--ds-c-text);
+}
+
+.mail {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--ds-space-5);
+  border: 1px solid var(--ds-c-hairline);
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-c-glass);
+  backdrop-filter: blur(10px);
+  font-size: var(--ds-fs-sm);
+  font-weight: var(--ds-fw-medium);
+  transition: border-color var(--ds-t-color), color var(--ds-t-color);
+}
+
+.mail:hover {
+  border-color: var(--ds-c-accent);
   color: var(--ds-c-accent);
 }
 
-.statLabel {
-  font-size: var(--ds-fs-xs);
+/* 一行文字式统计：项间用中点分隔，与页面里其他「对齐即秩序」的列表同构 */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2) var(--ds-space-3);
+  font-size: var(--ds-fs-sm);
   color: var(--ds-c-text-subtle);
+}
+
+.stat:not(:last-child)::after {
+  content: '·';
+  margin-left: var(--ds-space-3);
+  color: var(--ds-c-border);
+}
+
+.statValue {
+  font-weight: var(--ds-fw-semibold);
+  color: var(--ds-c-text);
 }
 
 .meta {
@@ -51,7 +94,12 @@
 }
 
 @media (max-width: 719px) {
-  .stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* 窄屏页脚更矮，环要再上移，让弧线落在收尾语附近而不是顶到框线上 */
+  .ringLayer > * {
+    top: -420px;
+  }
+
+  .closingLine {
+    font-size: 1.125rem;
   }
 }
