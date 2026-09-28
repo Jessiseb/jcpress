@@ -140,6 +140,113 @@ const check = (name, pass, detail) => {
   )
   check('交互元素触摸目标 ≥44px', smallTargets.length === 0, JSON.stringify(smallTargets))
 
+  // ---- 键盘可达：项目表格的展开必须能用键盘完成（不能只有鼠标/触摸） ----
+  // 作用域限定在 main 里：顶栏汉堡按钮也带 aria-expanded，但它属于 header
+  const focusOk = await page.evaluate(() => {
+    const btn = document.querySelector('main button[aria-expanded="false"]')
+    if (!btn) return false
+    btn.focus()
+    return document.activeElement === btn
+  })
+  await page.keyboard.press('Enter')
+  await page.waitForTimeout(200)
+  const kbState = await page.evaluate(() => {
+    const btn = document.querySelector('main button[aria-expanded="true"]')
+    if (!btn) return { expanded: false, visible: false, len: 0 }
+    const panel = document.getElementById(btn.getAttribute('aria-controls'))
+    return {
+      expanded: true,
+      visible: panel ? getComputedStyle(panel).display !== 'none' : false,
+      len: panel ? panel.innerText.trim().length : 0,
+    }
+  })
+  check(
+    '项目面板可键盘展开（Enter），内容真的进 DOM',
+    focusOk && kbState.expanded && kbState.visible && kbState.len > 40,
+    JSON.stringify(kbState),
+  )
+
+  // ---- prefers-reduced-motion：入场序列不接管，正文常显 ----
+  const rmCtx = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+    reducedMotion: 'reduce',
+  })
+  const rmPage = await rmCtx.newPage()
+  await rmPage.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle', timeout: 60000 })
+  await rmPage.waitForTimeout(600)
+  const rm = await rmPage.evaluate(() => {
+    const nodes = Array.from(document.querySelectorAll('[data-reveal]'))
+    const hidden = nodes.filter((el) => Number(getComputedStyle(el).opacity) < 0.99).length
+    return { armed: document.documentElement.getAttribute('data-reveal'), total: nodes.length, hidden }
+  })
+  check(
+    'reduced-motion 下入场不接管、正文不隐藏',
+    rm.armed === null && rm.hidden === 0,
+    `armed=${rm.armed} 隐藏=${rm.hidden}/${rm.total}`,
+  )
+  await rmCtx.close()
+
+  // ---- 「技术分享」列表页（M3 前端外壳）----
+  // 用暗色上下文顺便确认暗色主题下这一页也成立
+  const techCtx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'dark' })
+  const techPage = await techCtx.newPage()
+  await techPage.goto('http://127.0.0.1:5173/tech', { waitUntil: 'networkidle', timeout: 60000 })
+  await techPage.waitForTimeout(500)
+
+  const tech = await techPage.evaluate(() => {
+    const h1 = document.querySelector('h1')
+    const rows = Array.from(document.querySelectorAll('[class*="row"]'))
+    const bodyText = document.body.innerText
+    return {
+      h1: h1 ? h1.textContent.trim() : null,
+      h1Count: document.querySelectorAll('h1').length,
+      countText: (bodyText.match(/共 \d+ 篇 · 更新至 \d{4}\.\d{2}\.\d{2}/) || [null])[0],
+      rowCount: rows.length,
+      linksInRows: rows.reduce((n, r) => n + r.querySelectorAll('a').length, 0),
+      hasEmptyState: bodyText.includes('列表接口还没接通'),
+      ringBadges: Array.from(document.querySelectorAll('[data-ring]')).filter((el) => !el.closest('footer'))
+        .length,
+      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    }
+  })
+
+  check('技术分享页只有一个 h1 且内容正确', tech.h1Count === 1 && tech.h1 === '技术分享', `h1=${tech.h1}`)
+  check('计数取自数据长度（共 5 篇）', tech.countText === '共 5 篇 · 更新至 2026.08.12', `${tech.countText}`)
+  check('列表渲染 5 行', tech.rowCount === 5, `行=${tech.rowCount}`)
+  check('列表项内无链接（无死链）', tech.linksInRows === 0, `链接=${tech.linksInRows}`)
+  check('有数据时不渲染空态', tech.hasEmptyState === false)
+  check('列表页有环 badge', tech.ringBadges === 1, `环=${tech.ringBadges}`)
+  check('/tech 无横向滚动', tech.overflow <= 0, `溢出=${tech.overflow}px`)
+
+  await techCtx.close()
+
+  // ---- 占位页外壳：/algo 与 404 ----
+  const pageCtx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'light' })
+  const walkPage = await pageCtx.newPage()
+  await walkPage.goto('http://127.0.0.1:5173/algo', { waitUntil: 'networkidle', timeout: 60000 })
+  const algo = await walkPage.evaluate(() => ({
+    h1: document.querySelector('h1') ? document.querySelector('h1').textContent.trim() : null,
+    hasLead: document.body.innerText.includes('按专题整理的题解'),
+    hasEmpty: document.body.innerText.includes('内容整理中'),
+    // 每个页面都带页脚，页脚那枚环是 RingField；这里只数页面自己的 badge
+    ringBadges: Array.from(document.querySelectorAll('[data-ring]')).filter((el) => !el.closest('footer'))
+      .length,
+  }))
+  check(
+    '算法笔记占位页：标题 + 定位句 + 空态 + 环 badge',
+    algo.h1 === '算法笔记' && algo.hasLead && algo.hasEmpty && algo.ringBadges === 1,
+    JSON.stringify(algo),
+  )
+
+  await walkPage.goto('http://127.0.0.1:5173/no-such-page', { waitUntil: 'networkidle', timeout: 60000 })
+  const notFound = await walkPage.evaluate(() => ({
+    h1: document.querySelector('h1') ? document.querySelector('h1').textContent.trim() : null,
+    text: document.body.innerText.slice(0, 200),
+  }))
+  check('404 页给出方向而不是空白', notFound.h1 === '页面不存在' && notFound.text.includes('链接可能写错了'), notFound.h1)
+
+  await pageCtx.close()
+
   await browser.close()
 
   const failed = results.filter((r) => !r.pass)
