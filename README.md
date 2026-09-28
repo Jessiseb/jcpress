@@ -7,7 +7,7 @@
 
 | 层 | 选型 |
 | --- | --- |
-| 前端 | React 18 + TypeScript + Vite + React Router + TanStack Query |
+| 前端 | React 18 + TypeScript + Vite + React Router + TanStack Query；**构建期预渲染**（SEO）；**移动端优先适配** |
 | 后端 | Java 21 + Spring Boot 3 + MyBatis-Plus + **Gson** + **Sa-Token**（仅后台登录用） |
 | 存储 | MySQL 8（内容 + 后台账号） · Redis 7（Sa-Token 会话 / 缓存 / 限流） |
 | 部署 | Docker Compose（Nginx + Backend + MySQL + Redis） |
@@ -18,7 +18,9 @@
 | --- | --- |
 | [`docs/项目前期规划.md`](docs/项目前期规划.md) | **唯一源**：设计基线、信息架构、系统架构、数据库设计、Redis 设计、访问控制与后台认证（Sa-Token）、API 契约、后台管理系统、工程规范、部署、里程碑、风险、决策表 |
 | [`design-system/README.md`](design-system/README.md) | 设计 token 的提取溯源、许可说明与已知缺口 |
-| [`design-system/tokens.curated.css`](design-system/tokens.curated.css) | 可直接引入的 light + dark 双主题 token（建议作为前端基线） |
+| [`design-system/tokens.curated.css`](design-system/tokens.curated.css) | 从参照站提取的 light + dark 双主题 token（**证据基线，保持原样**） |
+| [`design-system/theme.jcpress.css`](design-system/theme.jcpress.css) | **本站品牌主题层**：青碧 Teal 主色、语义色调校、移动端 token 覆盖（在基线之后引入） |
+| [`design-system/palette-options.html`](design-system/palette-options.html) | 品牌主色候选预览（亮 / 暗两套 + 语义色撞色判定） |
 
 ## 已确定的内容结构
 
@@ -57,14 +59,19 @@ jcpress/
 
 ## 下一步
 
-1. 确认 [`docs/项目前期规划.md` §15](docs/项目前期规划.md#15-待确认决策) 的 **D1、D3–D7** 决策（D2 生活经验暂不做、D8 后台分三步、D9 前台免登录 + 后台 Sa-Token 已定）
-2. 确定品牌主色，替换 token 基线里的参照站靛蓝
-3. 启动 **M1 工程骨架**：前后端最小可运行工程 + Docker 依赖 + 统一响应/异常 + Gson 转换器 + Markdown 导入器
+1. 确认 [`docs/项目前期规划.md` §15](docs/项目前期规划.md#15-待确认决策) 剩下的 **D1、D4–D7、D11、D12** 决策
+   （已定：D2 生活经验暂不做 · D3 SPA+构建期预渲染 · D8 后台分三步 · D9 前台免登录 + 后台 Sa-Token ·
+   D10 单仓多模块 · D13 品牌主色青碧 Teal）
+2. ~~确定品牌主色~~ **已定青碧 Teal**：M1 把 `theme.jcpress.css` 接进前端入口
+3. 启动 **M1 工程骨架**：前后端最小可运行工程 + Docker 依赖 + 统一响应/异常 + Gson 转换器 +
+   Markdown 导入器 + 主题层接入 + 移动端抽屉骨架
 
 ## 说明
 
 - 设计基线提取自 `https://golangstar.cn/`（VuePress + VuePress Theme Hope，均为 MIT 许可），
   仅复用 token 结构与数值体系，品牌色与视觉签名将自行设计；详见规划文档 §2.7。
+- **移动端是硬要求**：断点、触摸目标（≥44px）、代码块与表格的横向滚动、性能预算见规划文档 §2.8；
+  所有页面按 375 / 390 / 768 / 1280 四档宽度验收。
 - 仓库中不提交任何密钥；数据库口令、对象存储 AK、后台账号口令一律通过环境变量注入。
 - 后端工程规范遵循《Java开发手册（黄山版）》：包结构按 **portal / admin 隔离**，
   并用 **P3C-PMD + ArchUnit** 在 CI 卡口（见规划文档 §11.4 分包架构、§11.5 符合性清单）。

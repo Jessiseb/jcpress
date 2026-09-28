@@ -1,0 +1,68 @@
+/* ==========================================================================
+   jcpress 品牌主题层
+   --------------------------------------------------------------------------
+   分层原则：
+     tokens.curated.css  从参照站提取的「证据基线」—— 保持原样不动，它是溯源依据
+     theme.jcpress.css   本站自己的品牌与适配覆盖 —— 所有改动集中在这里
+
+   引入顺序（后者覆盖前者）：
+     import './styles/tokens.curated.css'
+     import './styles/theme.jcpress.css'
+
+   决策依据：docs/项目前期规划.md 附录 D
+   可视化预览：design-system/palette-options.html
+   校验方式：所有对比度均为按 WCAG 公式的实测值，标注在注释里
+   ========================================================================== */
+
+:root {
+  /* ---- 品牌主色：青碧 Teal（色相 175°，距参照站靛蓝 #096fdc 36° —— 不再撞脸）----
+     三档沿用基线的用法分工：accent 作文字色、accent-bg 作填充底、accent-hover 为悬停态 */
+  --ds-c-accent:       #0f766e;  /* 链接 / 引用块左边框；作文字于白底 5.47:1 ✔ AA */
+  --ds-c-accent-bg:    #115e59;  /* 按钮填充；白字压它 7.58:1 ✔ AA */
+  --ds-c-accent-hover: #0d6b64;  /* hover / focus；白字压它 6.36:1 ✔ AA（沿用基线「hover 略变亮」的规律）*/
+  --ds-c-accent-soft:  rgb(15 118 110 / 14%);
+  --ds-c-accent-text:  #fff;
+
+  /* ---- 两处硬编码值：基线里写死了蓝/紫，换主色时不会自动跟随 ---- */
+  --ds-shadow-accent: 0 8px 18px rgb(15 118 110 / 20%);
+  /* 渐变最亮一档 #0d9488 对白字 3.74:1 —— 只允许承载 ≥20px 加粗的「大字号」文本（AA 大字号门槛 3:1）*/
+  --ds-gradient-hero: linear-gradient(120deg, #0d9488, var(--ds-c-accent) 40%, #064e3b 100%);
+
+  /* ---- 语义色调校：去掉参照站遗留、与品牌色打架的 blue 档 ----
+     品牌青碧 175° 与 blue #2fa1c5 194° 仅差 19°，并存会让「品牌色」和「信息态」分不清。
+     本站没有必须用蓝色表达的信息态，故把 blue 档映射到中性灰。
+     将来若确需独立信息色，换成一个明确偏蓝的值（如 #1d4ed8，色相 224°，距青碧 49°）即可。*/
+  --ds-c-blue-text:  var(--ds-c-grey-text);
+  --ds-c-blue-hover: var(--ds-c-grey-hover);
+  --ds-c-blue-bg:    var(--ds-c-grey-bg);
+  --ds-c-blue-soft:  var(--ds-c-grey-soft);
+}
+
+[data-theme='dark'] {
+  /* 暗色下必须提亮；且亮青底上要用深字 —— 基线漏了 --ds-c-accent-text，
+     会继承亮色主题的 #fff，白字压 #2dd4bf 只有 1.86:1（不可读）。这里补上。*/
+  --ds-c-accent:       #2dd4bf;  /* 作文字于深底 #1b1b1f 9.22:1 ✔ AA */
+  --ds-c-accent-bg:    #14b8a6;  /* 深字 #14141a 压它 7.37:1 ✔ AA */
+  --ds-c-accent-hover: #5eead4;  /* 深字压它 12.40:1 ✔ AA */
+  --ds-c-accent-soft:  rgb(45 212 191 / 16%);
+  --ds-c-accent-text:  #14141a;
+
+  --ds-shadow-accent: 0 8px 18px rgb(45 212 191 / 18%);
+  /* 暗色主题的渐变不能跟着提亮到 #5eead4，否则白字对比掉到 1.48:1 */
+  --ds-gradient-hero: linear-gradient(120deg, #0d9488, var(--ds-c-accent-bg) 40%, #134e4a 100%);
+}
+
+/* ==========================================================================
+   移动端：设计系统是变量驱动的，因此适配优先覆盖 token，而不是到处写媒体查询。
+   断点只保留基线收敛后的 4 个：419 / 719 / 959 / 1440
+   完整规则（触摸目标、代码块与表格横向滚动、抽屉导航、性能预算）见
+   docs/项目前期规划.md §2.8
+   ========================================================================== */
+
+@media (max-width: 719px) {
+  :root {
+    --ds-navbar-height: 3.25rem;   /* 60px → 52px（基线已记录该值）*/
+    --ds-page-width: 100%;         /* 容器占满，留白交给容器 padding 控制 */
+    --ds-content-width: 100%;      /* 正文单列，不再锁 780px */
+  }
+}
