@@ -164,9 +164,57 @@ Get-ChildItem C:\Users\O\Desktop\myproject\jcpress\frontend\dist -File | Select-
   --ds-ring-period: 7px;   /* 与参照站实测一致 */
 ```
 
+- [ ] **Step 2b: 标题排版进 `global.css`**
+
+`frontend/src/styles/global.css` 里 `h1, h2, h3, h4` 规则改为（字重降档 + 字距收紧）：
+
+```css
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  color: var(--ds-c-text);
+  font-family: var(--ds-font-display);
+  font-weight: var(--ds-fw-display);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+```
+
+`.sectionTitle` 改为 30px（移动端 1.55rem）：
+
+```css
+.sectionTitle {
+  padding-top: var(--ds-space-4);
+  border-top: 1px solid var(--ds-c-hairline);
+  font-size: 1.875rem;
+  margin-bottom: var(--ds-space-2);
+}
+
+@media (max-width: 719px) {
+  .sectionTitle {
+    font-size: 1.55rem;
+    padding-top: var(--ds-space-3);
+  }
+}
+```
+
+- [ ] **Step 2c: 记录实测对比度**
+
+`theme.jcpress.css` 的暗色底注释里写上实测值（`audit-contrast.cjs` 输出）：
+accent `7.05:1` / text-mute `9.79:1` / text-subtle `6.32:1`（亮暗两套 227 处文本全部通过 AA）。
+
 - [ ] **Step 3: 写令牌探针脚本**
 
 创建 `.tmp/tools/probe-tokens.cjs`：
+
+> **实现提醒（2026-09-28 执行时修正）**：自定义属性的计算值**不做颜色规范化** ——
+> `getComputedStyle().getPropertyValue('--ds-ring')` 返回的是 var() 替换后的原始 token 串
+> （`rgb(9 111 220 / 4%)` 原样返回，不会变成 `rgba(9, 111, 220, 0.04)`）。
+> 因此探针按「原样字符串」比对；主题也不跟随系统色，而是显式 `setAttribute('data-theme', ...)` 后再读。
+> 已按此修正执行，下方脚本即为最终生效版本。
+> 另：执行时把「标题字重/字号」这一步从 Step 1 拆出来单列（见 Step 2b），因为它改的是 `global.css` 而不是 `theme.jcpress.css`。
 
 ```js
 const { chromium } = require('playwright-core')

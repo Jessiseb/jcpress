@@ -1,5 +1,6 @@
-/* 全局基础样式：只做重置、容器、排版基线与可访问性兜底。
-   颜色 / 字号 / 间距 / 圆角 / 阴影一律走 design-system 的 token，不在这里重新定义。 */
+/* 全局基础样式：重置、容器、排版基线、氛围层、入场序列与可访问性兜底。
+   颜色 / 字号 / 间距 / 圆角 / 阴影一律走 design-system 的 token，不在这里重新定义。
+   风格基准见 docs/style-ref-golangstar.md。 */
 
 *,
 *::before,
@@ -15,7 +16,15 @@ html {
 
 body {
   margin: 0;
-  background: var(--ds-c-bg);
+  background-color: var(--ds-c-bg);
+  /* 氛围层：两枚大尺寸径向渐变，固定不随滚动漂移。
+     放在 body 的 background-image 上而不是额外伪元素 —— 不引入层叠上下文，
+     不需要 z-index 规避，也不会产生全视口的 repaint。 */
+  background-image:
+    radial-gradient(48rem 32rem at 6% -10%, var(--ds-atmosphere-1), transparent 62%),
+    radial-gradient(42rem 30rem at 102% 2%, var(--ds-atmosphere-2), transparent 58%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: var(--ds-c-text);
   font-family: var(--ds-font-sans);
   font-size: var(--ds-fs-body);
@@ -25,14 +34,19 @@ body {
   overflow-wrap: anywhere;
 }
 
+/* 标题统一走衬线展示字：与无衬线正文形成对比，是本站唯一的排版差异化手段。
+   字距收紧到 -0.02em（参照站 Georgia 400 的实测字距；中文大标题收太紧会粘连，不再往下压）。
+   字重从 700 降到 500（--ds-fw-display）：靠尺寸与衬线拉气质，不靠加粗。 */
 h1,
 h2,
 h3,
 h4 {
   margin: 0;
   color: var(--ds-c-text);
-  line-height: var(--ds-lh-tight);
-  font-weight: var(--ds-fw-bold);
+  font-family: var(--ds-font-display);
+  font-weight: var(--ds-fw-display);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
 }
 
 p {
@@ -86,7 +100,7 @@ button {
   }
 }
 
-/* 区块节奏：桌面 64px，移动端不下调行高但压缩外边距 */
+/* 区块节奏：桌面 64px，移动端压缩到 32px */
 .section {
   padding-block: var(--ds-space-7);
 }
@@ -97,21 +111,53 @@ button {
   }
 }
 
+/* 区块标题：上方压一条通栏发丝线，是本站的编辑式签名。
+   参考参照站的「1px 细边分块」手法，但把线放在标题上而不是包住内容，
+   避免又退回到「每个区块一个卡片」的模板感。 */
 .sectionTitle {
-  font-size: var(--ds-fs-h2);
+  padding-top: var(--ds-space-4);
+  border-top: 1px solid var(--ds-c-hairline);
+  /* 30px：比原来的 26.4px 提一档，配合字重降到 500，让区块标题有「版面标题」的分量 */
+  font-size: 1.875rem;
   margin-bottom: var(--ds-space-2);
 }
 
 @media (max-width: 719px) {
   .sectionTitle {
-    font-size: 1.5rem;
+    font-size: 1.55rem;
+    padding-top: var(--ds-space-3);
   }
 }
 
 .sectionLead {
   color: var(--ds-c-text-mute);
-  font-size: var(--ds-fs-lead);
+  font-size: var(--ds-fs-body);
   margin-bottom: var(--ds-space-5);
+}
+
+/* ==========================================================================
+   入场序列
+   --------------------------------------------------------------------------
+   硬约束：隐藏态只在 JS 真正跑起来之后才生效（useReveal 给 <html> 打
+   data-reveal="on"）。无 JS、爬虫抓取、以及将来的构建期预渲染产物里，
+   正文始终是可见的 —— 不拿 SEO 换动效。
+   缓动与时长取 frontend-design 基准（常规过渡 300–400ms，此处 460ms 覆盖
+   opacity + transform 两个属性，观感约等于 320ms 的单属性过渡）。
+   ========================================================================== */
+[data-reveal='on'] [data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity var(--ds-duration-reveal) var(--ds-ease-out),
+    transform var(--ds-duration-reveal) var(--ds-ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+[data-reveal='on'] [data-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
 }
 
 /* 尊重系统的「减少动态效果」设置 */
