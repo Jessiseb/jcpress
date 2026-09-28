@@ -43,6 +43,16 @@ const { chromium } = require('playwright-core')
     }
     await el.scrollIntoViewIfNeeded()
     await page.waitForTimeout(250)
+
+    // --expand：截之前先把区域里第一个折叠按钮点开，用于检查展开态版面
+    if (process.argv.includes('--expand')) {
+      await el.evaluate((node) => {
+        const btn = node.querySelector('button[aria-expanded="false"]')
+        if (btn) btn.click()
+      })
+      await page.waitForTimeout(300)
+    }
+
     await el.screenshot({ path: `${out}/${prefix}-${theme}.png` })
     console.log(`✔ ${out}/${prefix}-${theme}.png`)
     await ctx.close()

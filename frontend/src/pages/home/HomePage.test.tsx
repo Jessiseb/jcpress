@@ -89,13 +89,26 @@ describe('HomePage', () => {
     expect(skills.getAllByText('熟悉').length).toBeGreaterThan(0)
   })
 
-  it('项目状态以纯文字呈现，没有状态徽章', () => {
+  it('项目以表格呈现：三个项目名都在 h3，状态是纯文字', () => {
     renderHome()
 
     const projects = within(sectionOf('项目经历'))
-    expect(projects.getAllByText(/已上线/).length).toBeGreaterThan(0)
-    // 徽章的旧实现是带 status 类名的 span，这里用「技术栈不再渲染成标签列表」间接守住：
-    // 每张项目卡只应有一个 <h3>，标签列表若回归会多出成组的 <li>
     expect(projects.getAllByRole('heading', { level: 3 })).toHaveLength(3)
+    expect(projects.getAllByText(/已上线/).length).toBeGreaterThan(0)
+  })
+
+  it('项目面板默认收起，展开按钮带 aria-expanded 与 aria-controls', () => {
+    renderHome()
+
+    const projects = within(sectionOf('项目经历'))
+    const toggles = projects.getAllByRole('button', { name: '展开' })
+    expect(toggles).toHaveLength(3)
+
+    toggles.forEach((btn) => {
+      expect(btn).toHaveAttribute('aria-expanded', 'false')
+      const panelId = btn.getAttribute('aria-controls')
+      expect(panelId).toBeTruthy()
+      expect(document.getElementById(panelId as string)).not.toBeNull()
+    })
   })
 })

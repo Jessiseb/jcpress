@@ -1,132 +1,193 @@
-.section {
-  padding-top: var(--ds-space-6);
+/* 项目经历：编辑式表格。
+   列：ID / 项目 / 角色 · 状态 / 展开 —— 四列对齐是本区块的「印刷品」特征。
+   展开面板用 `grid-column: 1 / -1` 独占整行。 */
+
+.badge {
+  display: inline-block;
+  width: 54px;
+  height: 54px;
+  margin-left: var(--ds-space-4);
+  vertical-align: middle;
+  /* 环母题的小尺寸变体：周期比大环密得多（大环 46px，这里 7px）——
+     54px 的圆里用 46px 周期只会剩一条弧，看不出是环。
+     颜色用 --ds-ring-badge（比大环浓）：badge 是路标，太淡就白做了。 */
+  background-image: repeating-radial-gradient(
+    circle at 50% 50%,
+    var(--ds-ring-badge) 0 1px,
+    transparent 1px 7px
+  );
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 18%, transparent 70%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 18%, transparent 70%);
 }
 
-.grid {
+.table {
+  margin-top: var(--ds-space-5);
+  border-top: 1px solid var(--ds-c-hairline);
+}
+
+.head,
+.row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 3rem minmax(0, 1.6fr) minmax(0, 1fr) 5rem;
   gap: var(--ds-space-4);
-  align-items: start;
-}
-
-.card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ds-space-2);
-  padding: var(--ds-space-5);
-  border: 1px solid var(--ds-c-border-soft);
-  border-radius: var(--ds-radius-lg);
-  background: var(--ds-c-bg-elv);
-  box-shadow: var(--ds-shadow-xs);
-  transition: box-shadow var(--ds-t-transform), transform var(--ds-t-transform);
-}
-
-@media (hover: hover) {
-  .card:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--ds-shadow-hover);
-  }
-}
-
-.cardMore {
-  background: var(--ds-c-bg-alt);
+  align-items: baseline;
 }
 
 .head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ds-space-3);
-}
-
-.name {
-  font-size: var(--ds-fs-h3);
-  font-weight: var(--ds-fw-semibold);
-}
-
-.status {
-  padding: 2px var(--ds-space-3);
-  border-radius: var(--ds-radius-pill);
-  background: var(--ds-c-accent-soft);
-  color: var(--ds-c-accent);
+  padding-block: var(--ds-space-2);
+  border-bottom: 1px solid var(--ds-c-hairline);
+  font-family: var(--ds-font-mono);
   font-size: var(--ds-fs-xs);
-  white-space: nowrap;
+  letter-spacing: 0.12em;
+  color: var(--ds-c-text-subtle);
 }
 
-.role {
+.row {
+  padding-block: var(--ds-space-4);
+  border-bottom: 1px solid var(--ds-c-hairline);
+  transition: background var(--ds-t-color), box-shadow var(--ds-t-color);
+}
+
+/* hover 只做视觉强调：整行提亮 + 左侧蓝条。
+   蓝条用 inset box-shadow 而不是 border-left —— 不改变列宽，不会把表格挤动。 */
+@media (hover: hover) {
+  .row:hover {
+    background: var(--ds-c-accent-soft);
+    box-shadow: inset 2px 0 0 var(--ds-c-accent);
+  }
+}
+
+.idx {
+  font-family: var(--ds-font-mono);
   font-size: var(--ds-fs-xs);
   color: var(--ds-c-text-subtle);
 }
 
+.name {
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-fs-h3);
+  font-weight: var(--ds-fw-display);
+}
+
+/* 项目名里的 Latin 词斜体 + 降灰（与首屏同一套规则，见 utils/latin.tsx） */
+.name em {
+  font-style: italic;
+  color: var(--ds-c-text-mute);
+}
+
+.meta {
+  font-size: var(--ds-fs-sm);
+  color: var(--ds-c-text-subtle);
+}
+
+.toggle {
+  justify-self: end;
+  min-height: 44px; /* 触摸目标下限 */
+  padding-inline: var(--ds-space-3);
+  border: 1px solid var(--ds-c-hairline);
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-c-glass);
+  color: var(--ds-c-text-mute);
+  font-size: var(--ds-fs-xs);
+  transition: color var(--ds-t-color), border-color var(--ds-t-color);
+}
+
+.toggle:hover {
+  color: var(--ds-c-accent);
+  border-color: var(--ds-c-accent);
+}
+
+.panel {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  padding-top: var(--ds-space-3);
+}
+
+/* hidden 属性在 display:flex 面前会失效（作者样式覆盖了浏览器默认的 display:none），
+   必须显式兜住，否则面板永远展开。 */
+.panel[hidden] {
+  display: none;
+}
+
 .summary {
+  max-width: var(--ds-measure-prose);
   font-size: var(--ds-fs-sm);
   color: var(--ds-c-text-mute);
-  line-height: 1.75;
 }
 
 .highlights {
   display: flex;
   flex-direction: column;
   gap: var(--ds-space-2);
-  margin-top: var(--ds-space-1);
 }
 
 .highlight {
   position: relative;
-  padding-left: var(--ds-space-4);
+  max-width: var(--ds-measure-prose);
+  padding-left: 1rem;
   font-size: var(--ds-fs-sm);
-  color: var(--ds-c-text-mute);
   line-height: 1.75;
+  color: var(--ds-c-text-mute);
 }
 
 .highlight::before {
   content: '';
   position: absolute;
+  top: 0.78em;
   left: 0;
-  top: 0.7em;
-  width: 6px;
-  height: 6px;
-  border-radius: var(--ds-radius-full);
-  background: var(--ds-c-accent-soft);
+  width: 0.5rem;
+  height: 1px;
+  background: var(--ds-c-text-subtle);
 }
 
-.highlight strong {
-  color: var(--ds-c-text);
-  font-weight: var(--ds-fw-semibold);
-}
-
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ds-space-2);
-  margin-top: var(--ds-space-2);
-}
-
-.tag {
-  padding: 2px var(--ds-space-3);
-  border-radius: var(--ds-radius-pill);
-  background: var(--ds-c-control);
-  color: var(--ds-c-text-mute);
+.tech {
+  font-family: var(--ds-font-mono);
   font-size: var(--ds-fs-xs);
+  color: var(--ds-c-text-subtle);
 }
 
 .link {
-  margin-top: var(--ds-space-2);
   align-self: flex-start;
-  min-height: 44px;
   display: inline-flex;
   align-items: center;
+  min-height: 44px;
   font-size: var(--ds-fs-sm);
 }
 
-@media (max-width: 959px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 719px) {
-  .card {
-    padding: var(--ds-space-4);
+  .badge {
+    width: 36px;
+    height: 36px;
+    margin-left: var(--ds-space-3);
+  }
+
+  .head {
+    display: none;
+  }
+
+  /* 窄屏：表格降级成卡片堆叠。ID 与展开按钮同行，项目名与元信息各占一行 */
+  .row {
+    grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+    gap: var(--ds-space-1) var(--ds-space-3);
+    padding-block: var(--ds-space-3);
+  }
+
+  .name,
+  .meta,
+  .panel {
+    grid-column: 2 / -1;
+  }
+
+  .name {
+    font-size: 1.1rem;
+  }
+
+  .toggle {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    align-self: start;
   }
 }
