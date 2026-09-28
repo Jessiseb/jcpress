@@ -1,0 +1,8 @@
+{
+  "name": "jcpress-shot-tools",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "playwright-core": "^1.63.0"
+  }
+}
