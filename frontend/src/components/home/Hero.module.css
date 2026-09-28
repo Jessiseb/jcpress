@@ -1,177 +1,223 @@
+/* 首屏：居中单列。没有任何卡片、徽章、标签胶囊 —— 这些是模板感的来源。
+   2026-09-28：背后加环装置层，因此需要建立自己的层叠上下文。 */
+
 .hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 15rem;
-  gap: var(--ds-space-6);
+  position: relative;
+  /* 让 z-index:-1 的环层留在首屏内部，不跑到 body 背景后面去 */
+  isolation: isolate;
+  /* 环宽 1000px，窄屏必须裁掉，否则整页横向滚动（audit 会亮红） */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  text-align: center;
+  gap: var(--ds-space-3);
   padding-block: var(--ds-space-7) var(--ds-space-6);
 }
 
-.text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ds-space-3);
+/* 环层：绝对定位铺满首屏，内部再由 RingField 自身定位（left:50% + margin 居中） */
+.ringLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
+/* 环中心落在首屏偏上 45% 处；截图确认后允许 ±60px 微调 */
+.ringLayer > * {
+  top: -180px;
+}
+
+/* 地点行两侧压一条短发丝线：给居中标题一个「印刷品」的锚点，
+   避免纯居中在宽屏上显得松垮。这是参照站没有的小加法。 */
 .kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-3);
   font-size: var(--ds-fs-xs);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ds-c-text-subtle);
 }
 
-/* Hero 渐变标题 —— 全站唯一情绪化设计（基线 §2.2） */
+.kicker::before,
+.kicker::after {
+  content: '';
+  width: 2.5rem;
+  height: 1px;
+  background: var(--ds-c-border);
+}
+
+/* 标题：衬线 + 500 字重 + 收紧字距。渐变只给姓名那一行（.nameMain），
+   否则第二行的定位文字也会被 background-clip: text 变成渐变 —— 那不是我们要的。 */
 .name {
-  font-size: var(--ds-fs-hero);
-  line-height: var(--ds-lh-hero);
-  font-weight: var(--ds-fw-bold);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--ds-font-display);
+  font-size: 4.25rem;
+  font-weight: var(--ds-fw-display);
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  margin-block: var(--ds-space-2) var(--ds-space-1);
+}
+
+/* 全站唯一一处装饰性渐变，且只作用于姓名文字（参照站的签名手法）。
+   对比度：最亮一档 #0a7bf5 于白底 4.07:1，最暗 #0756ab 7.11:1；
+   68px 属 WCAG「大字号」，门槛 3:1，两端均通过。 */
+.nameMain {
   background: var(--ds-gradient-hero);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  margin-block: var(--ds-space-1);
+}
+
+/* 第二行：定位。刻意不用斜体 —— `AI` 只有两个字母，斜体后读起来像 /\I */
+.nameSub {
+  margin-top: 0.4rem;
+  font-size: 0.4em;
+  font-weight: var(--ds-fw-display);
+  letter-spacing: 0;
+  color: var(--ds-c-text-mute);
 }
 
 .headline {
+  max-width: 40rem;
   font-size: var(--ds-fs-lead);
   line-height: 1.6;
-  color: var(--ds-c-text-mute);
+  color: var(--ds-c-text);
+  text-wrap: balance;
 }
 
-.keywords {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ds-space-2);
-  margin-top: var(--ds-space-2);
-}
-
-.keyword {
-  padding: var(--ds-space-1) var(--ds-space-3);
-  border-radius: var(--ds-radius-pill);
-  background: var(--ds-c-accent-soft);
-  color: var(--ds-c-accent);
-  font-size: var(--ds-fs-sm);
+/* 斜体只出现在这里与项目名：Latin 词斜体 + 降灰同时发生（参照站手法）。
+   中文永远正体 —— 中文没有真斜体，机械倾斜很廉价。 */
+.headline em {
+  font-style: italic;
+  color: var(--ds-c-text-subtle);
 }
 
 .summary {
-  margin-top: var(--ds-space-2);
-  color: var(--ds-c-text-mute);
+  max-width: 40rem;
   font-size: var(--ds-fs-body);
-  max-width: 44rem;
+  color: var(--ds-c-text-mute);
 }
 
-.ctas {
+.actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ds-space-3);
+  align-items: center;
+  justify-content: center;
+  gap: var(--ds-space-5);
   margin-top: var(--ds-space-4);
 }
 
-.primary,
-.secondary {
-  min-height: 48px; /* ≥44px 触摸目标 */
+/* 主按钮：参照站的胶囊 + 单一强调色填充，无阴影、无位移 */
+.primary {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding-inline: var(--ds-space-5);
+  gap: 0.4em;
+  min-height: 44px; /* 触摸目标下限 */
+  padding-inline: var(--ds-space-6);
   border-radius: var(--ds-radius-pill);
-  font-size: var(--ds-fs-sm);
-  font-weight: var(--ds-fw-medium);
-  transition: background var(--ds-t-color), transform var(--ds-t-transform), box-shadow var(--ds-t-transform);
-}
-
-.primary {
   background: var(--ds-c-accent-bg);
   color: var(--ds-c-accent-text);
-  border: 1px solid var(--ds-c-accent-bg);
+  font-size: var(--ds-fs-sm);
+  font-weight: var(--ds-fw-medium);
+  /* 主按钮自带一圈同色辉光（参照站的白色胶囊自带光晕），hover 时再加深 */
+  box-shadow: 0 0 24px var(--ds-glow);
+  transition:
+    background var(--ds-t-color),
+    box-shadow var(--ds-t-color),
+    transform var(--ds-t-transform);
+}
+
+.primary::after {
+  content: '→';
+  transition: transform 200ms var(--ds-ease-out);
 }
 
 .primary:hover {
   background: var(--ds-c-accent-hover);
   color: var(--ds-c-accent-text);
-  transform: translateY(-1px);
   box-shadow: var(--ds-shadow-accent);
 }
 
+.primary:hover::after {
+  transform: translateX(3px);
+}
+
+/* 按压反馈走 active 而不是 hover（参照站的做法：scale .96） */
+.primary:active {
+  transform: scale(0.96);
+}
+
+/* 次级动作降级为文字链接：hover 时下划线自左侧扫出 */
 .secondary {
-  border: 1px solid var(--ds-c-accent);
-  color: var(--ds-c-accent);
-  background: transparent;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ds-c-text-mute);
+  font-size: var(--ds-fs-sm);
+  font-weight: var(--ds-fw-medium);
+  transition: color var(--ds-t-color);
+}
+
+.secondary::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0.65rem;
+  left: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 200ms var(--ds-ease-out);
 }
 
 .secondary:hover {
-  background: var(--ds-c-accent-soft);
-  color: var(--ds-c-accent-hover);
-  transform: translateY(-1px);
+  color: var(--ds-c-accent);
 }
 
-.avatarWrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--ds-space-3);
+.secondary:hover::after {
+  transform: scaleX(1);
 }
 
-.avatar {
-  width: 15rem;
-  height: 15rem;
-  border-radius: var(--ds-radius-xl);
-  background: var(--ds-gradient-hero);
-  color: #fff;
-  display: grid;
-  place-items: center;
-  font-size: 5rem;
-  font-weight: var(--ds-fw-bold);
-  box-shadow: var(--ds-shadow-md);
-}
-
-.contact {
-  font-size: var(--ds-fs-xs);
-  color: var(--ds-c-text-subtle);
-}
-
-/* 基线记录的响应式降级阶梯：3.6 → 2.5 → 2.25 → 2rem */
+/* 响应式降级阶梯：68 → 44 → 40 → 34px（沿用基线四档断点） */
 @media (max-width: 959px) {
-  .hero {
-    grid-template-columns: 1fr;
-  }
-
   .name {
-    font-size: 2.5rem;
-  }
-
-  .avatar {
-    width: 9rem;
-    height: 9rem;
-    font-size: 3rem;
-  }
-
-  .avatarWrap {
-    align-items: flex-start;
+    font-size: 2.75rem;
   }
 }
 
 @media (max-width: 719px) {
   .name {
-    font-size: 2.25rem;
+    font-size: 2.5rem;
   }
 
   .headline {
     font-size: 1.05rem;
   }
 
-  .ctas {
-    width: 100%;
+  .kicker::before,
+  .kicker::after {
+    width: 1.5rem;
   }
 
-  .primary,
-  .secondary {
-    flex: 1 1 12rem;
+  /* 窄屏首屏更矮，环要跟着上移，否则只能看到一片空白 */
+  .ringLayer > * {
+    top: -120px;
   }
 }
 
 @media (max-width: 419px) {
   .name {
-    font-size: 2rem;
+    font-size: 2.125rem;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: var(--ds-space-2);
   }
 }

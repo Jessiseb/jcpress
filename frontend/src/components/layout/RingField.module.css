@@ -1,0 +1,25 @@
+/* 环装置：透明背景上的两层叠加（中心聚光 + 同心环），最外层用 mask 做「中心实、外缘渐隐」。
+   位置由父容器决定 —— 父容器必须 `position: relative` + `isolation: isolate`，
+   本层用 `z-index: -1` 落在内容之下但不跑到 body 后面。
+
+   两条不能改的细节：
+   1. 居中用 margin，不用 transform：入场序列的 [data-reveal] 会写 transform（translateY → none），
+      用 translateX(-50%) 会被它整个覆盖掉，环会瞬间跳到右边。
+   2. 本组件内任何地方都不要写 transform / opacity 的过渡 —— opacity 由内联变量控制，
+      一旦参与 data-reveal 的淡入，`.is-revealed { opacity: 1 }` 会把 --ring-opacity 顶掉。 */
+.field {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: -1;
+  width: var(--ring-size);
+  height: var(--ring-size);
+  margin-left: calc(var(--ring-size) / -2);
+  pointer-events: none;
+  opacity: var(--ring-opacity, 1);
+  background-image:
+    radial-gradient(circle at 50% 45%, var(--ds-glow), transparent 34%),
+    repeating-radial-gradient(circle at 50% 45%, var(--ds-ring) 0 1px, transparent 1px var(--ds-ring-period));
+  -webkit-mask-image: radial-gradient(#000 5%, transparent 72%);
+  mask-image: radial-gradient(#000 5%, transparent 72%);
+}

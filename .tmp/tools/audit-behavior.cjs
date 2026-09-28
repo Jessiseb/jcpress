@@ -1,0 +1,151 @@
+const { chromium } = require('playwright-core')
+
+/**
+ * 浏览器内断言套件。
+ *
+ * 替代 jsdom 版 vitest 用例的原因：当前环境的 esbuild 子进程被禁止读取磁盘，
+ * vitest 无法启动。真实浏览器断言覆盖面更广（含布局、触摸目标、可见性），
+ * 且与 vitest 用例一一对应，见 src/pages/home/HomePage.test.tsx。
+ */
+
+const results = []
+const check = (name, pass, detail) => {
+  results.push({ name, pass, detail })
+  console.log(`${pass ? '✔' : '✘'} ${name}${detail ? ` — ${detail}` : ''}`)
+}
+
+;(async () => {
+  const browser = await chromium.launch({ channel: 'msedge', args: ['--no-sandbox'] })
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'light' })
+  const page = await ctx.newPage()
+  await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle', timeout: 60000 })
+  await page.waitForTimeout(700)
+
+  // ---- 对应 HomePage.test.tsx 的 9 条 ----
+  const dom = await page.evaluate(() => {
+    const q = (s) => document.querySelector(s)
+    const qa = (s) => Array.from(document.querySelectorAll(s))
+    const h1 = qa('h1')
+    const h2Names = qa('h2').map((el) => el.textContent.trim())
+    const hero = h1[0] ? h1[0].closest('section') : null
+    const sectionOf = (t) => {
+      const h = qa('h2').find((el) => el.textContent.trim() === t)
+      return h ? h.closest('section') : null
+    }
+    return {
+      h1Count: h1.length,
+      h1Text: h1[0] ? h1[0].textContent.trim() : '',
+      hasHeadline: document.body.innerText.includes('AI 应用开发工程师'),
+      h2Names,
+      companies: ['广州视源电子科技股份有限公司', '广东用友网络有限公司', '广东粤建三和软件有限公司'].map((c) =>
+        document.body.innerText.includes(c),
+      ),
+      highlightLabels: ['接口响应下降', '知识库检索准确率', '慢查询耗时', '异常订单自动修复率'].map((l) =>
+        document.body.innerText.includes(l),
+      ),
+      resumeHref: (() => {
+        const a = qa('a').find((el) => el.textContent.trim() === '下载简历 PDF')
+        return a ? a.getAttribute('href') : null
+      })(),
+      highlightTerms: sectionOf('拿得出手的数字')
+        ? sectionOf('拿得出手的数字').querySelectorAll('dt').length
+        : -1,
+      heroButtons: hero ? hero.querySelectorAll('button').length : -1,
+      heroLinks: hero ? hero.querySelectorAll('a').length : -1,
+      skillDots: sectionOf('技术栈')
+        ? sectionOf('技术栈').querySelectorAll('[aria-label*="熟练度"]').length
+        : -1,
+      skillHasLevelText: sectionOf('技术栈') ? sectionOf('技术栈').innerText.includes('熟悉') : false,
+      projectOnlineText: sectionOf('项目经历') ? sectionOf('项目经历').innerText.includes('已上线') : false,
+      projectH3: sectionOf('项目经历') ? sectionOf('项目经历').querySelectorAll('h3').length : -1,
+      // 装饰性渐变只允许出现在两类元素上：环装置（data-ring）与姓名渐变（data-gradient）。
+      // 卡片底、按钮、区块背景一旦引入渐变，这里立刻亮红 —— 这是「模板感」的护栏。
+      gradientLabels: qa('*')
+        .filter((el) => {
+          if (el === document.body || el === document.documentElement) return false
+          const bg = getComputedStyle(el).backgroundImage
+          return bg && bg.includes('gradient')
+        })
+        .map((el) =>
+          el.hasAttribute('data-ring') ? 'ring' : el.hasAttribute('data-gradient') ? 'gradient' : el.tagName,
+        ),
+    }
+  })
+
+  check(
+    '渲染姓名与一句话定位',
+    dom.h1Count === 1 && dom.h1Text.startsWith('庄家希') && dom.hasHeadline,
+    `h1="${dom.h1Text}"`,
+  )
+  check('三个实习经历都出现在页面上', dom.companies.every(Boolean))
+  check('四个关键数字都有标签', dom.highlightLabels.every(Boolean))
+  check('简历下载入口指向 /resume.pdf', dom.resumeHref === '/resume.pdf', `href=${dom.resumeHref}`)
+  check('全页只有一个 h1', dom.h1Count === 1, `h1=${dom.h1Count}`)
+  check(
+    '六个区块标题都在 h2 层级',
+    ['拿得出手的数字', '技术栈', '实习经历', '项目经历', '教育与荣誉', '联系我'].every((t) =>
+      dom.h2Names.includes(t),
+    ),
+    dom.h2Names.join(' / '),
+  )
+  check('关键数字是定义列表（4 项）', dom.highlightTerms === 4, `dt=${dom.highlightTerms}`)
+  check('首屏无按钮、两个链接', dom.heroButtons === 0 && dom.heroLinks === 2, `按钮=${dom.heroButtons} 链接=${dom.heroLinks}`)
+  check('技术栈无点阵熟练度条且含文字档位', dom.skillDots === 0 && dom.skillHasLevelText, `点阵=${dom.skillDots}`)
+  check('项目状态为纯文字且 3 个项目', dom.projectOnlineText && dom.projectH3 === 3, `h3=${dom.projectH3}`)
+  const strayGradients = dom.gradientLabels.filter((l) => l !== 'ring' && l !== 'gradient')
+  check(
+    '渐变只出现在环装置与姓名上',
+    strayGradients.length === 0 && dom.gradientLabels.filter((l) => l === 'gradient').length === 1,
+    `环=${dom.gradientLabels.filter((l) => l === 'ring').length} 姓名=${
+      dom.gradientLabels.filter((l) => l === 'gradient').length
+    } 其他=${strayGradients.join(',') || '无'}`,
+  )
+
+  // ---- 运行期才成立的两项：入场序列 + 触摸目标 ----
+  const revealTotal = await page.evaluate(() => {
+    const all = Array.from(document.querySelectorAll('[data-reveal]')).filter((el) => el.tagName !== 'HTML')
+    return all.length
+  })
+  await page.evaluate(async () => {
+    document.documentElement.style.scrollBehavior = 'auto'
+    for (let y = 0; y < document.body.scrollHeight; y += 300) {
+      window.scrollTo(0, y)
+      await new Promise((r) => setTimeout(r, 80))
+    }
+    window.scrollTo(0, 0)
+    await new Promise((r) => setTimeout(r, 600))
+  })
+  const revealed = await page.evaluate(
+    () => document.querySelectorAll('[data-reveal].is-revealed').length,
+  )
+  check('入场序列全部触发', revealed === revealTotal, `${revealed}/${revealTotal}`)
+
+  const smallTargets = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('a, button'))
+      .map((el) => {
+        const r = el.getBoundingClientRect()
+        const cs = getComputedStyle(el)
+        // 正文内联链接（<p> 里的 inline）按 WCAG 2.5.8 惯例豁免触摸目标下限：
+        // 强行撑到 44px 会破坏中文正文的行距与换行
+        const inline =
+          cs.display === 'inline' && el.parentElement && el.parentElement.tagName === 'P'
+        return {
+          t: el.textContent.trim().slice(0, 20),
+          w: Math.round(r.width),
+          h: Math.round(r.height),
+          inline,
+        }
+      })
+      .filter((x) => x.h > 0 && !x.inline && (x.h < 44 || x.w < 44)),
+  )
+  check('交互元素触摸目标 ≥44px', smallTargets.length === 0, JSON.stringify(smallTargets))
+
+  await browser.close()
+
+  const failed = results.filter((r) => !r.pass)
+  console.log(`\n合计 ${results.length} 项，通过 ${results.length - failed.length}，失败 ${failed.length}`)
+  process.exit(failed.length ? 1 : 0)
+})().catch((e) => {
+  console.error('ERR', e.message)
+  process.exit(2)
+})
