@@ -94,10 +94,25 @@
 
 ---
 
-## 阶段 5 · code review
+## 阶段 5 · code review（2026-09-28 21:40）
 
-（待补记）
+自查清单（对照设计文档 + 规划 §2.8）：
 
-## 阶段 6 · finish
+| 检查项 | 结果 |
+| --- | --- |
+| 首屏不依赖 window / localStorage（预渲染约束） | ✔ 初始主题由 index.html 内联脚本写；useCountUp 未激活返回终值，爬虫拿真实数字 |
+| 触摸目标 ≥ 44px | ✔ 导航项 / 汉堡 / CTA / 复制按钮均 ≥ 44px |
+| hover 不作唯一入口 | ✔ 卡片 hover 效果包在 `@media (hover: hover)` 内 |
+| `prefers-reduced-motion` 降级 | ✔ count-up 直出终值 + global.css 全局降动画 |
+| 暗色对比度 | ✔ 沿用 theme.jcpress.css 实测值（accent 暗色 9.22:1） |
+| DO / 内部字段泄漏 | N/A（纯前端，无接口） |
+| YAGNI | ✔ 富文本只解析 `**加粗**`，未引入 react-markdown |
 
-（待补记）
+**遗留（非阻断）**：① 头像为姓名首字占位，待用户提供图；② CSDN 与「成神笔记」无链接，待用户补 URL；③ 电话默认不上站，待用户确认。
+
+## 阶段 6 · finish（2026-09-28 21:42）
+
+- 测试：3 文件 / 11 用例全绿；`tsc --noEmit` 零错误；`vite build` 通过（JS gzip 73.9KB < 200KB 预算）
+- 提交：`1598ca8 feat: 首页（关于我）……`（分支 `feat/homepage-about`，工作区干净）
+- **合并选项待用户选择**：① 合入 `main`（个人项目可直接合）② 开 PR 自查后合 ③ 保留分支继续迭代
+- 证据截图：`desktop-1280-light` / `mobile-390-light` / `mobile-390-dark` / `mobile-375-light`（AppData/Temp/jcpress-shots）
