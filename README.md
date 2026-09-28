@@ -16,7 +16,7 @@
 
 | 文档 | 内容 |
 | --- | --- |
-| [`docs/项目前期规划.md`](docs/项目前期规划.md) | **唯一源**：设计基线、信息架构、系统架构、数据库设计、Redis 设计、鉴权与权限、API 契约、工程规范、部署、里程碑、风险、待确认决策 |
+| [`docs/项目前期规划.md`](docs/项目前期规划.md) | **唯一源**：设计基线、信息架构、系统架构、数据库设计、Redis 设计、鉴权与权限、API 契约、后台管理系统、工程规范、部署、里程碑、风险、决策表 |
 | [`design-system/README.md`](design-system/README.md) | 设计 token 的提取溯源、许可说明与已知缺口 |
 | [`design-system/tokens.curated.css`](design-system/tokens.curated.css) | 可直接引入的 light + dark 双主题 token（建议作为前端基线） |
 
@@ -29,12 +29,22 @@
 - `/projects` 项目笔记：项目卡片墙 → 项目详情 → 关联笔记
 - `/life` 生活经验：按 `PUBLIC / AUTHENTICATED / MEMBER / PRIVATE` 四级可见性过滤（**服务端强制**）
 
+## 内容维护方式（一期）
+
+| 内容 | 怎么维护 |
+| --- | --- |
+| 技术分享 / 项目笔记 | 仓库写 `content/**/*.md` + front-matter，M1 的 **Markdown 导入器**灌库（可 diff、可回滚） |
+| 生活经验 | `/admin/life/new` 单页写入口（手机上随手记），M5 之后实现 |
+| 简历数据 | Flyway seed / 直接 SQL |
+| 完整管理后台 | **放在 M7，按需启动** —— 见规划文档 [§10](docs/项目前期规划.md#10-后台管理系统)（决策 D8） |
+
 ## 仓库结构（规划）
 
 ```text
 jcpress/
 ├── docs/                # 前期规划与决策记录
 ├── design-system/       # 设计 token、提取产物与溯源说明
+├── content/             # Markdown 源文件（技术文章 / 项目笔记，待创建）
 ├── frontend/            # React SPA（待创建）
 ├── backend/             # Spring Boot 应用（待创建）
 └── deploy/              # docker-compose、nginx、Dockerfile（待创建）
@@ -42,9 +52,9 @@ jcpress/
 
 ## 下一步
 
-1. 确认 [`docs/项目前期规划.md` §14](docs/项目前期规划.md#14-待确认决策) 的 **D1–D7** 决策
+1. 确认 [`docs/项目前期规划.md` §15](docs/项目前期规划.md#15-待确认决策) 的 **D1–D8** 决策（D8 后台形态已定为"分三步"）
 2. 确定品牌主色，替换 token 基线里的参照站靛蓝
-3. 启动 **M1 工程骨架**：前后端最小可运行工程 + Docker 依赖 + 统一响应/异常 + Gson 转换器
+3. 启动 **M1 工程骨架**：前后端最小可运行工程 + Docker 依赖 + 统一响应/异常 + Gson 转换器 + Markdown 导入器
 
 ## 说明
 
