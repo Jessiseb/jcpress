@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react'
+
 import type { ExperienceVO } from '@/data/profile'
 import { renderRich } from '@/utils/rich'
 import styles from './ExperienceTimeline.module.css'
@@ -5,6 +7,8 @@ import styles from './ExperienceTimeline.module.css'
 interface Props {
   experiences: ExperienceVO[]
 }
+
+const stagger = (step: number) => ({ '--reveal-delay': `${step * 70}ms` }) as CSSProperties
 
 function formatMonth(value: string): string {
   return value.replace('-', '.')
@@ -14,34 +18,43 @@ function formatPeriod(experience: ExperienceVO): string {
   return `${formatMonth(experience.startDate)} - ${experience.endDate ? formatMonth(experience.endDate) : '至今'}`
 }
 
+/**
+ * 实习经历。左栏放时间与地点，右栏放正文 —— 两栏结构本身就是「时间线」，
+ * 不需要再画轴线、圆点或卡片，那些装饰在移动端还会全部塌掉。
+ */
 export default function ExperienceTimeline({ experiences }: Props) {
   return (
     <section className={`container section ${styles.section}`} aria-labelledby="exp-title">
-      <h2 id="exp-title" className="sectionTitle">
+      <h2 id="exp-title" className="sectionTitle" data-reveal>
         实习经历
       </h2>
-      <p className="sectionLead">三段企业实习，从传统后端一路做到 AI Agent。</p>
+      <p className="sectionLead" data-reveal style={stagger(1)}>
+        三段企业实习，从传统 Java 后端一路做到 AI Agent 工程。
+      </p>
 
-      <ol className={styles.timeline}>
-        {experiences.map((experience) => (
-          <li key={`${experience.company}-${experience.startDate}`} className={styles.item}>
-            <span className={styles.dot} aria-hidden="true" />
+      <ol className={styles.list}>
+        {experiences.map((experience, index) => (
+          <li
+            key={`${experience.company}-${experience.startDate}`}
+            className={styles.item}
+            data-reveal
+            style={stagger(index + 2)}
+          >
+            <div className={styles.rail}>
+              <span className={styles.period}>{formatPeriod(experience)}</span>
+              <span className={styles.meta}>
+                {experience.city} · {experience.department}
+              </span>
+            </div>
 
-            <article className={styles.card}>
-              <header className={styles.head}>
-                <div>
-                  <h3 className={styles.company}>{experience.company}</h3>
-                  <p className={styles.position}>
-                    {experience.department} · {experience.position}
-                  </p>
-                </div>
-                <span className={styles.period}>{formatPeriod(experience)}</span>
-              </header>
+            <article className={styles.body}>
+              <h3 className={styles.company}>{experience.company}</h3>
+              <p className={styles.position}>{experience.position}</p>
 
               {experience.projectName ? (
                 <p className={styles.project}>
                   <span className={styles.projectName}>{experience.projectName}</span>
-                  {experience.projectIntro ? <span className={styles.projectIntro}>{experience.projectIntro}</span> : null}
+                  {experience.projectIntro}
                 </p>
               ) : null}
 
@@ -53,13 +66,7 @@ export default function ExperienceTimeline({ experiences }: Props) {
                 ))}
               </ul>
 
-              <ul className={styles.tags}>
-                {experience.techStack.map((tech) => (
-                  <li key={tech} className={styles.tag}>
-                    {tech}
-                  </li>
-                ))}
-              </ul>
+              <p className={styles.tech}>{experience.techStack.join(' · ')}</p>
             </article>
           </li>
         ))}

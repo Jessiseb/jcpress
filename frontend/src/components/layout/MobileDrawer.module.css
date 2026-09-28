@@ -34,7 +34,7 @@
   gap: var(--ds-space-4);
   padding: var(--ds-space-5) var(--ds-space-5) calc(var(--ds-space-5) + env(safe-area-inset-bottom));
   background: var(--ds-c-bg);
-  border-left: 1px solid var(--ds-c-border-soft);
+  border-left: 1px solid var(--ds-c-hairline);
   box-shadow: var(--ds-shadow-md);
   transform: translateX(100%);
   transition: transform var(--ds-duration) var(--ds-ease);
@@ -61,7 +61,7 @@
   min-height: 44px;
   display: grid;
   place-items: center;
-  border: 1px solid var(--ds-c-border-soft);
+  border: 1px solid var(--ds-c-hairline);
   border-radius: var(--ds-radius-full);
   background: var(--ds-c-control);
   color: var(--ds-c-text);
