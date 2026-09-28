@@ -1,0 +1,78 @@
+.section {
+  padding-top: var(--ds-space-6);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--ds-space-4);
+}
+
+.card {
+  padding: var(--ds-space-5) var(--ds-space-4);
+  border: 1px solid var(--ds-c-border-soft);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-c-bg-elv);
+  box-shadow: var(--ds-shadow-xs);
+  transition: box-shadow var(--ds-t-transform), transform var(--ds-t-transform);
+}
+
+/* 卡片 hover 上移 1px —— 只在真的有 hover 的设备上生效（规划 §2.8） */
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--ds-shadow-hover);
+  }
+}
+
+.value {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  font-size: 2rem;
+  font-weight: var(--ds-fw-bold);
+  color: var(--ds-c-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.suffix {
+  font-size: 1rem;
+  font-weight: var(--ds-fw-semibold);
+  margin-left: 2px;
+}
+
+.arrow {
+  font-size: 1.25rem;
+  color: var(--ds-c-text-subtle);
+  margin-inline: 6px;
+}
+
+.label {
+  margin-top: var(--ds-space-2);
+  font-size: var(--ds-fs-body);
+  font-weight: var(--ds-fw-semibold);
+  color: var(--ds-c-text);
+}
+
+.caption {
+  margin-top: var(--ds-space-1);
+  font-size: var(--ds-fs-xs);
+  color: var(--ds-c-text-subtle);
+  line-height: 1.6;
+}
+
+@media (max-width: 959px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 419px) {
+  .value {
+    font-size: 1.65rem;
+  }
+
+  .card {
+    padding: var(--ds-space-4) var(--ds-space-3);
+  }
+}

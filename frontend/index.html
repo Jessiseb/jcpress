@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="庄家希 · AI 应用开发工程师：Agent 工程、Java 后端、RAG 与知识库。个人经历、技术栈与项目笔记。" />
+    <meta name="color-scheme" content="light dark" />
+    <title>庄家希 · AI 应用开发工程师</title>
+    <script>
+      // 主题首帧前写入，避免闪白（规划 §5.2 预渲染约束）
+      (function () {
+        try {
+          var saved = localStorage.getItem('jcpress-theme')
+          var theme =
+            saved === 'light' || saved === 'dark'
+              ? saved
+              : window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light'
+          document.documentElement.setAttribute('data-theme', theme)
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light')
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

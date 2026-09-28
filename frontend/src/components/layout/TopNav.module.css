@@ -1,0 +1,126 @@
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: var(--ds-navbar-height);
+  display: flex;
+  align-items: center;
+  padding-inline: var(--ds-navbar-padding-x);
+  background: var(--ds-c-bg-soft);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--ds-c-border-soft);
+  /* 刘海屏：顶栏避开安全区（规划 §2.8） */
+  padding-top: env(safe-area-inset-top);
+}
+
+.inner {
+  width: 100%;
+  max-width: var(--ds-page-width);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-4);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  color: var(--ds-c-text);
+}
+
+.mark {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-gradient-hero);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 0.9rem;
+  font-weight: var(--ds-fw-bold);
+}
+
+.brandName {
+  font-size: 1.25rem;
+  font-weight: var(--ds-fw-bold);
+  letter-spacing: 0.01em;
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  margin-left: auto;
+}
+
+.link {
+  min-height: 44px; /* 触摸目标（规划 §2.8） */
+  display: inline-flex;
+  align-items: center;
+  padding-inline: var(--ds-space-3);
+  border-radius: var(--ds-radius-pill);
+  color: var(--ds-c-text);
+  font-size: var(--ds-fs-sm);
+  transition: color var(--ds-t-color), background var(--ds-t-color);
+}
+
+.link:hover {
+  color: var(--ds-c-accent);
+  background: var(--ds-c-control);
+}
+
+.linkActive {
+  color: var(--ds-c-accent);
+  background: var(--ds-c-accent-soft);
+  font-weight: var(--ds-fw-medium);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  margin-left: var(--ds-space-2);
+}
+
+.iconBtn {
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--ds-c-border-soft);
+  border-radius: var(--ds-radius-full);
+  background: var(--ds-c-control);
+  color: var(--ds-c-text);
+  transition: background var(--ds-t-color);
+}
+
+.iconBtn:hover {
+  background: var(--ds-c-control-hover);
+}
+
+.burger {
+  display: none;
+  min-width: 44px;
+  min-height: 44px;
+  place-items: center;
+  border: 1px solid var(--ds-c-border-soft);
+  border-radius: var(--ds-radius-full);
+  background: var(--ds-c-control);
+  color: var(--ds-c-text);
+}
+
+/* 窄屏：导航收进抽屉（规划 §2.8） */
+@media (max-width: 719px) {
+  .links {
+    display: none;
+  }
+
+  .burger {
+    display: grid;
+  }
+
+  .actions {
+    margin-left: auto;
+  }
+}

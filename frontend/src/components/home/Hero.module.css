@@ -1,0 +1,177 @@
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 15rem;
+  gap: var(--ds-space-6);
+  align-items: center;
+  padding-block: var(--ds-space-7) var(--ds-space-6);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+}
+
+.kicker {
+  font-size: var(--ds-fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ds-c-text-subtle);
+}
+
+/* Hero 渐变标题 —— 全站唯一情绪化设计（基线 §2.2） */
+.name {
+  font-size: var(--ds-fs-hero);
+  line-height: var(--ds-lh-hero);
+  font-weight: var(--ds-fw-bold);
+  background: var(--ds-gradient-hero);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  margin-block: var(--ds-space-1);
+}
+
+.headline {
+  font-size: var(--ds-fs-lead);
+  line-height: 1.6;
+  color: var(--ds-c-text-mute);
+}
+
+.keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+  margin-top: var(--ds-space-2);
+}
+
+.keyword {
+  padding: var(--ds-space-1) var(--ds-space-3);
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-c-accent-soft);
+  color: var(--ds-c-accent);
+  font-size: var(--ds-fs-sm);
+}
+
+.summary {
+  margin-top: var(--ds-space-2);
+  color: var(--ds-c-text-mute);
+  font-size: var(--ds-fs-body);
+  max-width: 44rem;
+}
+
+.ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-3);
+  margin-top: var(--ds-space-4);
+}
+
+.primary,
+.secondary {
+  min-height: 48px; /* ≥44px 触摸目标 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: var(--ds-space-5);
+  border-radius: var(--ds-radius-pill);
+  font-size: var(--ds-fs-sm);
+  font-weight: var(--ds-fw-medium);
+  transition: background var(--ds-t-color), transform var(--ds-t-transform), box-shadow var(--ds-t-transform);
+}
+
+.primary {
+  background: var(--ds-c-accent-bg);
+  color: var(--ds-c-accent-text);
+  border: 1px solid var(--ds-c-accent-bg);
+}
+
+.primary:hover {
+  background: var(--ds-c-accent-hover);
+  color: var(--ds-c-accent-text);
+  transform: translateY(-1px);
+  box-shadow: var(--ds-shadow-accent);
+}
+
+.secondary {
+  border: 1px solid var(--ds-c-accent);
+  color: var(--ds-c-accent);
+  background: transparent;
+}
+
+.secondary:hover {
+  background: var(--ds-c-accent-soft);
+  color: var(--ds-c-accent-hover);
+  transform: translateY(-1px);
+}
+
+.avatarWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ds-space-3);
+}
+
+.avatar {
+  width: 15rem;
+  height: 15rem;
+  border-radius: var(--ds-radius-xl);
+  background: var(--ds-gradient-hero);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 5rem;
+  font-weight: var(--ds-fw-bold);
+  box-shadow: var(--ds-shadow-md);
+}
+
+.contact {
+  font-size: var(--ds-fs-xs);
+  color: var(--ds-c-text-subtle);
+}
+
+/* 基线记录的响应式降级阶梯：3.6 → 2.5 → 2.25 → 2rem */
+@media (max-width: 959px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .name {
+    font-size: 2.5rem;
+  }
+
+  .avatar {
+    width: 9rem;
+    height: 9rem;
+    font-size: 3rem;
+  }
+
+  .avatarWrap {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 719px) {
+  .name {
+    font-size: 2.25rem;
+  }
+
+  .headline {
+    font-size: 1.05rem;
+  }
+
+  .ctas {
+    width: 100%;
+  }
+
+  .primary,
+  .secondary {
+    flex: 1 1 12rem;
+  }
+}
+
+@media (max-width: 419px) {
+  .name {
+    font-size: 2rem;
+  }
+}

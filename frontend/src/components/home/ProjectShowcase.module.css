@@ -1,0 +1,132 @@
+.section {
+  padding-top: var(--ds-space-6);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ds-space-4);
+  align-items: start;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-5);
+  border: 1px solid var(--ds-c-border-soft);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-c-bg-elv);
+  box-shadow: var(--ds-shadow-xs);
+  transition: box-shadow var(--ds-t-transform), transform var(--ds-t-transform);
+}
+
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--ds-shadow-hover);
+  }
+}
+
+.cardMore {
+  background: var(--ds-c-bg-alt);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-3);
+}
+
+.name {
+  font-size: var(--ds-fs-h3);
+  font-weight: var(--ds-fw-semibold);
+}
+
+.status {
+  padding: 2px var(--ds-space-3);
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-c-accent-soft);
+  color: var(--ds-c-accent);
+  font-size: var(--ds-fs-xs);
+  white-space: nowrap;
+}
+
+.role {
+  font-size: var(--ds-fs-xs);
+  color: var(--ds-c-text-subtle);
+}
+
+.summary {
+  font-size: var(--ds-fs-sm);
+  color: var(--ds-c-text-mute);
+  line-height: 1.75;
+}
+
+.highlights {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  margin-top: var(--ds-space-1);
+}
+
+.highlight {
+  position: relative;
+  padding-left: var(--ds-space-4);
+  font-size: var(--ds-fs-sm);
+  color: var(--ds-c-text-mute);
+  line-height: 1.75;
+}
+
+.highlight::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.7em;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--ds-radius-full);
+  background: var(--ds-c-accent-soft);
+}
+
+.highlight strong {
+  color: var(--ds-c-text);
+  font-weight: var(--ds-fw-semibold);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+  margin-top: var(--ds-space-2);
+}
+
+.tag {
+  padding: 2px var(--ds-space-3);
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-c-control);
+  color: var(--ds-c-text-mute);
+  font-size: var(--ds-fs-xs);
+}
+
+.link {
+  margin-top: var(--ds-space-2);
+  align-self: flex-start;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--ds-fs-sm);
+}
+
+@media (max-width: 959px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 719px) {
+  .card {
+    padding: var(--ds-space-4);
+  }
+}

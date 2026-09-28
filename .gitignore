@@ -4,6 +4,7 @@ dist/
 dist-ssr/
 .vite/
 *.local
+frontend/.tmp/
 
 # ---- 后端 ----
 target/
@@ -31,6 +32,7 @@ logs/
 *.iml
 .DS_Store
 Thumbs.db
+.workbuddy/
 
 # ---- 测试与覆盖率 ----
 coverage/

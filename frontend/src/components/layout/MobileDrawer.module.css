@@ -1,0 +1,101 @@
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.rootOpen {
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.mask {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 40%);
+  opacity: 0;
+  transition: opacity var(--ds-duration) var(--ds-ease);
+}
+
+.rootOpen .mask {
+  opacity: 1;
+}
+
+.panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(20rem, 86vw);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+  padding: var(--ds-space-5) var(--ds-space-5) calc(var(--ds-space-5) + env(safe-area-inset-bottom));
+  background: var(--ds-c-bg);
+  border-left: 1px solid var(--ds-c-border-soft);
+  box-shadow: var(--ds-shadow-md);
+  transform: translateX(100%);
+  transition: transform var(--ds-duration) var(--ds-ease);
+  padding-top: calc(var(--ds-space-5) + env(safe-area-inset-top));
+}
+
+.rootOpen .panel {
+  transform: translateX(0);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: var(--ds-fs-h3);
+  font-weight: var(--ds-fw-semibold);
+}
+
+.close {
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--ds-c-border-soft);
+  border-radius: var(--ds-radius-full);
+  background: var(--ds-c-control);
+  color: var(--ds-c-text);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+}
+
+.item {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  padding-inline: var(--ds-space-4);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-c-bg-alt);
+  color: var(--ds-c-text);
+  font-size: var(--ds-fs-body);
+}
+
+.itemActive {
+  color: var(--ds-c-accent);
+  background: var(--ds-c-accent-soft);
+  font-weight: var(--ds-fw-medium);
+}
+
+.themeBtn {
+  margin-top: auto;
+  min-height: 48px;
+  border: 1px solid var(--ds-c-border);
+  border-radius: var(--ds-radius-lg);
+  background: transparent;
+  color: var(--ds-c-text);
+  font-size: var(--ds-fs-sm);
+}
