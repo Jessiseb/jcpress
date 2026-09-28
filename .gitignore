@@ -1,3 +1,6 @@
+# ---- brainstorm 视觉稿（brainstorming skill 产出，不入库）----
+.superpowers/
+
 # ---- 前端 ----
 node_modules/
 dist/
