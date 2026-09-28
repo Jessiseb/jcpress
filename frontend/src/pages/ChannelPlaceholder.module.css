@@ -1,34 +1,46 @@
 .wrap {
+  position: relative;
   min-height: 60vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: flex-start;
   gap: var(--ds-space-3);
 }
 
-.kicker {
-  font-size: var(--ds-fs-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ds-c-text-subtle);
+/* 环母题：默认占位页也要有它，否则从首页点进频道会「掉出风格」 */
+.badge {
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--ds-space-2);
+  background-image: repeating-radial-gradient(
+    circle at 50% 50%,
+    var(--ds-ring-badge) 0 1px,
+    transparent 1px 7px
+  );
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 18%, transparent 70%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 18%, transparent 70%);
 }
 
 .title {
   font-size: 2.5rem;
+  font-weight: var(--ds-fw-display);
 }
 
-@media (max-width: 719px) {
-  .title {
-    font-size: 2rem;
-  }
-}
-
-.desc {
+.lead {
+  max-width: var(--ds-measure-prose);
   color: var(--ds-c-text-mute);
   font-size: var(--ds-fs-lead);
 }
 
+.empty {
+  max-width: var(--ds-measure-prose);
+  color: var(--ds-c-text-subtle);
+  font-size: var(--ds-fs-sm);
+}
+
 .back {
+  margin-top: var(--ds-space-2);
   align-self: flex-start;
   min-height: 44px;
   display: inline-flex;
@@ -43,4 +55,10 @@
 .back:hover {
   background: var(--ds-c-accent-hover);
   color: var(--ds-c-accent-text);
+}
+
+@media (max-width: 719px) {
+  .title {
+    font-size: 2rem;
+  }
 }
