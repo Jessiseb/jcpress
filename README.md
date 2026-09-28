@@ -64,3 +64,5 @@ jcpress/
 - 设计基线提取自 `https://golangstar.cn/`（VuePress + VuePress Theme Hope，均为 MIT 许可），
   仅复用 token 结构与数值体系，品牌色与视觉签名将自行设计；详见规划文档 §2.7。
 - 仓库中不提交任何密钥；数据库口令、对象存储 AK、后台账号口令一律通过环境变量注入。
+- 后端工程规范遵循《Java开发手册（黄山版）》：包结构按 **portal / admin 隔离**，
+  并用 **P3C-PMD + ArchUnit** 在 CI 卡口（见规划文档 §11.4 分包架构、§11.5 符合性清单）。
