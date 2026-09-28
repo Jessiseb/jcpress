@@ -12,6 +12,7 @@
 | `tokens.json` / `tokens.css` | 工具生成的起步 token | **低** — 与上面同源，仅供对照 |
 | `tokens.curated.css` | 手工解析站点样式表里 **作者声明** 的 CSS 变量层 + raw.json 交叉验证 | 高（含 light/dark 两套完整语义色） |
 | `tokens.curated.json` | 上面那份的机器可读版本 | 高 |
+| `palette-options.html` | 品牌主色候选预览（6 个候选 × 亮/暗两套 × 语义色撞色判定） | 决策辅助，非产品代码 |
 
 **结论：优先使用 `tokens.curated.*`。** 自动提取对这类"设计变量驱动"的站点效果不好（页面
 `--vp-c-accent` 是 `rgb(7.1084070796, 86.0907079646, 171.3915929204)` 这种小数写法，工具把它
@@ -45,4 +46,10 @@
 import './styles/tokens.curated.css'
 ```
 
-改品牌色只需覆盖 `--ds-c-accent*` 四个变量，dark 分支会自动跟随（dark 分支里复用了同一批变量名）。
+改品牌色**不只是覆盖 `--ds-c-accent*`**：还有两处硬编码色不会自动跟随 ——
+`--ds-shadow-accent`（蓝 `rgb(37 99 235 / 20%)`）与两个主题的 `--ds-gradient-hero`（末端紫 `#5c07ab` / `#9023f6`），
+且暗色主题的 accent 需要独立给值（深底上必须提亮）。完整清单与候选色的实测对比度见
+`../docs/项目前期规划.md` 附录 D；预览用浏览器打开 `palette-options.html`。
+
+另一个坑：本目录的语义色（blue / green / yellow / red / purple / indigo）几乎占满了色相环，
+选品牌色时必须检查与最近语义色的距离 ≥ 25°，否则用户分不清「品牌色」和「状态色」。

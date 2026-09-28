@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>jcpress 品牌主色候选</title>
+<style>
+ body{margin:0;padding:32px;background:#f6f6f7;color:#3c3c43;font:15px/1.7 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+ h1{font-size:22px;margin:0 0 4px} .lead{color:#6b6b74;margin:0 0 20px;max-width:880px}
+ .card{background:#fff;border:1px solid #e5e5e8;border-radius:10px;padding:20px;margin-bottom:22px}
+ .card h2{font-size:17px;margin:0 0 6px}
+ .tag{font-size:12px;font-weight:400;background:#eef1f5;border-radius:999px;padding:2px 10px;color:#4b5563;vertical-align:2px}
+ .meta{font-size:13px;color:#6b6b74;margin:2px 0} .meta code{background:#f2f3f5;padding:1px 5px;border-radius:4px}
+ .note{font-size:13px;color:#8a8a94;margin:4px 0 0}
+ .bad{color:#b8272c;font-weight:600} .ok{color:#18794e;font-weight:600}
+ .pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+ .pane{border-radius:10px;padding:18px;border:1px solid #e5e5e8} .pane.light{background:#fff}
+ .pane.dark{background:#1b1b1f;color:#e8e8ea;border-color:#2a2a30}
+ .pane-label{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9a9aa4;margin-bottom:10px}
+ .pane h3{margin:0 0 8px;font-size:15px} .pane.light h3{color:var(--accent)} .pane.dark h3{color:var(--accent-dark)}
+ .pane p{margin:0 0 14px;font-size:14px}
+ .pane.light a{color:var(--accent);text-underline-offset:3px} .pane.dark a{color:var(--accent-dark);text-underline-offset:3px}
+ .chip{display:inline-block;font-size:12px;padding:1px 9px;border-radius:999px;background:var(--accent);color:#fff}
+ .chip.soft{background:var(--accent-soft);color:var(--accent)}
+ .pane.dark .chip{background:var(--accent-dark);color:#14141a} .pane.dark .chip.soft{background:#26262e;color:var(--accent-dark)}
+ .row{display:flex;gap:10px;margin-bottom:14px}
+ .btn{border:0;border-radius:6px;padding:8px 16px;font-size:13px;cursor:pointer;background:var(--accent);color:#fff}
+ .btn:hover{background:var(--accent-hover)} .pane.dark .btn{background:var(--accent-dark);color:#14141a}
+ .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+ .pane.dark .btn.ghost{color:var(--accent-dark);border-color:var(--accent-dark)}
+ .hero{border-radius:8px;padding:16px;color:#fff;font-size:13px;letter-spacing:.04em;
+        background:linear-gradient(120deg,var(--accent-hover),var(--accent) 45%,var(--accent-dark) 100%)}
+ .pane.dark .hero{color:#14141a}
+ .sem{margin-top:14px;font-size:12px;color:#8a8a94}
+ .s{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;color:#fff;font-size:11px}
+ .s.green{background:#30a46c} .s.yellow{background:#c28100} .s.red{background:#e0575b} .s.blue{background:#2fa1c5}
+ .occ{background:#fff;border:1px solid #e5e5e8;border-radius:10px;padding:16px 20px;margin-bottom:22px}
+ .occ ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:14px;font-size:13px}
+ .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+ footer{color:#8a8a94;font-size:13px;max-width:880px}
+</style></head><body>
+<h1>jcpress 品牌主色候选</h1>
+<p class="lead">四档 token（<code>accent</code> / <code>accent-hover</code> / <code>accent-soft</code> / 暗色版 <code>accent-dark</code>）逐一渲染，
+对比度为按 WCAG 公式的实测值。<b>关键约束</b>：提取到的 token 已用语义色占满色相环，主色若与最近语义色相距 &lt; 25° 就会让用户分不清「品牌色」和「状态色」。
+每个候选都并列了语义色徽章，可直接对比是否撞色。</p>
+
+<section class="occ"><b>已被语义色占用的色相</b><ul><li><span class='dot' style='background:#2fa1c5'></span>blue #2fa1c5 · 194°</li><li><span class='dot' style='background:#30a46c'></span>green #30a46c · 151°</li><li><span class='dot' style='background:#c28100'></span>yellow #c28100 · 40°</li><li><span class='dot' style='background:#e0575b'></span>red #e0575b · 358°</li><li><span class='dot' style='background:#8e5cd9'></span>purple #8e5cd9 · 264°</li><li><span class='dot' style='background:#5672cd'></span>indigo #5672cd · 226°</li></ul></section>
+
+  <section class="card">
+    <header>
+      <h2>沿用参照站靛蓝 <span class="tag">现状 · 不建议</span></h2>
+      <p class="meta">base <code>#096fdc</code> · hover <code>#0a7bf5</code> · soft <code>#e8f1fc</code> · dark <code>#2388f6</code></p>
+      <p class="meta">白字压主色 <b>4.86</b> · 暗色版对深底 <b>4.84</b>
+        · 色相 <b>211°</b> · 最近语义色 <b>indigo #5672cd</b> 距 <b>15°</b> <span class="bad">撞色</span></p>
+      <p class="note">撞参照站，无自我识别度；且与 indigo 语义同族</p>
+    </header>
+    <div class="pair" style="--accent:#096fdc;--accent-hover:#0a7bf5;--accent-soft:#e8f1fc;--accent-dark:#2388f6">
+      <div class="pane light">
+        <span class="pane-label">亮色主题</span>
+        <h3>Spring Boot 里替换掉 Jackson 改用 Gson</h3>
+        <p>正文示例，<a href="#">主色链接</a>，标签 <span class="chip">动态规划</span> <span class="chip soft">中等</span></p>
+        <div class="row"><button class="btn">主要按钮</button><button class="btn ghost">次要按钮</button></div>
+        <div class="hero">Hero 渐变示意</div>
+        <div class="sem">语义色对照：<span class="s green">简单</span><span class="s yellow">中等</span><span class="s red">困难</span><span class="s blue">信息</span></div>
+      </div>
+      <div class="pane dark">
+        <span class="pane-label">暗色主题</span>
+        <h3>暗色下的标题与正文</h3>
+        <p>深底上主色必须提亮：<a href="#">链接文字</a> <span class="chip">滑动窗口</span></p>
+        <div class="row"><button class="btn">主要按钮</button></div>
+        <div class="hero">Hero 渐变示意</div>
+      </div>
+    </div>
+  </section>
+  <section class="card">
+    <header>
+      <h2>玫瑰 Magenta <span class="tag">推荐（零冲突）</span></h2>
+      <p class="meta">base <code>#a21caf</code> · hover <code>#c026d3</code> · soft <code>#faeefc</code> · dark <code>#e879f9</code></p>
+      <p class="meta">白字压主色 <b>6.32</b> · 暗色版对深底 <b>6.98</b>
+        · 色相 <b>295°</b> · 最近语义色 <b>purple #8e5cd9</b> 距 <b>31°</b> <span class="ok">不撞</span></p>
+      <p class="note">唯一不与任何语义色撞车的选择（距 purple 31°），个性最强</p>
+    </header>
+    <div class="pair" style="--accent:#a21caf;--accent-hover:#c026d3;--accent-soft:#faeefc;--accent-dark:#e879f9">
+      <div class="pane light">
+        <span class="pane-label">亮色主题</span>
+        <h3>Spring Boot 里替换掉 Jackson 改用 Gson</h3>
+        <p>正文示例，<a href="#">主色链接</a>，标签 <span class="chip">动态规划</span> <span class="chip soft">中等</span></p>
+        <div class="row"><button class="btn">主要按钮</button><button class="btn ghost">次要按钮</button></div>
+        <div class="hero">Hero 渐变示意</div>
+        <div class="sem">语义色对照：<span class="s green">简单</span><span class="s yellow">中等</span><span class="s red">困难</span><span class="s blue">信息</span></div>
+      </div>
+      <div class="pane dark">
+        <span class="pane-label">暗色主题</span>
+        <h3>暗色下的标题与正文</h3>
+        <p>深底上主色必须提亮：<a href="#">链接文字</a> <span class="chip">滑动窗口</span></p>
+        <div class="row"><button class="btn">主要按钮</button></div>
+        <div class="hero">Hero 渐变示意</div>
+      </div>
+    </div>
+  </section>
+  <section class="card">
+    <header>
+      <h2>青碧 Teal <span class="tag">推荐（需让语义色让路）</span></h2>
+      <p class="meta">base <code>#0f766e</code> · hover <code>#0d9488</code> · soft <code>#e6f4f2</code> · dark <code>#2dd4bf</code></p>
+      <p class="meta">白字压主色 <b>5.47</b> · 暗色版对深底 <b>9.22</b>
+        · 色相 <b>175°</b> · 最近语义色 <b>blue #2fa1c5</b> 距 <b>19°</b> <span class="bad">撞色</span></p>
+      <p class="note">与 blue 语义距 19°，本站用不到 blue 语义档，可去掉</p>
+    </header>
+    <div class="pair" style="--accent:#0f766e;--accent-hover:#0d9488;--accent-soft:#e6f4f2;--accent-dark:#2dd4bf">
+      <div class="pane light">
+        <span class="pane-label">亮色主题</span>
+        <h3>Spring Boot 里替换掉 Jackson 改用 Gson</h3>
+        <p>正文示例，<a href="#">主色链接</a>，标签 <span class="chip">动态规划</span> <span class="chip soft">中等</span></p>
+        <div class="row"><button class="btn">主要按钮</button><button class="btn ghost">次要按钮</button></div>
+        <div class="hero">Hero 渐变示意</div>
+        <div class="sem">语义色对照：<span class="s green">简单</span><span class="s yellow">中等</span><span class="s red">困难</span><span class="s blue">信息</span></div>
+      </div>
+      <div class="pane dark">
+        <span class="pane-label">暗色主题</span>
+        <h3>暗色下的标题与正文</h3>
+        <p>深底上主色必须提亮：<a href="#">链接文字</a> <span class="chip">滑动窗口</span></p>
+        <div class="row"><button class="btn">主要按钮</button></div>
+        <div class="hero">Hero 渐变示意</div>
+      </div>
+    </div>
+  </section>
+  <section class="card">
+    <header>
+      <h2>墨绿 Emerald <span class="tag">不建议</span></h2>
+      <p class="meta">base <code>#047857</code> · hover <code>#059669</code> · soft <code>#e7f6ef</code> · dark <code>#34d399</code></p>
+      <p class="meta">白字压主色 <b>5.48</b> · 暗色版对深底 <b>8.93</b>
+        · 色相 <b>163°</b> · 最近语义色 <b>green #30a46c</b> 距 <b>12°</b> <span class="bad">撞色</span></p>
+      <p class="note">距 green 语义 12°，会与成功/简单徽章混淆</p>
+    </header>
+    <div class="pair" style="--accent:#047857;--accent-hover:#059669;--accent-soft:#e7f6ef;--accent-dark:#34d399">
+      <div class="pane light">
+        <span class="pane-label">亮色主题</span>
+        <h3>Spring Boot 里替换掉 Jackson 改用 Gson</h3>
+        <p>正文示例，<a href="#">主色链接</a>，标签 <span class="chip">动态规划</span> <span class="chip soft">中等</span></p>
+        <div class="row"><button class="btn">主要按钮</button><button class="btn ghost">次要按钮</button></div>
+        <div class="hero">Hero 渐变示意</div>
+        <div class="sem">语义色对照：<span class="s green">简单</span><span class="s yellow">中等</span><span class="s red">困难</span><span class="s blue">信息</span></div>
+      </div>
+      <div class="pane dark">
+        <span class="pane-label">暗色主题</span>
+        <h3>暗色下的标题与正文</h3>
+        <p>深底上主色必须提亮：<a href="#">链接文字</a> <span class="chip">滑动窗口</span></p>
+        <div class="row"><button class="btn">主要按钮</button></div>
+        <div class="hero">Hero 渐变示意</div>
+      </div>
+    </div>
+  </section>
+  <section class="card">
+    <header>
+      <h2>深青 Cyan <span class="tag">不建议</span></h2>
+      <p class="meta">base <code>#0e7490</code> · hover <code>#0891b2</code> · soft <code>#e6f3f7</code> · dark <code>#22d3ee</code></p>
+      <p class="meta">白字压主色 <b>5.36</b> · 暗色版对深底 <b>9.50</b>
+        · 色相 <b>193°</b> · 最近语义色 <b>blue #2fa1c5</b> 距 <b>1°</b> <span class="bad">撞色</span></p>
+      <p class="note">距 blue 语义 1°，等于同一个色</p>
+    </header>
+    <div class="pair" style="--accent:#0e7490;--accent-hover:#0891b2;--accent-soft:#e6f3f7;--accent-dark:#22d3ee">
+      <div class="pane light">
+        <span class="pane-label">亮色主题</span>
+        <h3>Spring Boot 里替换掉 Jackson 改用 Gson</h3>
+        <p>正文示例，<a href="#">主色链接</a>，标签 <span class="chip">动态规划</span> <span class="chip soft">中等</span></p>
+        <div class="row"><button class="btn">主要按钮</button><button class="btn ghost">次要按钮</button></div>
+        <div class="hero">Hero 渐变示意</div>
+        <div class="sem">语义色对照：<span class="s green">简单</span><span class="s yellow">中等</span><span class="s red">困难</span><span class="s blue">信息</span></div>
+      </div>
+      <div class="pane dark">
+        <span class="pane-label">暗色主题</span>
+        <h3>暗色下的标题与正文</h3>
+        <p>深底上主色必须提亮：<a href="#">链接文字</a> <span class="chip">滑动窗口</span></p>
+        <div class="row"><button class="btn">主要按钮</button></div>
+        <div class="hero">Hero 渐变示意</div>
+      </div>
+    </div>
+  </section>
+  <section class="card">
+    <header>
+      <h2>藤紫 Violet <span class="tag">不建议</span></h2>
+      <p class="meta">base <code>#6d28d9</code> · hover <code>#7c3aed</code> · soft <code>#f1ecfd</code> · dark <code>#a78bfa</code></p>
+      <p class="meta">白字压主色 <b>7.10</b> · 暗色版对深底 <b>6.31</b>
+        · 色相 <b>263°</b> · 最近语义色 <b>purple #8e5cd9</b> 距 <b>1°</b> <span class="bad">撞色</span></p>
+      <p class="note">距 purple 语义 1°，直接撞车</p>
+    </header>
+    <div class="pair" style="--accent:#6d28d9;--accent-hover:#7c3aed;--accent-soft:#f1ecfd;--accent-dark:#a78bfa">
+      <div class="pane light">
+        <span class="pane-label">亮色主题</span>
+        <h3>Spring Boot 里替换掉 Jackson 改用 Gson</h3>
+        <p>正文示例，<a href="#">主色链接</a>，标签 <span class="chip">动态规划</span> <span class="chip soft">中等</span></p>
+        <div class="row"><button class="btn">主要按钮</button><button class="btn ghost">次要按钮</button></div>
+        <div class="hero">Hero 渐变示意</div>
+        <div class="sem">语义色对照：<span class="s green">简单</span><span class="s yellow">中等</span><span class="s red">困难</span><span class="s blue">信息</span></div>
+      </div>
+      <div class="pane dark">
+        <span class="pane-label">暗色主题</span>
+        <h3>暗色下的标题与正文</h3>
+        <p>深底上主色必须提亮：<a href="#">链接文字</a> <span class="chip">滑动窗口</span></p>
+        <div class="row"><button class="btn">主要按钮</button></div>
+        <div class="hero">Hero 渐变示意</div>
+      </div>
+    </div>
+  </section>
+  <section class="card">
+    <header>
+      <h2>赭橙 Amber <span class="tag">不建议</span></h2>
+      <p class="meta">base <code>#b45309</code> · hover <code>#fbbf24</code> · soft <code>#fdf3e7</code> · dark <code>#fbbf24</code></p>
+      <p class="meta">白字压主色 <b>5.02</b> · 暗色版对深底 <b>10.28</b>
+        · 色相 <b>26°</b> · 最近语义色 <b>yellow #c28100</b> 距 <b>14°</b> <span class="bad">撞色</span></p>
+      <p class="note">距 yellow 语义 14°，会与警告混淆</p>
+    </header>
+    <div class="pair" style="--accent:#b45309;--accent-hover:#fbbf24;--accent-soft:#fdf3e7;--accent-dark:#fbbf24">
+      <div class="pane light">
+        <span class="pane-label">亮色主题</span>
+        <h3>Spring Boot 里替换掉 Jackson 改用 Gson</h3>
+        <p>正文示例，<a href="#">主色链接</a>，标签 <span class="chip">动态规划</span> <span class="chip soft">中等</span></p>
+        <div class="row"><button class="btn">主要按钮</button><button class="btn ghost">次要按钮</button></div>
+        <div class="hero">Hero 渐变示意</div>
+        <div class="sem">语义色对照：<span class="s green">简单</span><span class="s yellow">中等</span><span class="s red">困难</span><span class="s blue">信息</span></div>
+      </div>
+      <div class="pane dark">
+        <span class="pane-label">暗色主题</span>
+        <h3>暗色下的标题与正文</h3>
+        <p>深底上主色必须提亮：<a href="#">链接文字</a> <span class="chip">滑动窗口</span></p>
+        <div class="row"><button class="btn">主要按钮</button></div>
+        <div class="hero">Hero 渐变示意</div>
+      </div>
+    </div>
+  </section>
+<footer>结论：<b>玫瑰 Magenta #a21caf</b> 是唯一「零冲突」选项（距最近语义色 31°，白字对比 6.32，个性最强）；
+<b>青碧 Teal #0f766e</b> 气质更工程、对比 5.47，但与 blue 语义色仅差 19° —— 选它就要把本站用不到的 blue 语义档去掉（我们本来就要重做设计系统，而不是照搬）。
+定色后需同步 7 处：<code>--ds-c-accent</code> / <code>-bg</code> / <code>-hover</code> / <code>-soft</code> / <code>-text</code>、
+<code>--ds-shadow-accent</code>（硬编码蓝 rgb(37 99 235/20%)）、两个主题的 <code>--ds-gradient-hero</code>（末端硬编码紫 #5c07ab / #9023f6）。</footer>
+</body></html>
