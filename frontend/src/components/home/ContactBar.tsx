@@ -50,7 +50,7 @@ export default function ContactBar({ contacts }: Props) {
               ) : item.copyable ? (
                 <button
                   type="button"
-                  className={styles.copyBtn}
+                  className={`btn btnOutline btnSm btnStart ${styles.copyBtn}`}
                   onClick={() => handleCopy(item)}
                   aria-label={`复制${item.label}：${item.value}`}
                 >

@@ -126,66 +126,17 @@
   margin-top: var(--ds-space-5);
 }
 
-/* 主按钮：实心胶囊（--ds-c-btn-solid-*）。
-   参照站的按钮语言是「白底黑字 / 黑底白字」的实心胶囊，不用品牌色填充 ——
-   品牌蓝留给数字、链接与状态，按钮靠明度对比抢眼。自带一圈辉光。 */
-.primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5em;
-  min-height: 48px;
-  padding-inline: 2rem;
-  border-radius: var(--ds-radius-pill);
-  background: var(--ds-c-btn-solid-bg);
-  color: var(--ds-c-btn-solid-fg);
-  /* 15px：参照站的按钮文字是 19.2px，我们的中文正文比它小一档，取 15px 与之同比例 */
-  font-size: 0.9375rem;
-  font-weight: var(--ds-fw-medium);
-  box-shadow: 0 0 28px var(--ds-glow);
-  transition:
-    box-shadow var(--ds-t-color),
-    opacity var(--ds-t-color),
-    transform var(--ds-t-transform);
-}
+/* 按钮的颜色、形状、交互全部在全局按钮系统里（global.css 的 .btn*），
+   这里只留两处「布局 + 本组件专属」的东西：右箭头与组件定位。 */
 
-.primary::after {
+/* 主按钮尾部的箭头：hover 时右移 3px，是唯一的位移动效 */
+.arrow::after {
   content: '→';
   transition: transform 200ms var(--ds-ease-out);
 }
 
-.primary:hover {
-  color: var(--ds-c-btn-solid-fg);
-  opacity: 0.9;
-  box-shadow: 0 0 40px var(--ds-glow);
-}
-
-.primary:hover::after {
+.arrow:hover::after {
   transform: translateX(3px);
-}
-
-/* 按压反馈走 active 而不是 hover（参照站的做法：scale .96） */
-.primary:active {
-  transform: scale(0.96);
-}
-
-/* 次按钮：描边胶囊（参照站的「Our Services」那颗）。
-   不再是文字链 —— 两颗同一等级、同一形状，只靠填充的有无区分主次。 */
-.secondary {
-  display: inline-flex;
-  align-items: center;
-  min-height: 48px;
-  padding-inline: 1.75rem;
-  border: 1px solid var(--ds-c-hairline);
-  border-radius: var(--ds-radius-pill);
-  color: var(--ds-c-text);
-  font-size: 0.9375rem;
-  font-weight: var(--ds-fw-medium);
-  transition: border-color var(--ds-t-color), color var(--ds-t-color);
-}
-
-.secondary:hover {
-  border-color: var(--ds-c-accent);
-  color: var(--ds-c-accent);
 }
 
 /* 响应式降级阶梯：96 → 60 → 50 → 42px（沿用基线四档断点） */

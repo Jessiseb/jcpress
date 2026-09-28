@@ -56,8 +56,8 @@ export default function TopNav() {
           </nav>
 
           <div className={styles.actions}>
-            {/* 胶囊右端的实心 CTA：与首屏主按钮同一套「实心胶囊」语言 */}
-            <a className={styles.cta} href={`mailto:${profileData.profile.email}`}>
+            {/* 胶囊右端的实心 CTA：与首屏主按钮共用全局按钮系统 */}
+            <a className={`btn btnSolid btnSm ${styles.cta}`} href={`mailto:${profileData.profile.email}`}>
               发邮件
             </a>
 

@@ -1,0 +1,72 @@
+/* 聚光层：由 useSpotlight 写入的 --spot-x / --spot-y 定位一枚径向渐变。
+   做成共享模块是为了让「项目表格行 / 列表行」共用同一套实现，而不是各写一份。
+
+   用伪元素而不是额外 DOM：宿主只多挂一个类，不引入无语义节点，也不会打乱 grid 行的自动排布。
+   两层：
+     ::before  跟随指针的一团柔光（底光）
+     ::after   只画在 1px 描边上的高光（用双层 mask 挖空内部）—— 比整块发光克制得多
+
+   注意 `z-index: -1`：伪元素是「定位元素」，按绘制顺序会盖在静态文字之上；
+   宿主带 `isolation: isolate`，因此 -1 只会退到宿主自身内容之下，不会跑到页面背景后面。
+
+   按钮不用这套（按钮有实心底色，-1 的伪元素会被自己的底色盖住）：
+   按钮走 global.css 的 `.btnSpot`，把渐变直接叠成背景图 —— 那里天然在底色之上、文字之下。
+*/
+
+.host {
+  position: relative;
+  isolation: isolate;
+}
+
+.host::before,
+.host::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 260ms var(--ds-ease-out);
+}
+
+.host::before {
+  inset: 0;
+  border-radius: inherit;
+  background-image: radial-gradient(
+    var(--spot-size, 320px) var(--spot-size, 320px) at var(--spot-x, 50%) var(--spot-y, 50%),
+    var(--ds-spot),
+    transparent 70%
+  );
+}
+
+.host::after {
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  background-image: radial-gradient(
+    calc(var(--spot-size, 320px) * 0.6) calc(var(--spot-size, 320px) * 0.6) at var(--spot-x, 50%)
+      var(--spot-y, 50%),
+    var(--ds-spot-ring),
+    transparent 70%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.host[data-spotlight='on']::before,
+.host[data-spotlight='on']::after {
+  opacity: 1;
+}
+
+/* 减少动态效果：不做过渡（聚光本身保留，只是不再淡入淡出） */
+@media (prefers-reduced-motion: reduce) {
+  .host::before,
+  .host::after {
+    transition: none;
+  }
+}

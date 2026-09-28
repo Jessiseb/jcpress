@@ -58,8 +58,9 @@ const check = (name, pass, detail) => {
       skillHasLevelText: sectionOf('技术栈') ? sectionOf('技术栈').innerText.includes('熟悉') : false,
       projectOnlineText: sectionOf('项目经历') ? sectionOf('项目经历').innerText.includes('已上线') : false,
       projectH3: sectionOf('项目经历') ? sectionOf('项目经历').querySelectorAll('h3').length : -1,
-      // 装饰性渐变只允许出现在三类元素上：环装置（data-ring）、姓名渐变（data-gradient）、
-      // 顶栏功能性遮罩（data-scrim）。卡片底、按钮、区块背景一旦引入渐变，这里立刻亮红。
+      // 渐变只允许出现在三类元素上：环装置（data-ring）、姓名渐变（data-gradient）、
+      // 顶栏功能性遮罩（data-scrim）、指针聚光宿主（data-spot）。
+      // 卡片底、按钮底色、区块背景一旦引入装饰性渐变，这里立刻亮红。
       gradientLabels: qa('*')
         .filter((el) => {
           if (el === document.body || el === document.documentElement) return false
@@ -73,7 +74,9 @@ const check = (name, pass, detail) => {
               ? 'gradient'
               : el.hasAttribute('data-scrim')
                 ? 'scrim'
-                : el.tagName,
+                : el.hasAttribute('data-spot')
+                  ? 'spot'
+                  : el.tagName,
         ),
     }
   })
@@ -98,13 +101,17 @@ const check = (name, pass, detail) => {
   check('首屏无按钮、两个链接', dom.heroButtons === 0 && dom.heroLinks === 2, `按钮=${dom.heroButtons} 链接=${dom.heroLinks}`)
   check('技术栈无点阵熟练度条且含文字档位', dom.skillDots === 0 && dom.skillHasLevelText, `点阵=${dom.skillDots}`)
   check('项目状态为纯文字且 3 个项目', dom.projectOnlineText && dom.projectH3 === 3, `h3=${dom.projectH3}`)
-  const strayGradients = dom.gradientLabels.filter((l) => l !== 'ring' && l !== 'gradient' && l !== 'scrim')
+  const strayGradients = dom.gradientLabels.filter(
+    (l) => l !== 'ring' && l !== 'gradient' && l !== 'scrim' && l !== 'spot',
+  )
   check(
-    '渐变只出现在环装置 / 姓名 / 顶栏遮罩上',
+    '渐变只出现在环装置 / 姓名 / 顶栏遮罩 / 聚光宿主上',
     strayGradients.length === 0 && dom.gradientLabels.filter((l) => l === 'gradient').length === 1,
     `环=${dom.gradientLabels.filter((l) => l === 'ring').length} 姓名=${
       dom.gradientLabels.filter((l) => l === 'gradient').length
-    } 遮罩=${dom.gradientLabels.filter((l) => l === 'scrim').length} 其他=${strayGradients.join(',') || '无'}`,
+    } 遮罩=${dom.gradientLabels.filter((l) => l === 'scrim').length} 聚光=${
+      dom.gradientLabels.filter((l) => l === 'spot').length
+    } 其他=${strayGradients.join(',') || '无'}`,
   )
 
   // ---- 运行期才成立的两项：入场序列 + 触摸目标 ----
@@ -191,6 +198,40 @@ const check = (name, pass, detail) => {
     `armed=${rm.armed} 隐藏=${rm.hidden}/${rm.total}`,
   )
   await rmCtx.close()
+
+  // ---- 悬浮反馈：指针聚光必须真的跟随指针亮起来 ----
+  const projectRow = page.locator('section[aria-labelledby="projects-title"] [class*="row"]').first()
+  await projectRow.scrollIntoViewIfNeeded()
+  await page.waitForTimeout(200)
+  await projectRow.hover()
+  await page.waitForTimeout(320)
+  const rowSpot = await projectRow.evaluate((el) => ({
+    on: el.hasAttribute('data-spotlight'),
+    x: el.style.getPropertyValue('--spot-x'),
+    y: el.style.getPropertyValue('--spot-y'),
+    glow: getComputedStyle(el, '::before').opacity,
+    ring: getComputedStyle(el, '::after').opacity,
+  }))
+  check(
+    '项目行悬浮：指针聚光 + 边框高光都亮起',
+    rowSpot.on && rowSpot.x !== '' && rowSpot.y !== '' && Number(rowSpot.glow) > 0.9 && Number(rowSpot.ring) > 0.9,
+    JSON.stringify(rowSpot),
+  )
+
+  const primaryBtn = page.locator('a[data-spot]').first()
+  await primaryBtn.scrollIntoViewIfNeeded()
+  await primaryBtn.hover()
+  await page.waitForTimeout(320)
+  const btnSpot = await primaryBtn.evaluate((el) => ({
+    on: el.hasAttribute('data-spotlight'),
+    x: el.style.getPropertyValue('--spot-x'),
+    gradient: getComputedStyle(el).backgroundImage.includes('radial-gradient'),
+  }))
+  check(
+    '主按钮悬浮：指针聚光亮起（叠在底色之上的背景图）',
+    btnSpot.on && btnSpot.x !== '' && btnSpot.gradient,
+    JSON.stringify(btnSpot),
+  )
 
   // ---- 「技术分享」列表页（M3 前端外壳）----
   // 用暗色上下文顺便确认暗色主题下这一页也成立

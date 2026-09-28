@@ -37,25 +37,10 @@
   color: var(--ds-c-text);
 }
 
-/* 复制按钮：玻璃胶囊。
-   暗色下玻璃层让环从底下透上来，是「透明感」最省成本的落点；亮色下它只是一层很薄的磨砂。 */
+/* 复制按钮：形状与交互在全局按钮系统里（.btn.btnOutline.btnSm.btnStart），
+   这里只把「值」与「复制」提示之间的间距放大一档。 */
 .copyBtn {
-  display: inline-flex;
-  align-items: center;
   gap: var(--ds-space-3);
-  min-height: 44px;
-  padding-inline: var(--ds-space-4);
-  border: 1px solid var(--ds-c-hairline);
-  border-radius: var(--ds-radius-pill);
-  background: var(--ds-c-glass);
-  backdrop-filter: blur(10px);
-  text-align: left;
-  transition: border-color var(--ds-t-color);
-}
-
-.copyBtn:hover,
-.copyBtn:focus-visible {
-  border-color: var(--ds-c-accent);
 }
 
 /* hover / focus 才提示「这点得动」：复制提示平时不描边，避免每行都挂一个强调色下划线 */

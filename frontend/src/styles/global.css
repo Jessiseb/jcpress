@@ -32,7 +32,14 @@ body {
   color: var(--ds-c-text);
   font-family: var(--ds-font-sans);
   font-size: var(--ds-fs-body);
-  line-height: var(--ds-lh-body);
+  /* 中文正文：行高比基线的 1.7 再松一点（汉字是方块字，行距紧了整段会「发黑」） */
+  line-height: 1.8;
+  /* 禁止合成字重/字形：字体缺档时宁可用最近的一档，也不要浏览器把笔画横向拉粗 ——
+     这正是改版前 84px 中文姓名「发糊」的原因（见 docs/dev-journal.md 阶段 11） */
+  font-synthesis: none;
+  /* 中文排版细节：禁止标点出现在行首（避头尾），并按中西文自动收紧标点边距 */
+  line-break: strict;
+  text-spacing-trim: trim-start;
   -webkit-font-smoothing: antialiased;
   /* 移动端：长链接 / 长单词不撑破页面（规划 §2.8） */
   overflow-wrap: anywhere;
@@ -51,10 +58,14 @@ h4 {
   font-weight: var(--ds-fw-display);
   line-height: 1.25;
   letter-spacing: -0.02em;
+  /* 标题尽量避免「最后一行只剩一个字」 */
+  text-wrap: balance;
 }
 
 p {
   margin: 0;
+  /* 段落末端避免孤字（Chrome 117+ 支持；不支持的浏览器直接忽略） */
+  text-wrap: pretty;
 }
 
 ul {
@@ -104,9 +115,11 @@ button {
   }
 }
 
-/* 区块节奏：桌面 64px，移动端压缩到 32px */
+/* 区块节奏：桌面 64px，移动端压缩到 32px。
+   2026-09-29：桌面从 48px 提到 64px —— 参照站的通栏留白是「稀疏而有秩序」，
+   区块贴太近会把整页压成一张长表。 */
 .section {
-  padding-block: var(--ds-space-7);
+  padding-block: calc(var(--ds-space-7) + var(--ds-space-4));
 }
 
 @media (max-width: 719px) {
@@ -123,7 +136,8 @@ button {
   border-top: 1px solid var(--ds-c-hairline);
   /* 30px：比原来的 26.4px 提一档，配合字重降到 500，让区块标题有「版面标题」的分量 */
   font-size: 1.875rem;
-  margin-bottom: var(--ds-space-2);
+  line-height: 1.3;
+  margin-bottom: var(--ds-space-3);
 }
 
 @media (max-width: 719px) {
@@ -133,10 +147,114 @@ button {
   }
 }
 
+/* 区块导语：比正文大一档（不是小一号）—— 它是「这一段在讲什么」，
+   要能压住下面的正文，而不是像注释一样缩在标题底下。 */
 .sectionLead {
+  max-width: 40rem;
   color: var(--ds-c-text-mute);
-  font-size: var(--ds-fs-body);
-  margin-bottom: var(--ds-space-5);
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  margin-bottom: var(--ds-space-6);
+}
+
+/* ==========================================================================
+   按钮系统
+   --------------------------------------------------------------------------
+   2026-09-29：原来每处按钮各写一份（Hero / 顶栏 / 项目展开 / 复制 / 页脚 / 返回），
+   圆角、内边距、hover 反馈都不完全一致。收敛成一层：
+     .btn                    尺寸与基础交互（高度、内边距、圆角、过渡、按压、焦点环）
+     .btnSolid / .btnOutline / .btnGhost   三种语义
+     .btnSm                  小尺寸修饰（表格行内、页脚）
+   组件自己的 CSS Module 只保留「布局」（对齐、定位），不再重复颜色与形状。
+   ========================================================================== */
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-height: 48px; /* 触摸目标下限 44px，主按钮再宽裕一档 */
+  padding-inline: 2rem;
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-pill);
+  font-size: 0.9375rem;
+  font-weight: var(--ds-fw-medium);
+  line-height: 1;
+  white-space: nowrap;
+  text-align: center;
+  transition:
+    background var(--ds-t-color),
+    border-color var(--ds-t-color),
+    color var(--ds-t-color),
+    box-shadow var(--ds-t-color),
+    opacity var(--ds-t-color),
+    transform var(--ds-t-transform);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+/* 主操作：实心胶囊。品牌蓝不用于填充，靠明度对比抢眼（参照站的按钮语言）。 */
+.btnSolid {
+  background: var(--ds-c-btn-solid-bg);
+  color: var(--ds-c-btn-solid-fg);
+  box-shadow: 0 0 24px var(--ds-glow);
+}
+
+.btnSolid:hover {
+  color: var(--ds-c-btn-solid-fg);
+  opacity: 0.92;
+  box-shadow: 0 0 36px var(--ds-glow);
+}
+
+/* 次操作：描边 + 玻璃底 */
+.btnOutline {
+  border-color: var(--ds-c-hairline);
+  background: var(--ds-c-glass);
+  backdrop-filter: blur(10px);
+  color: var(--ds-c-text);
+}
+
+.btnOutline:hover {
+  border-color: var(--ds-c-accent);
+  color: var(--ds-c-accent);
+}
+
+/* 三级：无底无边，只有文字（如「去 Gitee 看看 →」） */
+.btnGhost {
+  min-height: 44px;
+  padding-inline: 0;
+  color: var(--ds-c-text-mute);
+}
+
+.btnGhost:hover {
+  color: var(--ds-c-accent);
+}
+
+/* 小尺寸：表格行内、页脚这一档 */
+.btnSm {
+  min-height: 44px;
+  padding-inline: var(--ds-space-4);
+  font-size: var(--ds-fs-xs);
+}
+
+/* 内容左对齐（复制按钮这种「值 + 提示」的按钮不适合居中） */
+.btnStart {
+  justify-content: flex-start;
+}
+
+/* 按钮上的指针聚光（配合 useSpotlight 写入的 --spot-x / --spot-y）。
+   为什么按钮不像表格行那样用伪元素：按钮有实心底色，`z-index:-1` 的伪元素会被自己的
+   底色盖住；而写成 background-image 天然叠在 background-color 之上、文字之下，正好。
+   `.btnSolid` 用的是 background 简写（会清掉 background-image），所以这条要写在它之后。 */
+.btnSpot {
+  background-image: radial-gradient(
+    var(--spot-size, 220px) var(--spot-size, 220px) at var(--spot-x, 50%) var(--spot-y, 50%),
+    var(--ds-spot),
+    transparent 70%
+  );
 }
 
 /* ==========================================================================

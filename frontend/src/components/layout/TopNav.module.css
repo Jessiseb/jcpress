@@ -90,24 +90,12 @@
   margin-left: var(--ds-space-2);
 }
 
-/* 胶囊右端的实心 CTA：与首屏主按钮同一套语言（--ds-c-btn-solid-*） */
-.cta {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding-inline: var(--ds-space-4);
-  border-radius: var(--ds-radius-pill);
-  background: var(--ds-c-btn-solid-bg);
-  color: var(--ds-c-btn-solid-fg);
-  font-size: var(--ds-fs-sm);
-  font-weight: var(--ds-fw-medium);
-  white-space: nowrap;
-  transition: opacity var(--ds-t-color);
-}
-
-.cta:hover {
-  opacity: 0.86;
-  color: var(--ds-c-btn-solid-fg);
+/* 胶囊右端的实心 CTA：形状与交互在全局按钮系统里（.btn.btnSolid.btnSm），
+   这个类只用来在窄屏把它藏掉（位置让给主题切换与汉堡） */
+@media (max-width: 719px) {
+  .cta {
+    display: none;
+  }
 }
 
 .iconBtn {
@@ -140,10 +128,6 @@
 /* 窄屏：导航收进抽屉（规划 §2.8）；CTA 让位给主题切换与汉堡 */
 @media (max-width: 719px) {
   .links {
-    display: none;
-  }
-
-  .cta {
     display: none;
   }
 

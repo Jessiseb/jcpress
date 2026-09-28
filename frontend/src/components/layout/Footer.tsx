@@ -19,7 +19,7 @@ export default function Footer() {
         {/* 收尾语 + 一个动作：把页脚从「版权声明」变成「一句人话 + 一个入口」 */}
         <div className={styles.closing}>
           <p className={styles.closingLine}>有合适的机会，随时找我。</p>
-          <a className={styles.mail} href={`mailto:${profileData.profile.email}`}>
+          <a className="btn btnOutline btnSm" href={`mailto:${profileData.profile.email}`}>
             发邮件
           </a>
         </div>

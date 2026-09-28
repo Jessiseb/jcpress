@@ -45,14 +45,13 @@
 .row {
   padding-block: var(--ds-space-4);
   border-bottom: 1px solid var(--ds-c-hairline);
-  transition: background var(--ds-t-color), box-shadow var(--ds-t-color);
+  transition: box-shadow var(--ds-t-color);
 }
 
-/* hover 只做视觉强调：整行提亮 + 左侧蓝条。
+/* hover 只做视觉强调：左侧蓝条 + （由 spotlight 模块提供的）指针聚光。
    蓝条用 inset box-shadow 而不是 border-left —— 不改变列宽，不会把表格挤动。 */
 @media (hover: hover) {
   .row:hover {
-    background: var(--ds-c-accent-soft);
     box-shadow: inset 2px 0 0 var(--ds-c-accent);
   }
 }
@@ -80,21 +79,9 @@
   color: var(--ds-c-text-subtle);
 }
 
+/* 展开按钮：形状与交互在全局按钮系统里（.btn.btnOutline.btnSm），这里只负责表格内的对齐 */
 .toggle {
   justify-self: end;
-  min-height: 44px; /* 触摸目标下限 */
-  padding-inline: var(--ds-space-3);
-  border: 1px solid var(--ds-c-hairline);
-  border-radius: var(--ds-radius-pill);
-  background: var(--ds-c-glass);
-  color: var(--ds-c-text-mute);
-  font-size: var(--ds-fs-xs);
-  transition: color var(--ds-t-color), border-color var(--ds-t-color);
-}
-
-.toggle:hover {
-  color: var(--ds-c-accent);
-  border-color: var(--ds-c-accent);
 }
 
 .panel {
@@ -148,12 +135,9 @@
   color: var(--ds-c-text-subtle);
 }
 
-.link {
+/* 外链：形状在全局 .btn.btnGhost 里，这里只负责面板里的左对齐 */
+.repo {
   align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  font-size: var(--ds-fs-sm);
 }
 
 @media (max-width: 719px) {

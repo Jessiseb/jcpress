@@ -44,6 +44,12 @@ const { chromium } = require('playwright-core')
     await el.scrollIntoViewIfNeeded()
     await page.waitForTimeout(250)
 
+    // --hover：把指针移到元素中心，用于拍悬浮态（指针聚光需要真实 pointermove）
+    if (process.argv.includes('--hover')) {
+      await el.hover()
+      await page.waitForTimeout(400)
+    }
+
     // --expand：截之前先把区域里第一个折叠按钮点开，用于检查展开态版面
     if (process.argv.includes('--expand')) {
       await el.evaluate((node) => {

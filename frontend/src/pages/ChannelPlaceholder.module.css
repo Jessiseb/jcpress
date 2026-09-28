@@ -39,24 +39,6 @@
   font-size: var(--ds-fs-sm);
 }
 
-.back {
-  margin-top: var(--ds-space-2);
-  align-self: flex-start;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  padding-inline: var(--ds-space-4);
-  border-radius: var(--ds-radius-pill);
-  background: var(--ds-c-accent-bg);
-  color: var(--ds-c-accent-text);
-  font-size: var(--ds-fs-sm);
-}
-
-.back:hover {
-  background: var(--ds-c-accent-hover);
-  color: var(--ds-c-accent-text);
-}
-
 @media (max-width: 719px) {
   .title {
     font-size: 2rem;

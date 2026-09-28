@@ -29,7 +29,7 @@ export default function ChannelPlaceholder({ title, lead, empty, is404 = false }
 
       {!is404 && empty ? <p className={styles.empty}>{empty}</p> : null}
 
-      <Link to="/" className={styles.back}>
+      <Link to="/" className="btn btnSolid">
         回到首页
       </Link>
     </section>

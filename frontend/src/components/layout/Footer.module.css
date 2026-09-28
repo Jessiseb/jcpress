@@ -43,25 +43,6 @@
   color: var(--ds-c-text);
 }
 
-.mail {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding-inline: var(--ds-space-5);
-  border: 1px solid var(--ds-c-hairline);
-  border-radius: var(--ds-radius-pill);
-  background: var(--ds-c-glass);
-  backdrop-filter: blur(10px);
-  font-size: var(--ds-fs-sm);
-  font-weight: var(--ds-fw-medium);
-  transition: border-color var(--ds-t-color), color var(--ds-t-color);
-}
-
-.mail:hover {
-  border-color: var(--ds-c-accent);
-  color: var(--ds-c-accent);
-}
-
 /* 一行文字式统计：项间用中点分隔，与页面里其他「对齐即秩序」的列表同构 */
 .stats {
   display: flex;

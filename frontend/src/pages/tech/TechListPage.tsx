@@ -1,11 +1,31 @@
 import { Link } from 'react-router-dom'
 
+import type { ArticleVO } from '@/data/articles'
 import { useArticles } from '@/hooks/useArticles'
+import { useSpotlight } from '@/hooks/useSpotlight'
+import spot from '@/styles/spotlight.module.css'
 import styles from './TechListPage.module.css'
 
 /** 把 YYYY-MM-DD 显示成 YYYY.MM.DD（等宽字下点号比短横线更好对齐） */
 function formatDate(value: string): string {
   return value.replace(/-/g, '.')
+}
+
+/** 单行：自带指针聚光（与项目经历表格同一套交互语言）。 */
+function ArticleRow({ article }: { article: ArticleVO }) {
+  const ref = useSpotlight<HTMLDivElement>()
+
+  return (
+    <div ref={ref} className={`${spot.host} ${styles.row}`}>
+      <span className={styles.date}>{formatDate(article.publishedAt)}</span>
+      <span className={styles.titleCell}>
+        <span className={styles.articleTitle}>{article.title}</span>
+        <span className={styles.tags}>{article.tags.join(' / ')}</span>
+      </span>
+      <span className={styles.category}>{article.category}</span>
+      <span className={styles.reading}>{article.readingMinutes} 分钟</span>
+    </div>
+  )
 }
 
 /**
@@ -33,7 +53,7 @@ export default function TechListPage() {
           <p className={styles.emptyHint}>
             先看首页的项目与实习经历 —— 那边已经把两个自研项目的取舍写得比较细。
           </p>
-          <Link to="/" className={styles.back}>
+          <Link to="/" className="btn btnSolid">
             回到首页
           </Link>
         </div>
@@ -52,15 +72,7 @@ export default function TechListPage() {
             </div>
 
             {articles.map((a) => (
-              <div key={a.slug} className={styles.row}>
-                <span className={styles.date}>{formatDate(a.publishedAt)}</span>
-                <span className={styles.titleCell}>
-                  <span className={styles.articleTitle}>{a.title}</span>
-                  <span className={styles.tags}>{a.tags.join(' / ')}</span>
-                </span>
-                <span className={styles.category}>{a.category}</span>
-                <span className={styles.reading}>{a.readingMinutes} 分钟</span>
-              </div>
+              <ArticleRow key={a.slug} article={a} />
             ))}
           </div>
         </>

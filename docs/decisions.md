@@ -94,6 +94,10 @@
 | 40 | **暗色姓名渐变提亮，与亮色分开取色** | 基线 `#0756ab` 是为白底选的；近黑底 + 96px 下整块字「虚」。暗色改用 `linear-gradient(120deg, #7cc0ff, #4d9bff 38%, #b48cff)`（10.6:1 / 7.0:1），保留蓝→紫签名。**这是全站唯一一处按主题分别取色的渐变** |
 | 41 | **等宽字白名单追加中文禁区** | `--ds-font-mono` 的栈（Consolas/Monaco…）没有任何 CJK 字形；用它排中文文案会**逐字回落**到无衬线，与相邻 Latin 字形不搭。白名单明确为：只用于纯 Latin/数字（表头、年份、档位、单位、计数），**不得用于含中文的句子**（kicker 曾因此踩坑） |
 
+| 42 | **按钮收敛为全局按钮系统** | 原来 Hero / 顶栏 / 项目展开 / 复制 / 页脚 / 返回 各写一份按钮 CSS，圆角、内边距、hover 不一致。收敛为 `global.css` 的 `.btn` + `.btnSolid` / `.btnOutline` / `.btnGhost` / `.btnSm` / `.btnStart`；**组件 CSS Module 只保留布局**（对齐、定位），不再重复颜色与形状 |
+| 43 | **指针聚光移植为 `useSpotlight`，拒绝 Tailwind + shadcn** | 外部组件要求 shadcn 结构 + Tailwind + `/components/ui`，本项目三条都不满足，且选型在规划里定死（#7 D4=A）。**不装 Tailwind / shadcn / lucide-react**，只移植效果：`useSpotlight` 写 `--spot-x/--spot-y`，表格行用 `.host`（伪元素两层：底光 + 边框高光，`z-index:-1` + `isolation`），按钮用 `.btnSpot`（背景图叠加，因为实心底色会盖住 `-1` 的伪元素）。四处与原始实现的差异：监听元素自身而非 `document`、元素相对坐标而非视口坐标 + `background-attachment: fixed`、只在 `(hover: hover)` 且非 reduced-motion 时绑定、进入/离开只切一个属性 |
+| 44 | **中文排版细则与区块节奏** | `font-synthesis: none`（**禁止合成字重**——这是阶段 11「中文姓名发糊」的根因，从机制上杜绝复发）、`line-break: strict`（避头尾）、`text-spacing-trim: trim-start`、正文行高 1.7 → 1.8、标题 `text-wrap: balance` / 段落 `pretty`、区块纵向节奏 48 → 64px、区块导语 16 → 17px（导语要比正文大一档，不是小一号） |
+
 ## 环境注意事项（Windows + WorkBuddy 沙箱）
 
 | 坑 | 现象 | 绕过方式 |
