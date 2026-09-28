@@ -385,3 +385,60 @@ jsdom 版 vitest 跑不起来，改用**真实浏览器断言套件**覆盖同�
 | 浏览器断言 | ✔ 24/24（渐变护栏现报「环=3 姓名=1 遮罩=1 其他=无」） |
 | 对比度 | ✔ 亮暗各 227 处未达标 0（新增的实心胶囊按钮 18.4:1 / 20.1:1） |
 | 横向溢出 | ✔ 四视口无溢出（胶囊导航比通栏更窄，不引入风险） |
+
+---
+
+## 阶段 11 · 展示字体重做（2026-09-29 00:2x）
+
+### 11.1 用户关键原话
+
+- 「字体没有达到那个效果」
+
+### 11.2 诊断：不是字体选得不够好，是**根本没用到那款字体**
+
+写 `probe-fonts.cjs` 量了两件事（canvas 宽度比对 + `fonts.check`，后者对不存在的字体也返回 true，
+所以只信前者）：
+
+| 字体 | 已安装？ |
+| --- | --- |
+| Songti SC（macOS） | ✘ 不在这台机器上 |
+| **STSong（华文宋体）** | ✔ 装了 —— **这就是实际渲染用的那个** |
+| **Source Han Serif SC（思源宋体）** | ✔ 装了，但**排在 STSong 后面，永远轮不到** |
+| Georgia / Times New Roman | ✔ |
+
+根因两条：① 字体栈把 STSong 排在思源宋体之前；② 更致命的是 **STSong 没有 500/700 字重**，
+而我把展示字重设成了 500 —— 浏览器于是**合成伪粗体**，84px 的「庄家希」字面发糊、没有骨架。
+参照站那种「大号衬线的优雅」不是靠字号堆出来的，是靠**真字重的衬线骨架**。
+
+### 11.3 方案：Latin 走 Georgia，中文走自托管子集
+
+| 项 | 取值 |
+| --- | --- |
+| Latin（Agent / Java / AIWorker / CVTE） | **Georgia** —— 参照站的展示字本来就是 Georgia 400，斜体也是 Georgia Italic |
+| CJK | 自托管 **Noto Serif SC wght=500 子集**，`unicode-range` 只声明 CJK 码位，Latin 不被接管 |
+| 字符表 | **531 字**，由 `collect-charset.cjs` **从真实渲染的 DOM 收集**（5 个路由 + aria/title/alt + 交互态文案） |
+| 体积 | **92.7 KB**（woff2） |
+| 流水线 | `frontend/scripts/build-font-subset.cjs` + `collect-charset.cjs`，npm 脚本 `fonts:build` / `fonts:chars` |
+
+**取舍记录**：变量子集（保留 wght 轴）是 **176.8KB**，静态 500 是 **92.7KB**。查了一遍展示字的用法
+（只有 `.brandName` 用 700，而它是 Latin → Georgia 真粗体），全站 CJK 展示字只需要一档，
+因此取静态 500，把省下的 84KB 留给内容。
+
+**为什么搬进仓库**：这套脚本原先写在 `.tmp/tools/`，但加文章（M3 详情页）必然引入新汉字，
+流水线是项目的一部分、不是临时工具，因此移到 `frontend/scripts/` 并挂上 npm 脚本。
+
+### 11.4 依赖与环境
+
+- 需要 `fonttools` + `brotli`（`python -m pip install fonttools brotli`）——`brotli` 缺失时 `pyftsubset`
+  报 `ImportError: No module named brotli`，装完即可，已记入环境注意事项。
+- 源字体：google/fonts 仓库的 Noto Serif SC 变量字体（24MB，OFL 许可），下载一次后缓存在 `frontend/.tmp/fonts/`。
+
+### 11.5 验收
+
+| 关卡 | 结果 |
+| --- | --- |
+| 字体请求 | ✔ `GET /fonts/serif-sc-500.woff2 → 200, 92.7KB`；`document.fonts` 里 `JCPress Serif SC 500` 已加载 |
+| H1 计算值 | ✔ `Georgia, "Times New Roman", "JCPress Serif SC", …`，`font-weight: 500` |
+| `tsc` / `vitest` | ✔ 0 错误 / 25 用例 |
+| 浏览器断言 | ✔ 24/24 |
+| 对比度 | ✔ 未达标 0 |

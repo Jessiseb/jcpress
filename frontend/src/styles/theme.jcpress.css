@@ -1,4 +1,29 @@
 /* ==========================================================================
+   展示字子集：Noto Serif SC（思源宋体）wght=500，只含本站真正用到的字（551 字形 / 92.7KB）。
+   --------------------------------------------------------------------------
+   为什么自托管：中文衬线是参照站那种「大号衬线的优雅」的前提，而系统栈在 Windows 上
+   会落到 SimSun / STSong —— 它们没有 500 字重，浏览器只能合成伪粗体，84px 下字面发糊。
+   子集的 unicode-range 只覆盖 CJK，因此 Latin 仍然走 Georgia ——
+   与参照站「Georgia 展示字 + 中文衬线」的搭配一致。
+
+   为什么是静态 500 而不是变量字体：全站展示字只需要一档（`.brandName` 用 700，
+   但那是 Latin，走 Georgia 的真粗体），变量子集要 176.8KB，静态 500 只要 92.7KB。
+   将来真需要第二档，跑一次生成脚本即可（约 30 秒）。
+
+   生成方式：`node .tmp/tools/collect-charset.cjs`（收集真实渲染的字符）
+             + `python -m fontTools.subset …`，完整流水线见 `.tmp/tools/build-font-subset.cjs`。
+   ========================================================================== */
+@font-face {
+  font-family: 'JCPress Serif SC';
+  src: url('/fonts/serif-sc-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  /* 只认 CJK 与中文标点：Latin 交给 Georgia，避免子集把正文英文也接管过去 */
+  unicode-range: U+3000-303F, U+4E00-9FFF, U+FF00-FFEF, U+2018-201D, U+2026;
+}
+
+/* ==========================================================================
    jcpress 品牌主题层
    --------------------------------------------------------------------------
    分层原则：
@@ -23,12 +48,20 @@
      2026-09-28 曾一度改为青碧 Teal（色相 175°），按用户决定撤回：
      「不要有绿色，不好看，蓝色就好」。 */
 
-  /* ---- 展示字：中文衬线栈，零字体下载 ----
-     正文继续用系统无衬线栈（基线 --ds-font-sans）；展示字只给 H1 与区块大标题，
-     靠「衬线标题 × 无衬线正文」的对比制造辨识度，同时不破「首屏 gzip ≤200KB」预算。
-     排序逻辑：macOS 的 Songti SC → 思源宋体（用户已装时命中）→ Windows SimSun 兜底 → 通用 serif。 */
-  --ds-font-display: 'Songti SC', 'STSong', 'Source Han Serif SC', 'Noto Serif CJK SC', 'Noto Serif SC',
-    'SimSun', Georgia, 'Times New Roman', serif;
+  /* ---- 展示字：Latin 走 Georgia，中文走自托管子集 ----
+     2026-09-29 重做。原因：原栈把 STSong（华文宋体）排在思源宋体前面，而这台机器上
+     **思源宋体是装了的** —— 于是 84px 的姓名实际用的是 STSong，且它没有 500 字重，
+     浏览器只能合成伪粗体，字面发糊、没有骨架。参照站那种「大号衬线的优雅」根本出不来。
+
+     现在的策略（两端都要成立）：
+       ① Latin（Agent / Java / AIWorker…）用 Georgia —— 参照站的展示字就是 Georgia 400；
+       ② 中文用自托管的 Noto Serif SC 子集（`/fonts/serif-sc-400.woff2`，见下方 @font-face），
+          只打包本站真正用到的字，保证**换台没装思源宋体的机器也是同一个样子**；
+       ③ 本机装了思源宋体时，子集文件仍然优先（@font-face 的 unicode-range 只认 CJK），
+          行为一致、不依赖系统装了啥。
+     栈序含义：Georgia 先试（它没有 CJK 字形，中文自然落到下一档），再 Times，再我们的子集。 */
+  --ds-font-display: Georgia, 'Times New Roman', 'JCPress Serif SC', 'Source Han Serif SC',
+    'Noto Serif SC', 'Songti SC', STSong, SimSun, serif;
 
   /* ---- 基线里写死了其他主色的硬编码值，换主色时必须跟随 ---- */
   --ds-shadow-accent: 0 8px 18px rgb(9 111 220 / 18%);
@@ -86,9 +119,10 @@
      照抄大环的不透明度会看不见（截图确认过）。 */
   --ds-ring-badge: rgb(9 111 220 / 22%);
 
-  /* ---- 展示字字重（新增）----
-     参照站用 Georgia 400 撑起 96–102px 标题：靠尺寸与衬线拉气质，不靠加粗。
-     中文宋体在 400 下偏细（Windows SimSun 尤甚），折中取 500。 */
+  /* ---- 展示字字重 ----
+     参照站用 Georgia 400 撑起 96–102px 标题；中文字形比 Georgia 细，
+     同字号下需要一档更实，因此取 500 —— 但必须是**真字重**：
+     子集就打包了 wght=500（改版前用系统宋体合成伪粗体，正是 84px 姓名发糊的原因）。 */
   --ds-fw-display: 500;
 
   /* ---- 文本灰阶校正 ----
