@@ -64,6 +64,20 @@
 | 25 | **发丝线改为半透明**（亮 `#e2e2e3` → `rgb(20 22 26 / 12%)`，暗 `#2e3238` → `rgb(255 255 255 / 13%)`） | 环会铺在区块之下，实色线会把图案「切断」。半透明线让环透过线继续可读。属对上一轮已定值的修订，需复测可见性 |
 | 26 | **文档位置沿用仓库约定**（`docs/*.md`），不引入 `docs/superpowers/specs/` | brainstorming skill 的默认路径与本仓库既有约定（`design-homepage.md` / `style-ref-*.md` / `decisions.md`）不一致；用户偏好优先，取 `docs/design-visual-language.md` |
 
+## 2026-09-28 · 一期视觉语言修订（实施期补充）
+
+> 设计文档：`docs/design-visual-language.md`；实施计划：`docs/plan-visual-language.md`。
+> 以下每条都是**执行时才发现**的约束，不是设计阶段能预判的。
+
+| # | 决策 / 偏差 | 说明 |
+| --- | --- | --- |
+| 27 | **环装置的第三层（135° 面差渐变）不用作叠加层** | 参照站那一层是元素自身的底；作为叠加层会得到一块不透明背景，把正文与 body 氛围层全遮住。「底面差」由既有的 `--ds-atmosphere-*` 承担（设计文档 §2.1 注记） |
+| 28 | **`RingField` 内部禁止写 `transform`，居中一律用 `margin`** | 入场序列 `[data-reveal]` 会写 `transform: translateY(18px)`，`.is-revealed` 又写 `transform: none`；环若用 `translateX(-50%)` 居中会被整个覆盖，环会瞬间跳到右边 |
+| 29 | **项目表格去掉「年份」列** | 现有 `ProjectVO` 没有年份字段，凭空编年份就是假数据。改为 `ID / 项目 / 角色 · 状态`；等后端补 `period` 再加列 |
+| 30 | **展开面板用 `hidden` 属性 + `.panel[hidden] { display: none }` 兜底** | `.panel` 是 `display: flex`，作者样式会盖掉浏览器默认的 `[hidden] { display: none }`，面板会永远展开。必须显式兜住 |
+| 31 | **页脚环层不能加 `data-reveal`** | `useReveal` 只观察 `HomePage` 那棵子树（它拿的是 HomePage 的 ref），页脚在它之外 —— 带 `data-reveal` 的元素会被全局隐藏态规则压成 `opacity: 0` 且**永不揭示**，等于页脚环根本看不见。这个 bug 截图看不出来（截图脚本会先摘掉 `data-reveal`），是行为断言「入场序列 43/44」抓到的。**规则**：`data-reveal` 只能用在 HomePage 子树内 |
+| 32 | **环 badge 单开一档 `--ds-ring-badge`（亮 22% 蓝 / 暗 32% 蓝）** | 54px 的区块标记照抄大环的不透明度（亮 6%/暗 8%）会看不见（截图确认）。大环是布景、badge 是路标，两档剂量本来就该分开 |
+
 ## 环境注意事项（Windows + WorkBuddy 沙箱）
 
 | 坑 | 现象 | 绕过方式 |
@@ -75,3 +89,5 @@
 | **Playwright 无法启动浏览器**（2026-09-28 22:36 起复现） | `chromium.launch({ channel: 'msedge' })` 报 `spawn EPERM`（浏览器以 `--remote-debugging-pipe` 命名管道启动，受限模式禁止）。直接用 Edge 自带 headless 截图（`--headless=new --screenshot=`）同样无产物（连 example.com 也拍不出） | 本会话内一次性提权到 `danger-full-access` 后可正常运行。**每次新会话首次跑截图脚本都需要提权一次** |
 | **brainstorming 视觉陪跑服务启动方式** | skill 自带的是 `scripts/start-server.sh`（bash），Windows 下不可直接用 | 直接跑 node：`BRAINSTORM_DIR=<项目>/.superpowers/brainstorm/s1` + `BRAINSTORM_PORT=52341` + `node ~/.agents/skills/brainstorming/scripts/server.cjs`，以后台任务方式常驻。`.superpowers/` 已加入 `.gitignore` |
 | **npm 缓存写入被拒** | `npx` 报 `EPERM ... AppData\Local\npm-cache\_cacache\tmp\...` | 把 `npm_config_cache` 指向项目内目录（如 `.npm-cache`）再执行；用完删除该目录 |
+| **自己起 dev server 会失败** | `npm run dev` 报 `spawn EPERM`（vite 加载配置时 esbuild 起子进程被拒），但 5173 上仍有一个可用的 dev server | 该服务是另一个会话留下的；Vite 的 HMR 会吃磁盘上的改动，直接用它即可。若它挂了，再用 `danger-full-access` 起一个 |
+| **编辑源文件偶发 `ReplaceFileW EIO (Win32 1175)`** | 写入被 Vite 的文件监听占用 | 重试同一次编辑即可（同一命令重试第二次都成功） |
