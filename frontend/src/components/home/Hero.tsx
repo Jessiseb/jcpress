@@ -31,7 +31,7 @@ export default function Hero({ profile }: Props) {
       {/* 环层：与首屏一起淡入。data-reveal 写在包裹层上，环自身的 opacity 不参与动画，
           否则 [data-reveal].is-revealed 的 opacity:1 会把 --ring-opacity 覆盖掉。 */}
       <div className={styles.ringLayer} data-reveal style={stagger(0)}>
-        <RingField size={1000} />
+        <RingField size={1200} />
       </div>
 
       <p className={styles.kicker} data-reveal style={stagger(1)}>

@@ -20,8 +20,11 @@ function formatValue(metric: HighlightMetric): string {
 /**
  * 简历里最硬的四个量化结果。
  *
- * 刻意不做「超大数字 + 数字滚动」—— 那是仪表盘的语汇，也是 AI 生成页面的标志性手法。
- * 这里改成编辑式列表：数值与正文同级字号，靠等宽数字和强调色对齐，信息密度高但不出声。
+ * 2026-09-28 二次修订：从「编辑式行列表」改成**四列数字块**（参照站的数据区形态）——
+ * 用户明确要求「不要取舍，要有气场」，行列表太平。改动边界：
+ *  - 仍然是 `<dl>` 语义（label 是 dt，数值与出处是 dd），测试与断言口径不变；
+ *  - **没有卡片**：不着色、不描边、不投影，靠字号与留白分栏，避免退回看板感；
+ *  - **仍然不做 count-up**（滚动数字是明确的 AI 味信号，上一轮已删，不恢复）。
  */
 export default function HighlightStats({ metrics }: Props) {
   return (
@@ -35,7 +38,7 @@ export default function HighlightStats({ metrics }: Props) {
 
       <dl className={styles.list}>
         {metrics.map((metric, index) => (
-          <div key={metric.label} className={styles.row} data-reveal style={stagger(index + 2)}>
+          <div key={metric.label} className={styles.cell} data-reveal style={stagger(index + 2)}>
             <dt className={styles.label}>{metric.label}</dt>
             <dd className={styles.value}>{formatValue(metric)}</dd>
             <dd className={styles.caption}>{metric.caption}</dd>

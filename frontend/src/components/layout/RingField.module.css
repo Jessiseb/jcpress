@@ -18,8 +18,11 @@
   pointer-events: none;
   opacity: var(--ring-opacity, 1);
   background-image:
-    radial-gradient(circle at 50% 45%, var(--ds-glow), transparent 34%),
+    /* 聚光：射程 46%（与参照站一致）—— 太短就没有「光场」，只是一圈细纹 */
+    radial-gradient(circle at 50% 45%, var(--ds-glow), transparent 46%),
     repeating-radial-gradient(circle at 50% 45%, var(--ds-ring) 0 1px, transparent 1px var(--ds-ring-period));
-  -webkit-mask-image: radial-gradient(#000 5%, transparent 72%);
-  mask-image: radial-gradient(#000 5%, transparent 72%);
+  /* 遮罩：中心实、外缘收得比参照站更紧一点（10% → 64%），
+     让环的边界可辨 —— 原来 5% → 72% 摊得太开，看着像脏而不是像环 */
+  -webkit-mask-image: radial-gradient(#000 10%, transparent 64%);
+  mask-image: radial-gradient(#000 10%, transparent 64%);
 }

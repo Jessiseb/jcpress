@@ -11,16 +11,20 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
-  scroll-padding-top: calc(var(--ds-navbar-height) + 16px);
+  /* 顶栏改成悬浮胶囊后外层变高了（胶囊 + 上下留白），锚点偏移跟着加一档 */
+  scroll-padding-top: calc(var(--ds-navbar-height) + var(--ds-space-5));
 }
 
 body {
   margin: 0;
   background-color: var(--ds-c-bg);
-  /* 氛围层：两枚大尺寸径向渐变，固定不随滚动漂移。
-     放在 body 的 background-image 上而不是额外伪元素 —— 不引入层叠上下文，
-     不需要 z-index 规避，也不会产生全视口的 repaint。 */
+  /* 背景分四层（写在 body 上而不是额外伪元素：不引入层叠上下文、不需要 z-index 规避）：
+     ① 晕影：从视口中心向外收暗，让内容像「从暗处浮出来」（参照站的核心氛围手法）
+     ②③ 氛围层：两枚大尺寸径向渐变，替代纯色平铺
+     晕影放在第一位 = 画在最上层（但仍低于正文），因此它压得住氛围层。
+     全部 fixed：不随滚动漂移，也不会产生全视口的 repaint。 */
   background-image:
+    radial-gradient(125% 95% at 50% 0%, transparent 42%, var(--ds-vignette) 100%),
     radial-gradient(48rem 32rem at 6% -10%, var(--ds-atmosphere-1), transparent 62%),
     radial-gradient(42rem 30rem at 102% 2%, var(--ds-atmosphere-2), transparent 58%);
   background-repeat: no-repeat;

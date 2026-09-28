@@ -1,27 +1,29 @@
+/* 顶栏：悬浮玻璃胶囊（参照站的签名元素）。
+   外层 .navbar 只负责 sticky 定位与顶部渐隐遮罩 —— 内容从胶囊两侧与下方滑过时不会打架；
+   视觉（玻璃底、1px 半透明边、圆角）全部落在 .pill 上。 */
+
 .navbar {
   position: sticky;
   top: 0;
   z-index: 50;
+  padding: calc(var(--ds-space-3) + env(safe-area-inset-top)) var(--ds-navbar-padding-x) var(--ds-space-3);
+  /* 顶部渐隐：胶囊之外让内容淡出，避免文字贴着胶囊边缘划过 */
+  background: linear-gradient(to bottom, var(--ds-c-bg) 42%, transparent);
+}
+
+.pill {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
   height: var(--ds-navbar-height);
   display: flex;
   align-items: center;
-  padding-inline: var(--ds-navbar-padding-x);
-  /* 玻璃底：暗色下 --ds-c-bg-soft 已被 theme 覆盖成 62% 近黑，环可以从顶栏底下透上来 */
+  gap: var(--ds-space-4);
+  padding-inline: var(--ds-space-4);
+  border: 1px solid var(--ds-c-hairline);
+  border-radius: var(--ds-radius-pill);
   background: var(--ds-c-glass);
   backdrop-filter: blur(14px) saturate(1.2);
-  /* 暗色下 --ds-c-border-soft 是纯黑，看不见；改用发丝线令牌 */
-  border-bottom: 1px solid var(--ds-c-hairline);
-  /* 刘海屏：顶栏避开安全区（规划 §2.8） */
-  padding-top: env(safe-area-inset-top);
-}
-
-.inner {
-  width: 100%;
-  max-width: var(--ds-page-width);
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  gap: var(--ds-space-4);
 }
 
 .brand {
@@ -33,9 +35,7 @@
   color: var(--ds-c-text);
 }
 
-/* 品牌标记：环母题的最小变体。
-   底色用 accent-soft（强调色 14% 洗过），线用强调色本身 —— 不再用实色填充 + 白字
-   （那样白字压在渐变最亮档只有 4.07:1，且品牌标记与首屏渐变会重复）。 */
+/* 品牌标记：环母题的最小变体。底色用 accent-soft（强调色洗过），线用强调色本身。 */
 .mark {
   width: 32px;
   height: 32px;
@@ -90,6 +90,26 @@
   margin-left: var(--ds-space-2);
 }
 
+/* 胶囊右端的实心 CTA：与首屏主按钮同一套语言（--ds-c-btn-solid-*） */
+.cta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--ds-space-4);
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-c-btn-solid-bg);
+  color: var(--ds-c-btn-solid-fg);
+  font-size: var(--ds-fs-sm);
+  font-weight: var(--ds-fw-medium);
+  white-space: nowrap;
+  transition: opacity var(--ds-t-color);
+}
+
+.cta:hover {
+  opacity: 0.86;
+  color: var(--ds-c-btn-solid-fg);
+}
+
 .iconBtn {
   min-width: 44px;
   min-height: 44px;
@@ -117,9 +137,13 @@
   color: var(--ds-c-text);
 }
 
-/* 窄屏：导航收进抽屉（规划 §2.8） */
+/* 窄屏：导航收进抽屉（规划 §2.8）；CTA 让位给主题切换与汉堡 */
 @media (max-width: 719px) {
   .links {
+    display: none;
+  }
+
+  .cta {
     display: none;
   }
 
@@ -129,5 +153,13 @@
 
   .actions {
     margin-left: auto;
+  }
+
+  .navbar {
+    padding-inline: var(--ds-space-3);
+  }
+
+  .pill {
+    padding-inline: var(--ds-space-3);
   }
 }

@@ -1,37 +1,40 @@
-/* 关键数字：编辑式列表，不是卡片栅格。
-   三列固定比例让我能对齐数值列 —— 列对齐是「印刷品」的核心特征，
-   一旦让每一项各自居中，就退回到仪表盘卡片了。 */
+/* 关键数字：四列数字块（参照站的数据区形态）。
+   改自「编辑式行列表」—— 行列表信息密度高但太平，用户要气场。
+   边界：没有卡片（不着色 / 不描边 / 不投影），靠字号与留白分栏；
+   数值用衬线 + 强调色 + 30px，是这一区的视觉重心。 */
 
 .list {
-  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--ds-space-6);
+  margin: var(--ds-space-6) 0 0;
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-1);
+  padding-top: var(--ds-space-3);
+  /* 每格一条顶部发丝线：与全站「对齐即秩序」的分块语言一致，同时不需要卡片 */
   border-top: 1px solid var(--ds-c-hairline);
 }
 
-.row {
-  display: grid;
-  /* 数值列 11rem：22px 衬线下「1200ms → 50ms」约 150px，原来的 8rem（128px）会被撑破、
-     贴到右栏的出处文字上（截图确认过）。列宽留够，同时保持四行数值纵向对齐。 */
-  grid-template-columns: minmax(0, 11rem) minmax(0, 11rem) minmax(0, 1fr);
-  align-items: baseline;
-  gap: var(--ds-space-4);
-  padding-block: var(--ds-space-4);
-  border-bottom: 1px solid var(--ds-c-hairline);
-}
-
+/* 指标名：等宽小字。它在数据块里是「这一格量的是什么」，不是装饰性 eyebrow */
 .label {
-  font-size: var(--ds-fs-body);
-  font-weight: var(--ds-fw-semibold);
-  color: var(--ds-c-text);
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-fs-xs);
+  letter-spacing: 0.02em;
+  color: var(--ds-c-text-subtle);
 }
 
-/* 数值：衬线 + 强调色 + 22px。
-   刻意保留编辑式行结构，不做四格大数字卡片、不做 count-up（见 docs/decisions.md #20）。
+/* 数值：衬线 + 强调色 + 30px。
    对比度：亮色 #0756ab 于白底 7.11:1 ✔；暗色 #4d9bff 于 #08090c 7.05:1 ✔ */
 .value {
   margin: 0;
   font-family: var(--ds-font-display);
-  font-size: 1.375rem;
+  font-size: 1.875rem;
   font-weight: var(--ds-fw-display);
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
   color: var(--ds-c-accent);
   white-space: nowrap;
@@ -39,25 +42,20 @@
 
 .caption {
   margin: 0;
-  font-size: var(--ds-fs-sm);
+  font-size: var(--ds-fs-xs);
   color: var(--ds-c-text-subtle);
 }
 
-/* 窄屏：三列压成「标签 + 数值」一行，出处换行到下面，避免横向挤压 */
-@media (max-width: 719px) {
-  .row {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: var(--ds-space-2) var(--ds-space-3);
-    padding-block: var(--ds-space-3);
-  }
-
-  .caption {
-    grid-column: 1 / -1;
+/* 平板：两列（不塌成一列，避免四格变成长条） */
+@media (max-width: 959px) {
+  .list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--ds-space-5);
   }
 }
 
 @media (max-width: 419px) {
   .value {
-    font-size: var(--ds-fs-sm);
+    font-size: 1.5rem;
   }
 }

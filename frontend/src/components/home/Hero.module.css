@@ -24,7 +24,7 @@
 
 /* 环中心落在首屏偏上 45% 处；截图确认后允许 ±60px 微调 */
 .ringLayer > * {
-  top: -180px;
+  top: -240px;
 }
 
 /* 地点行两侧压一条短发丝线：给居中标题一个「印刷品」的锚点，
@@ -33,6 +33,8 @@
   display: inline-flex;
   align-items: center;
   gap: var(--ds-space-3);
+  /* 等宽字：这一行是数据（地点 · 岗位），不是句子 */
+  font-family: var(--ds-font-mono);
   font-size: var(--ds-fs-xs);
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -54,7 +56,7 @@
   flex-direction: column;
   align-items: center;
   font-family: var(--ds-font-display);
-  font-size: 4.25rem;
+  font-size: 5.25rem;
   font-weight: var(--ds-fw-display);
   line-height: 1.06;
   letter-spacing: -0.02em;
@@ -111,7 +113,9 @@
   margin-top: var(--ds-space-4);
 }
 
-/* 主按钮：参照站的胶囊 + 单一强调色填充，无阴影、无位移 */
+/* 主按钮：实心胶囊（--ds-c-btn-solid-*）。
+   参照站的按钮语言是「白底黑字 / 黑底白字」的实心胶囊，不用品牌色填充 ——
+   品牌蓝留给数字、链接与状态，按钮靠明度对比抢眼。自带一圈辉光。 */
 .primary {
   display: inline-flex;
   align-items: center;
@@ -119,15 +123,14 @@
   min-height: 44px; /* 触摸目标下限 */
   padding-inline: var(--ds-space-6);
   border-radius: var(--ds-radius-pill);
-  background: var(--ds-c-accent-bg);
-  color: var(--ds-c-accent-text);
+  background: var(--ds-c-btn-solid-bg);
+  color: var(--ds-c-btn-solid-fg);
   font-size: var(--ds-fs-sm);
   font-weight: var(--ds-fw-medium);
-  /* 主按钮自带一圈同色辉光（参照站的白色胶囊自带光晕），hover 时再加深 */
-  box-shadow: 0 0 24px var(--ds-glow);
+  box-shadow: 0 0 28px var(--ds-glow);
   transition:
-    background var(--ds-t-color),
     box-shadow var(--ds-t-color),
+    opacity var(--ds-t-color),
     transform var(--ds-t-transform);
 }
 
@@ -137,9 +140,9 @@
 }
 
 .primary:hover {
-  background: var(--ds-c-accent-hover);
-  color: var(--ds-c-accent-text);
-  box-shadow: var(--ds-shadow-accent);
+  color: var(--ds-c-btn-solid-fg);
+  opacity: 0.9;
+  box-shadow: 0 0 40px var(--ds-glow);
 }
 
 .primary:hover::after {
@@ -151,49 +154,36 @@
   transform: scale(0.96);
 }
 
-/* 次级动作降级为文字链接：hover 时下划线自左侧扫出 */
+/* 次按钮：描边胶囊（参照站的「Our Services」那颗）。
+   不再是文字链 —— 两颗同一等级、同一形状，只靠填充的有无区分主次。 */
 .secondary {
-  position: relative;
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  color: var(--ds-c-text-mute);
+  padding-inline: var(--ds-space-5);
+  border: 1px solid var(--ds-c-hairline);
+  border-radius: var(--ds-radius-pill);
+  color: var(--ds-c-text);
   font-size: var(--ds-fs-sm);
   font-weight: var(--ds-fw-medium);
-  transition: color var(--ds-t-color);
-}
-
-.secondary::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  bottom: 0.65rem;
-  left: 0;
-  height: 1px;
-  background: currentColor;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 200ms var(--ds-ease-out);
+  transition: border-color var(--ds-t-color), color var(--ds-t-color);
 }
 
 .secondary:hover {
+  border-color: var(--ds-c-accent);
   color: var(--ds-c-accent);
 }
 
-.secondary:hover::after {
-  transform: scaleX(1);
-}
-
-/* 响应式降级阶梯：68 → 44 → 40 → 34px（沿用基线四档断点） */
+/* 响应式降级阶梯：84 → 52 → 44 → 38px（沿用基线四档断点） */
 @media (max-width: 959px) {
   .name {
-    font-size: 2.75rem;
+    font-size: 3.25rem;
   }
 }
 
 @media (max-width: 719px) {
   .name {
-    font-size: 2.5rem;
+    font-size: 2.75rem;
   }
 
   .headline {
@@ -213,7 +203,7 @@
 
 @media (max-width: 419px) {
   .name {
-    font-size: 2.125rem;
+    font-size: 2.375rem;
   }
 
   .actions {

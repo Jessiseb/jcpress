@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 
+import { profileData } from '@/data/profile'
 import { useTheme } from '@/hooks/useTheme'
 import MobileDrawer from './MobileDrawer'
 import styles from './TopNav.module.css'
@@ -12,17 +13,24 @@ export const NAV_ITEMS = [
   { to: '/projects', label: '项目笔记' },
 ] as const
 
+/**
+ * 顶栏：悬浮玻璃胶囊。
+ *
+ * 2026-09-28 改版：从「通栏 sticky 条」换成参照站的悬浮胶囊（设计方向 A/C 的签名元素之一）。
+ * 外层的 sticky 壳只负责定位与顶部渐隐遮罩，视觉全部落在胶囊上。
+ */
 export default function TopNav() {
   const { theme, toggle } = useTheme()
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   return (
     <>
-      <header className={styles.navbar}>
-        <div className={styles.inner}>
+      {/* data-scrim：外层这层顶部渐隐是「功能性遮罩」（保证滚动时胶囊边缘的文字可读），
+          不是装饰性渐变 —— 断言套件的渐变护栏据此把它与「模板感渐变」区分开 */}
+      <header className={styles.navbar} data-scrim="">
+        <div className={styles.pill}>
           <NavLink to="/" className={styles.brand}>
-            {/* 品牌标记：环母题的最小尺寸变体（4 圈同心环 + 中心点）。
-                换掉原来的实色「庄」方块 —— 环是全站的图案语言，logo 是它出现的第一处。 */}
+            {/* 品牌标记：环母题的最小尺寸变体（4 圈同心环 + 中心点） */}
             <span className={styles.mark} aria-hidden="true">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <circle cx="10" cy="10" r="8.6" stroke="currentColor" strokeWidth="1" opacity="0.32" />
@@ -48,6 +56,11 @@ export default function TopNav() {
           </nav>
 
           <div className={styles.actions}>
+            {/* 胶囊右端的实心 CTA：与首屏主按钮同一套「实心胶囊」语言 */}
+            <a className={styles.cta} href={`mailto:${profileData.profile.email}`}>
+              发邮件
+            </a>
+
             <button
               type="button"
               className={styles.iconBtn}
