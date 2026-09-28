@@ -1,0 +1,46 @@
+{
+  "source": {
+    "url": "https://golangstar.cn/",
+    "extractedAt": "2026-09-28T10:36:12.325Z",
+    "extractor": "dembrandt"
+  },
+  "colors": {
+    "primary": "rgb(9, 111, 220)",
+    "palette": [
+      "rgb(9, 111, 220)"
+    ],
+    "cssVariables": {}
+  },
+  "typography": {
+    "headingFont": "-apple-system",
+    "bodyFont": "-apple-system"
+  },
+  "spacing": {
+    "scale": [
+      "2px",
+      "3.4px",
+      "4px",
+      "4.8px",
+      "5px",
+      "6px",
+      "8px",
+      "9.6px",
+      "10.4px",
+      "11.2px",
+      "12px",
+      "14px",
+      "16px",
+      "24px",
+      "28.8px",
+      "32px",
+      "48px",
+      "60px"
+    ]
+  },
+  "radius": {
+    "scale": []
+  },
+  "shadows": {
+    "scale": []
+  }
+}

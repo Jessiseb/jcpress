@@ -1,0 +1,40 @@
+# ---- 前端 ----
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
+
+# ---- 后端 ----
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
+
+# ---- 密钥与环境变量 ----
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.jks
+
+# ---- 日志与运行时 ----
+*.log
+logs/
+*.pid
+
+# ---- 编辑器与系统 ----
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# ---- 测试与覆盖率 ----
+coverage/
+.nyc_output/
+
+# ---- 上传文件（本地存储模式下不入库）----
+uploads/

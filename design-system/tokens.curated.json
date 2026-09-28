@@ -1,0 +1,157 @@
+{
+  "$comment": "Curated design tokens reverse-engineered from https://golangstar.cn/ (VuePress 2 + VuePress Theme Hope, MIT). Parsed from the site's author-declared CSS custom-property layer and cross-checked against .extract-design-system/raw.json. Starter layer for jcpress — review before treating as final.",
+  "source": {
+    "url": "https://golangstar.cn/",
+    "siteName": "秀才的进阶之路",
+    "stack": ["VuePress 2.0.0-rc.19", "VuePress Theme Hope 2.0.0-rc.66"],
+    "evidence": [
+      "author-declared CSS custom properties in /assets/style-*.css (192 root vars)",
+      "computed-style extraction in .extract-design-system/raw.json",
+      "article page DOM class inventory (/go_series/introduction.html)"
+    ],
+    "extractionTool": "extract-design-system (dembrandt)"
+  },
+  "color": {
+    "light": {
+      "accent": "#0756ab",
+      "accentBg": "#096fdc",
+      "accentHover": "#0a7bf5",
+      "accentSoft": "rgb(20 99 184 / 14%)",
+      "accentText": "#ffffff",
+      "bg": "#ffffff",
+      "bgAlt": "#f6f6f7",
+      "bgElv": "#ffffff",
+      "bgSoft": "rgb(255 255 255 / 90%)",
+      "text": "#3c3c43",
+      "textMute": "rgb(60 60 67 / 78%)",
+      "textSubtle": "rgb(60 60 67 / 56%)",
+      "border": "#c2c2c4",
+      "borderHard": "#b8b8ba",
+      "borderSoft": "#e2e2e3",
+      "shadowColor": "rgb(0 0 0 / 15%)",
+      "control": "rgb(142 150 170 / 10%)",
+      "controlHover": "rgb(142 150 170 / 16%)",
+      "controlDisabled": "#eaeaea"
+    },
+    "dark": {
+      "accent": "#2388f6",
+      "accentBg": "#0a75e9",
+      "accentHover": "#096fdc",
+      "accentSoft": "rgb(20 99 184 / 16%)",
+      "bg": "#1b1b1f",
+      "bgAlt": "#161618",
+      "bgElv": "#202127",
+      "bgSoft": "rgb(27 27 31 / 90%)",
+      "text": "rgb(235 235 245 / 86%)",
+      "textMute": "rgb(235 235 245 / 60%)",
+      "textSubtle": "rgb(235 235 245 / 38%)",
+      "border": "#3c3f44",
+      "borderHard": "#45484e",
+      "borderSoft": "#000000",
+      "shadowColor": "rgb(0 0 0 / 30%)",
+      "control": "rgb(101 117 133 / 12%)",
+      "controlHover": "rgb(101 117 133 / 18%)",
+      "controlDisabled": "#363636"
+    },
+    "status": {
+      "grey": { "text": "#656869", "hover": "#e4e4e9", "bg": "#ebebef", "soft": "rgb(142 150 170 / 14%)" },
+      "blue": { "text": "#2888a7", "hover": "#2d98ba", "bg": "#2fa1c5", "soft": "rgb(27 178 229 / 14%)" },
+      "green": { "text": "#18794e", "hover": "#299764", "bg": "#30a46c", "soft": "rgb(16 185 129 / 14%)" },
+      "yellow": { "text": "#915930", "hover": "#946300", "bg": "#c28100", "soft": "rgb(234 179 8 / 14%)" },
+      "red": { "text": "#b8272c", "hover": "#d5393e", "bg": "#e0575b", "soft": "rgb(244 63 94 / 14%)" },
+      "purple": { "text": "#6f42c1", "hover": "#7e4cc9", "bg": "#8e5cd9", "soft": "rgb(159 122 234 / 14%)" },
+      "indigo": { "text": "#3451b2", "bg": "#5672cd" }
+    },
+    "gradientHero": {
+      "light": "linear-gradient(120deg, #0a7bf5, #0756ab 30%, #5c07ab 100%)",
+      "dark": "linear-gradient(120deg, #096fdc, #2388f6 30%, #9023f6 100%)"
+    }
+  },
+  "typography": {
+    "fontSans": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', STHeiti, 'Microsoft YaHei', SimSun, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'",
+    "fontMono": "Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace",
+    "sizes": {
+      "hero": "3.6rem",
+      "h1": "2rem",
+      "h2": "1.65rem",
+      "h3": "1.25rem",
+      "lead": "1.125rem",
+      "body": "1rem",
+      "sm": "0.875rem",
+      "xs": "0.75rem",
+      "code": "0.875rem"
+    },
+    "lineHeights": { "tight": 1.25, "hero": 1.5, "body": 1.7, "code": 1.6 },
+    "weights": { "regular": 400, "medium": 500, "semibold": 600, "bold": 700 },
+    "responsiveHeadingSteps": {
+      "hero": { "base": "3.6rem", "max959": "2.5rem", "max719": "2.25rem", "max419": "2rem" },
+      "sectionHeader": { "base": "3rem", "max959": "2.5rem", "max719": "2.25rem", "max419": "2rem" }
+    },
+    "note": "The extracted headingFont 'bodyFont: -apple-system' is the computed family only; the declared stack above is authoritative and keeps CJK fallbacks after the Latin faces."
+  },
+  "spacing": {
+    "base": "4px",
+    "scale": ["0.25rem", "0.5rem", "0.75rem", "1rem", "1.5rem", "2rem", "3rem"]
+  },
+  "radius": {
+    "xs": "2px",
+    "sm": "4px",
+    "md": "6px",
+    "lg": "8px",
+    "xl": "10px",
+    "pill": "40px",
+    "full": "9999px"
+  },
+  "shadows": {
+    "xs": "0 2px 8px rgb(0 0 0 / 5%)",
+    "sm": "0 2px 12px var(--ds-c-shadow-color)",
+    "md": "0 12px 30px rgb(15 23 42 / 12%)",
+    "lg": "0 18px 45px rgb(15 23 42 / 16%)",
+    "accent": "0 8px 18px rgb(37 99 235 / 20%)",
+    "hover": "0 4px 12px rgb(0 0 0 / 10%)"
+  },
+  "motion": { "duration": "0.3s", "easing": "ease", "tokens": ["--ds-t-color", "--ds-t-transform"] },
+  "layout": {
+    "navbarHeight": "3.75rem",
+    "navbarPaddingX": "1.5rem",
+    "navbarPaddingY": "0.7rem",
+    "sidebarWidth": "18rem",
+    "contentWidth": "780px",
+    "pageWidth": "1160px",
+    "breakpoints": ["419px", "600px", "719px", "750px", "768px", "959px", "1100px", "1200px", "1280px", "1440px"]
+  },
+  "components": {
+    "featureCard": {
+      "flexBasis": "calc(33% - 3rem)",
+      "margin": "0.5rem",
+      "padding": "1rem",
+      "borderRadius": "0.5rem",
+      "transition": "background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease",
+      "hover": "translateY(-1px) + accent-tinted shadow",
+      "gridNote": "3-up at desktop, wrapping flex; 1440px+ widens the basis"
+    },
+    "searchField": { "height": "56px", "borderRadius": "40px", "shadow": "inset 0 0 0 2px var(--ds-c-accent-soft)" },
+    "codeBlock": {
+      "radius": "6px",
+      "padding": "1rem 1.25rem",
+      "fontSize": "14px",
+      "lineHeight": 1.6,
+      "lineNumberWidth": "3rem"
+    },
+    "iconButton": { "background": "var(--ds-c-control)", "borderRadius": "8px", "hoverBackground": "var(--ds-c-control-hover)" },
+    "navLink": {
+      "fontSize": "0.875rem",
+      "fontWeight": 400,
+      "lineHeight": "1.7rem",
+      "color": "var(--ds-c-text)",
+      "activeOrHover": "var(--ds-c-accent)",
+      "dropdownTitleWeight": 500
+    }
+  },
+  "gaps": [
+    "Automated pass captured only 1 palette colour, no radius/shadow scale, and no dark-mode variant; those sections come from manual CSS parsing.",
+    "Hover/active/focus states were sampled per-element, not per-component-state matrix — verify in-browser before freezing component tokens.",
+    "Comment widget, search modal internals (DocSearch), and print styles were not reverse-engineered.",
+    "No image/illustration style, icon-grid spacing, or animation choreography beyond transitions."
+  ]
+}

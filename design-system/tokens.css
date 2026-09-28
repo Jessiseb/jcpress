@@ -1,0 +1,23 @@
+:root {
+  --color-primary: rgb(9, 111, 220);
+  --font-heading: -apple-system;
+  --font-body: -apple-system;
+  --space-1: 2px;
+  --space-2: 3.4px;
+  --space-3: 4px;
+  --space-4: 4.8px;
+  --space-5: 5px;
+  --space-6: 6px;
+  --space-7: 8px;
+  --space-8: 9.6px;
+  --space-9: 10.4px;
+  --space-10: 11.2px;
+  --space-11: 12px;
+  --space-12: 14px;
+  --space-13: 16px;
+  --space-14: 24px;
+  --space-15: 28.8px;
+  --space-16: 32px;
+  --space-17: 48px;
+  --space-18: 60px;
+}

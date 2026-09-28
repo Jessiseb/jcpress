@@ -1,0 +1,1149 @@
+{
+  "url": "https://golangstar.cn/",
+  "extractedAt": "2026-09-28T10:36:12.325Z",
+  "siteName": "秀才的进阶之路",
+  "logo": {
+    "source": "img",
+    "url": "https://golangstar.cn/web_logo2.png",
+    "width": 1728,
+    "height": 1728,
+    "alt": "",
+    "safeZone": {
+      "top": 0,
+      "right": 12.8,
+      "bottom": 0,
+      "left": 0
+    },
+    "background": "rgba(255, 255, 255, 0.9)"
+  },
+  "favicons": [
+    {
+      "type": "icon",
+      "url": "https://golangstar.cn/favicon.ico",
+      "sizes": null
+    },
+    {
+      "type": "shortcut icon",
+      "url": "https://golangstar.cn/favicon.ico",
+      "sizes": null
+    },
+    {
+      "type": "icon",
+      "url": "https://golangstar.cn/web_logo2.png",
+      "sizes": "32x32"
+    },
+    {
+      "type": "icon",
+      "url": "https://golangstar.cn/web_logo2.png",
+      "sizes": "16x16"
+    },
+    {
+      "type": "apple-touch-icon",
+      "url": "https://golangstar.cn/web_logo2.png",
+      "sizes": null
+    },
+    {
+      "type": "apple-touch-icon",
+      "url": "https://golangstar.cn/web_logo2.png",
+      "sizes": null
+    }
+  ],
+  "colors": {
+    "semantic": {
+      "primary": "rgb(9, 111, 220)"
+    },
+    "palette": [
+      {
+        "color": "rgb(60, 60, 67)",
+        "normalized": "#3c3c43",
+        "count": 125,
+        "confidence": "high",
+        "sources": [
+          "theme-container",
+          "vp-navbar",
+          "vp-nav-links"
+        ],
+        "lch": "lch(25.56% 4.6 291.12)",
+        "oklch": "oklch(35.88% 0.012 285.78)"
+      },
+      {
+        "color": "rgb(255, 255, 255)",
+        "normalized": "#ffffff",
+        "count": 29,
+        "confidence": "high",
+        "sources": [
+          "vp-skip-link",
+          "vp-navbar",
+          "docsearch-button-key"
+        ],
+        "lch": "lch(100% 0 158.2)",
+        "oklch": "oklch(100% 0 89.88)"
+      },
+      {
+        "color": "rgb(100, 116, 139)",
+        "normalized": "#64748b",
+        "count": 24,
+        "confidence": "high",
+        "sources": [
+          "docsearch",
+          "docsearch-button-container",
+          "docsearch-button-placeholder"
+        ],
+        "lch": "lch(48.34% 14.51 268.68)",
+        "oklch": "oklch(55.44% 0.041 257.42)"
+      },
+      {
+        "color": "rgb(10, 123, 245)",
+        "normalized": "#0a7bf5",
+        "count": 1,
+        "confidence": "medium",
+        "sources": [
+          "hover/focus"
+        ]
+      },
+      {
+        "color": "rgb(230, 240, 255)",
+        "normalized": "#e6f0ff",
+        "count": 1,
+        "confidence": "medium",
+        "sources": [
+          "hover/focus"
+        ]
+      }
+    ],
+    "cssVariables": {
+      "--vp-c-indigo-bg": {
+        "value": "#5672cd",
+        "lch": "lch(50% 53.2 288.82)",
+        "oklch": "oklch(57.51% 0.144 268.72)"
+      },
+      "--back-to-top-c-accent-bg": {
+        "value": "rgb(9.139380531, 110.6880530973, 220.360619469)"
+      },
+      "--badge-c-important-bg": {
+        "value": "rgb(159 122 234 / 14%)"
+      },
+      "--vp-c-red-text": {
+        "value": "#b8272c",
+        "lch": "lch(40.94% 66.14 31.15)",
+        "oklch": "oklch(51.28% 0.181 24.9)"
+      },
+      "--badge-c-important-text": {
+        "value": "#6f42c1",
+        "lch": "lch(39.79% 76.24 308.37)",
+        "oklch": "oklch(50.15% 0.188 294.99)"
+      },
+      "--container-c-bg-header": {
+        "value": "#eee",
+        "lch": "lch(94.1% 0 158.2)",
+        "oklch": "oklch(94.91% 0 89.88)"
+      },
+      "--vp-c-blue-bg": {
+        "value": "#2fa1c5",
+        "lch": "lch(61.76% 33.5 235.07)",
+        "oklch": "oklch(66.24% 0.111 223.9)"
+      },
+      "--tip-c-text": {
+        "value": "#18794e",
+        "lch": "lch(44.83% 41.08 157)",
+        "oklch": "oklch(51.14% 0.11 158.44)"
+      },
+      "--vp-c-accent-text": {
+        "value": "#fff",
+        "lch": "lch(100% 0 158.2)",
+        "oklch": "oklch(100% 0 89.88)"
+      },
+      "--code-c-highlight-bg": {
+        "value": "rgb(215.75625, 233.00625, 245.94375)"
+      },
+      "--vp-c-blue-text": {
+        "value": "#2888a7",
+        "lch": "lch(52.78% 29.48 235.49)",
+        "oklch": "oklch(58.6% 0.098 224.23)"
+      },
+      "--balloon-color": {
+        "value": "rgba(16, 16, 16, .95)",
+        "lch": "lch(4.68% 0 158.2 / 0.95)",
+        "oklch": "oklch(17.3% 0 89.88 / 0.95)"
+      },
+      "--badge-c-warning-text": {
+        "value": "#915930",
+        "lch": "lch(43.33% 38.05 59.87)",
+        "oklch": "oklch(51.85% 0.093 55.18)"
+      },
+      "--vp-c-red-bg": {
+        "value": "#e0575b",
+        "lch": "lch(55.51% 59.66 25.87)",
+        "oklch": "oklch(63.71% 0.171 21.65)"
+      },
+      "--vp-c-indigo-text": {
+        "value": "#3451b2",
+        "lch": "lch(37.53% 59.39 292.57)",
+        "oklch": "oklch(46.99% 0.158 267.41)"
+      },
+      "--quote-border-color": {
+        "value": "rgb(7, 86, 171)",
+        "lch": "lch(37.19% 52.85 283.84)",
+        "oklch": "oklch(46.22% 0.153 255.89)"
+      },
+      "--badge-c-tip-bg": {
+        "value": "rgb(16 185 129 / 14%)"
+      },
+      "--docsearch-primary-color": {
+        "value": "rgb(7.1084070796, 86.0907079646, 171.3915929204)"
+      },
+      "--vp-c-green-bg": {
+        "value": "#30a46c",
+        "lch": "lch(60.12% 49.53 156.17)",
+        "oklch": "oklch(64.06% 0.133 157.68)"
+      },
+      "--badge-c-warning-bg": {
+        "value": "rgb(234 179 8 / 14%)"
+      },
+      "--vp-c-purple-bg": {
+        "value": "#8e5cd9",
+        "lch": "lch(50% 73.37 309.08)",
+        "oklch": "oklch(58.85% 0.185 299.08)"
+      },
+      "--docsearch-logo-color": {
+        "value": "#5468ff",
+        "lch": "lch(50.69% 87 297.22)",
+        "oklch": "oklch(59.06% 0.223 271.9)"
+      },
+      "--badge-c-danger-bg": {
+        "value": "rgb(244 63 94 / 14%)"
+      },
+      "--badge-c-info-bg": {
+        "value": "rgb(27 178 229 / 14%)"
+      },
+      "--vp-c-yellow-bg": {
+        "value": "#c28100",
+        "lch": "lch(59.13% 67.17 75.37)",
+        "oklch": "oklch(65.39% 0.139 73.76)"
+      },
+      "--badge-c-note-bg": {
+        "value": "rgb(142 150 170 / 14%)"
+      }
+    },
+    "_raw": [
+      {
+        "color": "rgb(255, 255, 255)",
+        "normalized": "#ffffff",
+        "count": 29
+      },
+      {
+        "color": "rgb(60, 60, 67)",
+        "normalized": "#3c3c43",
+        "count": 125
+      },
+      {
+        "color": "rgb(7, 86, 171)",
+        "normalized": "#0756ab",
+        "count": 46
+      },
+      {
+        "color": "rgb(100, 116, 139)",
+        "normalized": "#64748b",
+        "count": 24
+      },
+      {
+        "color": "rgb(30, 41, 59)",
+        "normalized": "#1e293b",
+        "count": 12
+      },
+      {
+        "color": "rgb(226, 232, 240)",
+        "normalized": "#e2e8f0",
+        "count": 10
+      },
+      {
+        "color": "rgb(51, 51, 51)",
+        "normalized": "#333333",
+        "count": 12
+      },
+      {
+        "color": "rgb(74, 85, 104)",
+        "normalized": "#4a5568",
+        "count": 7
+      },
+      {
+        "color": "rgb(71, 85, 105)",
+        "normalized": "#475569",
+        "count": 31
+      },
+      {
+        "color": "rgb(22, 119, 255)",
+        "normalized": "#1677ff",
+        "count": 8
+      },
+      {
+        "color": "rgb(7, 193, 96)",
+        "normalized": "#07c160",
+        "count": 8
+      },
+      {
+        "color": "rgb(249, 115, 22)",
+        "normalized": "#f97316",
+        "count": 8
+      },
+      {
+        "color": "rgb(139, 92, 246)",
+        "normalized": "#8b5cf6",
+        "count": 8
+      }
+    ]
+  },
+  "typography": {
+    "styles": [
+      {
+        "context": "heading-1",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, STHeiti, Microsoft YaHei, SimSun, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji",
+        "size": "57.6px (3.60rem)",
+        "weight": 700,
+        "lineHeight": "1.50",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "heading-1",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "32px (2.00rem)",
+        "weight": 400,
+        "lineHeight": null,
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "heading-1",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "26.4px (1.65rem)",
+        "weight": 700,
+        "lineHeight": "1.25",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "link",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "26.4px (1.65rem)",
+        "weight": 500,
+        "lineHeight": "1.25",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "heading-1",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "26.4px (1.65rem)",
+        "weight": 500,
+        "lineHeight": "1.25",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "heading-1",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "25.6px (1.60rem)",
+        "weight": 500,
+        "lineHeight": "1.30",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "heading-1",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, STHeiti, Microsoft YaHei, SimSun, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji",
+        "size": "20.8px (1.30rem)",
+        "weight": 600,
+        "lineHeight": "1.25",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "heading-1",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "20px (1.25rem)",
+        "weight": 500,
+        "lineHeight": "1.88",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "heading-1",
+        "family": "Arial",
+        "fallbacks": null,
+        "size": "20px (1.25rem)",
+        "weight": 400,
+        "lineHeight": "1.00",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "link",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "19.2px (1.20rem)",
+        "weight": 500,
+        "lineHeight": "1.60",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "heading-1",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "19.2px (1.20rem)",
+        "weight": 500,
+        "lineHeight": "1.60",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "heading-1",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "17px (1.06rem)",
+        "weight": 400,
+        "lineHeight": null,
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "link",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "17px (1.06rem)",
+        "weight": 500,
+        "lineHeight": "2.21",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "heading-1",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "17px (1.06rem)",
+        "weight": 500,
+        "lineHeight": "1.40",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "link",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "16px (1.00rem)",
+        "weight": 500,
+        "lineHeight": "1.80",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "link",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "15.3px (0.96rem)",
+        "weight": 700,
+        "lineHeight": null,
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "heading-1",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "15px (0.94rem)",
+        "weight": 800,
+        "lineHeight": "1.35",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "link",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "14px (0.88rem)",
+        "weight": 500,
+        "lineHeight": "2.29",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "caption",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "14px (0.88rem)",
+        "weight": 500,
+        "lineHeight": "2.29",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "caption",
+        "family": "Arial",
+        "fallbacks": null,
+        "size": "14px (0.88rem)",
+        "weight": 500,
+        "lineHeight": null,
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "button",
+        "family": "Arial",
+        "fallbacks": null,
+        "size": "13.3333px (0.83rem)",
+        "weight": 400,
+        "lineHeight": null,
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "button",
+        "family": "Arial",
+        "fallbacks": null,
+        "size": "13.3333px (0.83rem)",
+        "weight": 500,
+        "lineHeight": null,
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "caption",
+        "family": "Arial",
+        "fallbacks": null,
+        "size": "13.3333px (0.83rem)",
+        "weight": 500,
+        "lineHeight": null,
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "caption",
+        "family": "Arial",
+        "fallbacks": null,
+        "size": "13.3333px (0.83rem)",
+        "weight": 400,
+        "lineHeight": null,
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "link",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "13px (0.81rem)",
+        "weight": 800,
+        "lineHeight": "1.20",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "caption",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "13px (0.81rem)",
+        "weight": 800,
+        "lineHeight": "1.20",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "caption",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "12px (0.75rem)",
+        "weight": 400,
+        "lineHeight": "1.55",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "caption",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "12px (0.75rem)",
+        "weight": 700,
+        "lineHeight": "1.30",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "caption",
+        "family": "Arial",
+        "fallbacks": null,
+        "size": "11px (0.69rem)",
+        "weight": 700,
+        "lineHeight": "1.18",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "caption",
+        "family": "-apple-system",
+        "fallbacks": "system-ui, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue",
+        "size": "11px (0.69rem)",
+        "weight": 700,
+        "lineHeight": "1.18",
+        "spacing": null,
+        "transform": null
+      }
+    ],
+    "sources": {
+      "googleFonts": [],
+      "adobeFonts": false,
+      "variableFonts": false
+    }
+  },
+  "spacing": {
+    "scaleType": "8px",
+    "commonValues": [
+      {
+        "px": "2px",
+        "rem": "0.13rem",
+        "count": 2,
+        "numericValue": 2
+      },
+      {
+        "px": "3.4px",
+        "rem": "0.21rem",
+        "count": 2,
+        "numericValue": 3.4
+      },
+      {
+        "px": "4px",
+        "rem": "0.25rem",
+        "count": 6,
+        "numericValue": 4
+      },
+      {
+        "px": "4.8px",
+        "rem": "0.30rem",
+        "count": 1,
+        "numericValue": 4.8
+      },
+      {
+        "px": "5px",
+        "rem": "0.31rem",
+        "count": 4,
+        "numericValue": 5
+      },
+      {
+        "px": "6px",
+        "rem": "0.38rem",
+        "count": 8,
+        "numericValue": 6
+      },
+      {
+        "px": "8px",
+        "rem": "0.50rem",
+        "count": 31,
+        "numericValue": 8
+      },
+      {
+        "px": "9.6px",
+        "rem": "0.60rem",
+        "count": 2,
+        "numericValue": 9.6
+      },
+      {
+        "px": "10.4px",
+        "rem": "0.65rem",
+        "count": 2,
+        "numericValue": 10.4
+      },
+      {
+        "px": "11.2px",
+        "rem": "0.70rem",
+        "count": 2,
+        "numericValue": 11.2
+      },
+      {
+        "px": "12px",
+        "rem": "0.75rem",
+        "count": 6,
+        "numericValue": 12
+      },
+      {
+        "px": "14px",
+        "rem": "0.88rem",
+        "count": 8,
+        "numericValue": 14
+      },
+      {
+        "px": "16px",
+        "rem": "1.00rem",
+        "count": 10,
+        "numericValue": 16
+      },
+      {
+        "px": "24px",
+        "rem": "1.50rem",
+        "count": 13,
+        "numericValue": 24
+      },
+      {
+        "px": "28.8px",
+        "rem": "1.80rem",
+        "count": 4,
+        "numericValue": 28.8
+      },
+      {
+        "px": "32px",
+        "rem": "2.00rem",
+        "count": 1,
+        "numericValue": 32
+      },
+      {
+        "px": "48px",
+        "rem": "3.00rem",
+        "count": 1,
+        "numericValue": 48
+      },
+      {
+        "px": "60px",
+        "rem": "3.75rem",
+        "count": 2,
+        "numericValue": 60
+      }
+    ]
+  },
+  "borderRadius": {
+    "values": [
+      {
+        "value": "0px 0px 0px 8px",
+        "count": 1,
+        "elements": [
+          "AI项目：智能客服"
+        ],
+        "confidence": "low",
+        "numericValue": 0
+      },
+      {
+        "value": "0.85px",
+        "count": 1,
+        "elements": [
+          "span"
+        ],
+        "confidence": "low",
+        "numericValue": 0.85
+      },
+      {
+        "value": "3px",
+        "count": 2,
+        "elements": [
+          "kbd"
+        ],
+        "confidence": "low",
+        "numericValue": 3
+      },
+      {
+        "value": "6px",
+        "count": 4,
+        "elements": [
+          "img",
+          "AI项目：模拟面试官",
+          "AI项目：智能客服"
+        ],
+        "confidence": "medium",
+        "numericValue": 6
+      },
+      {
+        "value": "8px",
+        "count": 9,
+        "elements": [
+          "a",
+          "🎯 Go语言从入门到面试",
+          "📚 后端架构进阶",
+          "⭐ AI进阶实战",
+          "🔥 Agent项目实战"
+        ],
+        "confidence": "medium",
+        "numericValue": 8
+      },
+      {
+        "value": "8px 0px 0px 8px",
+        "count": 1,
+        "elements": [
+          "站点联系入口"
+        ],
+        "confidence": "low",
+        "numericValue": 8
+      },
+      {
+        "value": "8px 0px 0px",
+        "count": 1,
+        "elements": [
+          "学习交流群"
+        ],
+        "confidence": "low",
+        "numericValue": 8
+      },
+      {
+        "value": "32px",
+        "count": 1,
+        "elements": [
+          "开始学习→"
+        ],
+        "confidence": "low",
+        "numericValue": 32
+      },
+      {
+        "value": "40px",
+        "count": 1,
+        "elements": [
+          "搜索文档"
+        ],
+        "confidence": "low",
+        "numericValue": 40
+      }
+    ]
+  },
+  "borders": {
+    "combinations": [
+      {
+        "width": "1px",
+        "style": "solid",
+        "color": "rgb(226, 232, 240)",
+        "count": 8,
+        "elements": [
+          "a",
+          "div"
+        ],
+        "confidence": "medium"
+      },
+      {
+        "width": "0px 0px 1px",
+        "style": "none none solid",
+        "color": "rgb(71, 85, 105)",
+        "count": 3,
+        "elements": [
+          "button",
+          "a"
+        ],
+        "confidence": "low"
+      },
+      {
+        "width": "1px 0px 0px",
+        "style": "solid none none",
+        "color": "rgb(194, 194, 196)",
+        "count": 2,
+        "elements": [
+          "div",
+          "footer"
+        ],
+        "confidence": "low"
+      },
+      {
+        "width": "1px",
+        "style": "solid",
+        "color": "rgb(238, 242, 247)",
+        "count": 2,
+        "elements": [
+          "img"
+        ],
+        "confidence": "low"
+      },
+      {
+        "width": "0px 0px 1px",
+        "style": "none none solid",
+        "color": "rgb(74, 85, 104)",
+        "count": 1,
+        "elements": [
+          "h2"
+        ],
+        "confidence": "low"
+      },
+      {
+        "width": "1px 0px 1px 1px",
+        "style": "solid none solid solid",
+        "color": "rgb(226, 232, 240)",
+        "count": 1,
+        "elements": [
+          "aside"
+        ],
+        "confidence": "low"
+      }
+    ]
+  },
+  "shadows": [
+    {
+      "shadow": "rgba(0, 0, 0, 0.05) 0px 2px 8px 0px",
+      "count": 4,
+      "confidence": "medium"
+    },
+    {
+      "shadow": "rgba(15, 23, 42, 0.16) 0px 18px 45px 0px",
+      "count": 4,
+      "confidence": "medium"
+    },
+    {
+      "shadow": "rgba(37, 99, 235, 0.2) 0px 8px 18px 0px",
+      "count": 2,
+      "confidence": "low"
+    },
+    {
+      "shadow": "rgba(0, 0, 0, 0.15) 0px 2px 8px 0px",
+      "count": 1,
+      "confidence": "low"
+    },
+    {
+      "shadow": "rgba(15, 23, 42, 0.12) 0px 12px 30px 0px",
+      "count": 1,
+      "confidence": "low"
+    }
+  ],
+  "components": {
+    "buttons": [
+      {
+        "states": {
+          "default": {
+            "backgroundColor": "rgba(142, 150, 170, 0.14)",
+            "color": "rgb(100, 116, 139)",
+            "padding": "0px 8px",
+            "borderRadius": "40px",
+            "border": "0px none rgb(100, 116, 139)",
+            "boxShadow": "none",
+            "outline": "rgb(100, 116, 139) none 3px",
+            "transform": "none",
+            "opacity": "1"
+          },
+          "hover": {
+            "backgroundColor": "rgba(0, 0, 0, 0.2)",
+            "color": "var(--docsearch-highlight-color)",
+            "opacity": "1",
+            "boxShadow": "rgba(59, 130, 246, 0.15) 0px 4px 12px",
+            "border": "0px",
+            "outline": "none",
+            "transform": "translateY(-1px)"
+          },
+          "active": {
+            "backgroundColor": "initial",
+            "boxShadow": "var(--docsearch-searchbox-shadow)",
+            "border": "0px",
+            "opacity": "1",
+            "color": "var(--docsearch-text-color)",
+            "outline": "none"
+          },
+          "focus": {
+            "opacity": "1",
+            "backgroundColor": "rgba(0, 0, 0, 0.2)",
+            "boxShadow": "var(--docsearch-searchbox-shadow)",
+            "border": "0px",
+            "color": "var(--docsearch-text-color)",
+            "outline": "rgba(59, 130, 246, 0.45) solid 3px"
+          }
+        },
+        "fontWeight": "500",
+        "fontSize": "13.3333px",
+        "classes": "DocSearch DocSearch-Button",
+        "confidence": "high"
+      },
+      {
+        "states": {
+          "default": {
+            "backgroundColor": "rgba(255, 255, 255, 0.96)",
+            "color": "rgb(71, 85, 105)",
+            "padding": "8px 6px",
+            "borderRadius": "8px 0px 0px",
+            "border": "0px 0px 1px none none solid rgb(71, 85, 105) rgb(71, 85, 105) rgb(226, 232, 240)",
+            "boxShadow": "none",
+            "outline": "rgb(71, 85, 105) none 3px",
+            "transform": "none",
+            "opacity": "1"
+          },
+          "hover": {
+            "backgroundColor": "rgba(51, 65, 85, 0.98)",
+            "color": "rgb(147, 197, 253)",
+            "opacity": "1",
+            "boxShadow": "rgba(37, 99, 235, 0.65) 3px 0px inset",
+            "border": "0px",
+            "transform": "translateY(-1px)"
+          },
+          "active": {
+            "backgroundColor": "initial",
+            "boxShadow": "none",
+            "border": "0px",
+            "opacity": "1"
+          },
+          "focus": {
+            "opacity": "1",
+            "backgroundColor": "rgba(51, 65, 85, 0.98)",
+            "boxShadow": "rgba(37, 99, 235, 0.65) 3px 0px inset",
+            "border": "0px",
+            "color": "rgb(147, 197, 253)",
+            "outline": "rgba(59, 130, 246, 0.45) solid 3px"
+          }
+        },
+        "fontWeight": "400",
+        "fontSize": "13.3333px",
+        "classes": "right-promo-trigger",
+        "confidence": "high"
+      }
+    ],
+    "inputs": {
+      "text": [],
+      "checkbox": [],
+      "radio": [],
+      "select": []
+    },
+    "links": [
+      {
+        "color": "rgb(7, 86, 171)",
+        "textDecoration": "none",
+        "fontWeight": "700",
+        "states": {
+          "default": {
+            "color": "rgb(7, 86, 171)",
+            "textDecoration": "none"
+          },
+          "hover": {
+            "color": "var(--theme-color)"
+          }
+        }
+      },
+      {
+        "color": "rgb(60, 60, 67)",
+        "textDecoration": "none",
+        "fontWeight": "500",
+        "states": {
+          "default": {
+            "color": "rgb(60, 60, 67)",
+            "textDecoration": "none"
+          },
+          "hover": {
+            "color": "var(--theme-color)"
+          }
+        }
+      },
+      {
+        "color": "rgb(255, 255, 255)",
+        "textDecoration": "none",
+        "fontWeight": "500",
+        "states": {
+          "default": {
+            "color": "rgb(255, 255, 255)",
+            "textDecoration": "none"
+          },
+          "hover": {
+            "color": "var(--theme-color)"
+          }
+        }
+      },
+      {
+        "color": "rgb(74, 85, 104)",
+        "textDecoration": "none",
+        "fontWeight": "500",
+        "states": {
+          "default": {
+            "color": "rgb(74, 85, 104)",
+            "textDecoration": "none"
+          },
+          "hover": {
+            "textDecoration": "underline",
+            "color": "var(--theme-color)"
+          }
+        }
+      },
+      {
+        "color": "rgb(59, 130, 246)",
+        "textDecoration": "none",
+        "fontWeight": "500",
+        "states": {
+          "default": {
+            "color": "rgb(59, 130, 246)",
+            "textDecoration": "none"
+          },
+          "hover": {
+            "color": "var(--theme-color)"
+          }
+        }
+      },
+      {
+        "color": "rgb(71, 85, 105)",
+        "textDecoration": "none",
+        "fontWeight": "500",
+        "states": {
+          "default": {
+            "color": "rgb(71, 85, 105)",
+            "textDecoration": "none"
+          },
+          "hover": {
+            "color": "rgb(147, 197, 253)"
+          }
+        }
+      }
+    ],
+    "badges": {
+      "all": [],
+      "byVariant": {
+        "error": [],
+        "warning": [],
+        "success": [],
+        "info": [],
+        "neutral": []
+      }
+    }
+  },
+  "breakpoints": [
+    {
+      "px": "419px"
+    },
+    {
+      "px": "600px"
+    },
+    {
+      "px": "719px"
+    },
+    {
+      "px": "750px"
+    },
+    {
+      "px": "768px"
+    },
+    {
+      "px": "959px"
+    },
+    {
+      "px": "1100px"
+    },
+    {
+      "px": "1200px"
+    },
+    {
+      "px": "1280px"
+    },
+    {
+      "px": "1440px"
+    }
+  ],
+  "iconSystem": [
+    {
+      "name": "Font Awesome",
+      "type": "icon-font"
+    },
+    {
+      "name": "SVG Icons",
+      "type": "svg"
+    }
+  ],
+  "frameworks": [
+    {
+      "name": "PrimeReact/Vue/NG",
+      "confidence": "high",
+      "evidence": "53 Prime components"
+    },
+    {
+      "name": "Element Plus/UI",
+      "confidence": "high",
+      "evidence": "6 el- components"
+    }
+  ]
+}

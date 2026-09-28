@@ -1,0 +1,160 @@
+/* ==========================================================================
+   jcpress design tokens — curated from https://golangstar.cn/
+   --------------------------------------------------------------------------
+   Source of truth: the site's author-declared CSS custom-property layer
+   (VuePress 2 + VuePress Theme Hope, both MIT licensed), parsed from
+   /assets/style-*.css. Values were also cross-checked against the
+   computed-style pass in .extract-design-system/raw.json.
+   Prefix: --ds- (design system). Rename to your own brand prefix once the
+   palette is finalized — these are a starter layer, not a finished system.
+   ========================================================================== */
+
+:root,
+[data-theme='light'] {
+  /* ---------- brand / accent (the site's single accent hue: blue) ---------- */
+  --ds-c-accent: #0756ab;             /* rgb(7.11 86.09 171.39)  solid accent, links, quote border */
+  --ds-c-accent-bg: #096fdc;          /* rgb(9.14 110.69 220.36) button / filled accent bg */
+  --ds-c-accent-hover: #0a7bf5;       /* rgb(10.15 122.99 244.85) hover + focus state */
+  --ds-c-accent-soft: rgb(20 99 184 / 14%);  /* tinted wash for badges, active nav */
+  --ds-c-accent-text: #fff;           /* text on accent background */
+
+  /* ---------- neutral surface / text ---------- */
+  --ds-c-bg: #fff;
+  --ds-c-bg-alt: #f6f6f7;             /* section striping, code block bg */
+  --ds-c-bg-elv: #fff;                /* elevated card surface */
+  --ds-c-bg-soft: rgb(255 255 255 / 90%);   /* translucent navbar / overlay */
+  --ds-c-bg-elv-soft: rgb(255 255 255 / 90%);
+  --ds-c-text: #3c3c43;               /* rgb(60 60 67) body text */
+  --ds-c-text-mute: rgb(60 60 67 / 78%);
+  --ds-c-text-subtle: rgb(60 60 67 / 56%);
+  --ds-c-border: #c2c2c4;
+  --ds-c-border-hard: #b8b8ba;        /* rgb(184.09 184.09 186.41) */
+  --ds-c-border-soft: #e2e2e3;        /* hairline dividers (was --vp-c-gutter) */
+  --ds-c-shadow-color: rgb(0 0 0 / 15%);
+  --ds-c-control: rgb(142 150 170 / 10%);        /* icon button, kbd, chip bg */
+  --ds-c-control-hover: rgb(142 150 170 / 16%);
+  --ds-c-control-disabled: #eaeaea;
+
+  /* ---------- status palette (text / hover / bg / soft per hue) ---------- */
+  --ds-c-grey-text: #656869;   --ds-c-grey-hover: #e4e4e9;   --ds-c-grey-bg: #ebebef;   --ds-c-grey-soft: rgb(142 150 170 / 14%);
+  --ds-c-blue-text: #2888a7;   --ds-c-blue-hover: #2d98ba;   --ds-c-blue-bg: #2fa1c5;   --ds-c-blue-soft: rgb(27 178 229 / 14%);
+  --ds-c-green-text: #18794e;  --ds-c-green-hover: #299764;  --ds-c-green-bg: #30a46c;  --ds-c-green-soft: rgb(16 185 129 / 14%);
+  --ds-c-yellow-text: #915930; --ds-c-yellow-hover: #946300; --ds-c-yellow-bg: #c28100; --ds-c-yellow-soft: rgb(234 179 8 / 14%);
+  --ds-c-red-text: #b8272c;    --ds-c-red-hover: #d5393e;    --ds-c-red-bg: #e0575b;    --ds-c-red-soft: rgb(244 63 94 / 14%);
+  --ds-c-purple-text: #6f42c1; --ds-c-purple-hover: #7e4cc9; --ds-c-purple-bg: #8e5cd9; --ds-c-purple-soft: rgb(159 122 234 / 14%);
+  --ds-c-indigo-text: #3451b2; --ds-c-indigo-bg: #5672cd;
+
+  /* ---------- signature hero gradient (blue -> violet, clipped to text) ---------- */
+  --ds-gradient-hero: linear-gradient(120deg, var(--ds-c-accent-hover), var(--ds-c-accent) 30%, #5c07ab 100%);
+
+  /* ---------- typography ---------- */
+  --ds-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', STHeiti, 'Microsoft YaHei', SimSun, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';   /* keeps CJK fallbacks last */
+  --ds-font-mono: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+
+  --ds-fs-hero: 3.6rem;      /* 57.6px  homepage hero title */
+  --ds-fs-h1: 2rem;          /* 32px */
+  --ds-fs-h2: 1.65rem;       /* 26.4px */
+  --ds-fs-h3: 1.25rem;       /* 20px  section headers */
+  --ds-fs-lead: 1.125rem;    /* 18px  hero / section description */
+  --ds-fs-body: 1rem;        /* 16px */
+  --ds-fs-sm: 0.875rem;      /* 14px  nav links, card body */
+  --ds-fs-xs: 0.75rem;       /* 12px  meta, labels */
+  --ds-fs-code: 0.875rem;    /* 14px  code blocks */
+
+  --ds-lh-tight: 1.25;   /* headings */
+  --ds-lh-hero: 1.5;     /* hero title */
+  --ds-lh-body: 1.7;     /* body / nav */
+  --ds-lh-code: 1.6;
+
+  --ds-fw-regular: 400;
+  --ds-fw-medium: 500;   /* nav items */
+  --ds-fw-semibold: 600; /* card titles, stats, section headers */
+  --ds-fw-bold: 700;     /* h1-h2, hero, strong */
+
+  /* ---------- spacing (4px base; the site's rhythm is 4 / 8 / 12 / 16 / 24) ---------- */
+  --ds-space-1: 0.25rem;  /* 4px   icon gaps, kbd padding */
+  --ds-space-2: 0.5rem;   /* 8px   card grid gutter, tight padding */
+  --ds-space-3: 0.75rem;  /* 12px */
+  --ds-space-4: 1rem;     /* 16px  default card padding */
+  --ds-space-5: 1.5rem;   /* 24px  navbar horizontal padding, block gaps */
+  --ds-space-6: 2rem;     /* 32px  section inner padding */
+  --ds-space-7: 3rem;     /* 48px  section vertical rhythm */
+
+  /* ---------- radius (observed: 6px code, 8px cards/links, 10px media, 40px pill) ---------- */
+  --ds-radius-xs: 2px;    /* tooltip */
+  --ds-radius-sm: 4px;
+  --ds-radius-md: 6px;    /* code blocks, images */
+  --ds-radius-lg: 8px;    /* cards, feature items (0.5rem) */
+  --ds-radius-xl: 10px;   /* large media / panels */
+  --ds-radius-pill: 40px; /* search field, tag pills */
+  --ds-radius-full: 9999px;
+
+  /* ---------- shadows (cards use a near-invisible lift, hover adds glow) ---------- */
+  --ds-shadow-xs: 0 2px 8px rgb(0 0 0 / 5%);
+  --ds-shadow-sm: 0 2px 12px var(--ds-c-shadow-color);
+  --ds-shadow-md: 0 12px 30px rgb(15 23 42 / 12%);
+  --ds-shadow-lg: 0 18px 45px rgb(15 23 42 / 16%);
+  --ds-shadow-accent: 0 8px 18px rgb(37 99 235 / 20%);
+  --ds-shadow-hover: 0 4px 12px rgb(0 0 0 / 10%);
+
+  /* ---------- motion ---------- */
+  --ds-ease: ease;
+  --ds-duration: 0.3s;
+  --ds-t-color: 0.3s ease;      /* colour transitions (links, nav) */
+  --ds-t-transform: 0.3s ease;  /* lift / scale on hover */
+
+  /* ---------- layout metrics ---------- */
+  --ds-navbar-height: 3.75rem;        /* 60px */
+  --ds-navbar-padding-x: 1.5rem;
+  --ds-navbar-padding-y: 0.7rem;
+  --ds-sidebar-width: 18rem;          /* 288px doc sidebar */
+  --ds-content-width: 780px;          /* article measure — ideal for Chinese text */
+  --ds-page-width: 1160px;            /* wide marketing/home container */
+
+  /* ---------- code block component tokens ---------- */
+  --ds-code-radius: 6px;
+  --ds-code-padding-x: 1.25rem;
+  --ds-code-padding-y: 1rem;
+  --ds-code-font-size: 14px;
+  --ds-code-line-height: 1.6;
+}
+
+/* ==========================================================================
+   Dark theme — the site swaps tokens under [data-theme='dark'].
+   Note the inversion: dark --accent-bg equals light --accent-hover.
+   ========================================================================== */
+[data-theme='dark'] {
+  --ds-c-bg: #1b1b1f;
+  --ds-c-bg-alt: #161618;
+  --ds-c-bg-elv: #202127;
+  --ds-c-bg-soft: rgb(27 27 31 / 90%);
+  --ds-c-bg-elv-soft: rgb(32 33 39 / 90%);
+  --ds-c-text: rgb(235 235 245 / 86%);
+  --ds-c-text-mute: rgb(235 235 245 / 60%);
+  --ds-c-text-subtle: rgb(235 235 245 / 38%);
+  --ds-c-border: #3c3f44;
+  --ds-c-border-hard: #45484e;
+  --ds-c-border-soft: #000;
+  --ds-c-shadow-color: rgb(0 0 0 / 30%);
+  --ds-c-control: rgb(101 117 133 / 12%);
+  --ds-c-control-hover: rgb(101 117 133 / 18%);
+  --ds-c-control-disabled: #363636;
+
+  --ds-c-accent: #2388f6;             /* brighter accent for dark surfaces */
+  --ds-c-accent-bg: #0a75e9;
+  --ds-c-accent-hover: #096fdc;
+  --ds-c-accent-soft: rgb(20 99 184 / 16%);
+
+  --ds-gradient-hero: linear-gradient(120deg, var(--ds-c-accent-hover), var(--ds-c-accent) 30%, #9023f6 100%);
+}
+
+/* ==========================================================================
+   Breakpoints used by the source site (recorded, not enforced):
+   419 / 600 / 719 / 750 / 768 / 959 / 1100 / 1200 / 1280 / 1440
+   The load-bearing ones are 419 (phone), 719 (small tablet), 959 (tablet /
+   sidebar collapse), 1440 (wide desktop). Responsive heading steps:
+   hero 3.6rem -> 2.5rem (<=959) -> 2.25rem (<=719) -> 2rem (<=419);
+   section header 3rem -> 2.5rem -> 2.25rem -> 2rem.
+   ========================================================================== */
