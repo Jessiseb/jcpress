@@ -23,6 +23,11 @@ export default function ContactBar({ contacts }: Props) {
     }
   }
 
+  // r2：邮箱成为该区唯一主角（可直接发信），其余入口降为次级条目
+  const primary = contacts.find((item) => item.href?.startsWith('mailto:'))
+  const primaryHref = primary?.href ?? undefined
+  const rest = contacts.filter((item) => item !== primary)
+
   return (
     <section
       className="container section"
@@ -36,9 +41,15 @@ export default function ContactBar({ contacts }: Props) {
         简历 PDF 可直接下载；微信号点一下就复制，不用手抄。
       </p>
 
+      {primary && primaryHref && (
+        <a className={styles.primary} href={primaryHref} data-reveal style={stagger(2)}>
+          {primary.value}
+        </a>
+      )}
+
       <dl className={styles.list}>
-        {contacts.map((item, index) => (
-          <div key={item.label} className={styles.row} data-reveal style={stagger(index + 2)}>
+        {rest.map((item, index) => (
+          <div key={item.label} className={styles.row} data-reveal style={stagger(index + 3)}>
             <dt className={styles.label}>{item.label}</dt>
 
             <dd className={styles.valueCell}>

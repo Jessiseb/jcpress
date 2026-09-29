@@ -46,46 +46,74 @@
   color: var(--ds-c-text-subtle);
 }
 
+/* 奖项（r2）：按年份分组的「年份轴」
+   --------------------------------------------------------------------------
+   r1 是「年份等宽小字 + 奖项名 + 等级」三段行 —— 年份被压成注脚。
+   r2 让**年份成为组头**：展示衬线、字号明显大于奖项名，纵向对齐成一列，形成时间轴。
+   分组而不是逐行重复的原因：本期五项奖项年份全是 2025，逐行重复既冗长，
+   又把「2025 是丰收年」这个真正有信息量的事实埋掉了。
+   等级从等宽改回无衬线：内容是中文，等宽栈没有 CJK 字形（decisions #41）。 */
 .awards {
   margin-top: var(--ds-space-5);
   border-top: 1px solid var(--ds-c-hairline);
 }
 
-.award {
+.yearGroup {
   display: grid;
-  grid-template-columns: 3.5rem minmax(0, 1fr) auto;
-  align-items: baseline;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
   gap: var(--ds-space-4);
-  padding-block: var(--ds-space-3);
+  align-items: start;
+  padding-block: var(--ds-space-4);
   border-bottom: 1px solid var(--ds-c-hairline);
 }
 
-.awardYear {
-  font-family: var(--ds-font-mono);
-  font-size: var(--ds-fs-xs);
+.year {
+  font-family: var(--ds-font-display);
+  font-size: 1.625rem;
+  font-weight: var(--ds-fw-display-strong);
   font-variant-numeric: tabular-nums;
-  color: var(--ds-c-text-subtle);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ds-c-text);
+}
+
+.yearAwards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+}
+
+.award {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--ds-space-4);
 }
 
 .awardName {
-  font-size: var(--ds-fs-sm);
+  font-size: 0.9375rem;
   color: var(--ds-c-text);
 }
 
 .awardLevel {
-  font-family: var(--ds-font-mono);
-  font-size: var(--ds-fs-sm);
-  color: var(--ds-c-text-mute);
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  color: var(--ds-c-text-subtle);
 }
 
 @media (max-width: 719px) {
-  .award {
-    grid-template-columns: 3rem minmax(0, 1fr);
-    gap: var(--ds-space-1) var(--ds-space-3);
+  .yearGroup {
+    grid-template-columns: 4rem minmax(0, 1fr);
+    gap: var(--ds-space-2) var(--ds-space-3);
   }
 
-  /* 窄屏把等级换到第二行，避免长奖项名被挤成多行 */
-  .awardLevel {
-    grid-column: 2;
+  .year {
+    font-size: 1.25rem;
+  }
+
+  /* 窄屏奖项名与等级上下排，避免长奖项名被挤成多行 */
+  .award {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
   }
 }

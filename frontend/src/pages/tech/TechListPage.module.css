@@ -31,10 +31,10 @@
   font-size: var(--ds-fs-lead);
 }
 
-/* 计数：等宽字 + 弱化色，与表头同一档，不抢标题 */
+/* 计数：弱化小字，与表头同一档，不抢标题。
+   r2：**去掉等宽** —— 「共 5 篇 · 更新至 …」含中文，等宽栈无 CJK 字形（decisions #41）。 */
 .count {
   margin-top: var(--ds-space-5);
-  font-family: var(--ds-font-mono);
   font-size: var(--ds-fs-xs);
   color: var(--ds-c-text-subtle);
 }
@@ -55,7 +55,7 @@
 .head {
   padding-block: var(--ds-space-2);
   border-bottom: 1px solid var(--ds-c-hairline);
-  font-family: var(--ds-font-mono);
+  /* r2：表头是中文（日期 / 标题 / 分类 / 阅读），不走等宽栈（decisions #41） */
   font-size: var(--ds-fs-xs);
   letter-spacing: 0.12em;
   color: var(--ds-c-text-subtle);
@@ -73,9 +73,8 @@
   }
 }
 
-.date,
-.reading,
-.tags {
+/* 日期列是纯数字 → 保留等宽；「9 分钟」与标签（Spring AI / 并发）含中文 → r2 改无衬线 */
+.date {
   font-family: var(--ds-font-mono);
   font-size: var(--ds-fs-xs);
   color: var(--ds-c-text-subtle);

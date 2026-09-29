@@ -354,7 +354,10 @@ button {
    ========================================================================== */
 [data-reveal='on'] [data-reveal] {
   opacity: 0;
-  transform: translateY(18px);
+  /* r2：位移 18 → 28px，并加极轻放大（0.985 → 1）—— 用户反馈「缺滑动闪出的感觉」。
+     只动 transform / opacity（两项都走合成器）：一旦引入 filter / clip-path / 高度动画，
+     就会把二期刚修好的移动端性能（decisions #51：每条流线只允许一条动画）重新拖下水。 */
+  transform: translateY(28px) scale(0.985);
   transition:
     opacity var(--ds-duration-reveal) var(--ds-ease-out),
     transform var(--ds-duration-reveal) var(--ds-ease-out);

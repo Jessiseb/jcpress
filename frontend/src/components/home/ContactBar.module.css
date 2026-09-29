@@ -1,8 +1,30 @@
-/* 联系我：两栏定义列表。
-   标签列固定宽度让值列全部左对齐 —— 与关键数字区、奖项区共用同一套「对齐即秩序」的思路。 */
+/* 联系我（r2 重做）：一个主角 + 次级入口
+   --------------------------------------------------------------------------
+   r1 是「标签列 + 值列」的两栏定义列表 —— 五个入口权重完全相同，没有主次。
+   r2 让**邮箱成为唯一主角**（展示衬线大字号、`mailto:` 可直接发信），
+   其余入口降为次级条目排在下方。「联系我」这件事本身就该是一个动作，不是一张表。 */
 
+/* 主入口：邮箱。字号明显大于次级条目（断言口径）。 */
+.primary {
+  display: inline-block;
+  font-family: var(--ds-font-display);
+  font-size: 2rem;
+  font-weight: var(--ds-fw-display-strong);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  color: var(--ds-c-text);
+  /* 触摸目标：大字号本身已远超 44px，这里只保证是块级可点区域 */
+  padding-block: var(--ds-space-1);
+  transition: color var(--ds-t-color);
+}
+
+.primary:hover {
+  color: var(--ds-c-accent);
+}
+
+/* 次级入口：一条条窄行，右侧是值 */
 .list {
-  margin: 0;
+  margin: var(--ds-space-5) 0 0;
   border-top: 1px solid var(--ds-c-hairline);
 }
 

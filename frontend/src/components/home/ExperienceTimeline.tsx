@@ -27,7 +27,7 @@ export default function ExperienceTimeline({ experiences }: Props) {
     <section
       className="container section"
       aria-labelledby="exp-title"
-      data-rhythm="major"
+      data-rhythm="minor"
     >
       <h2 id="exp-title" className="sectionTitle" data-reveal>
         实习经历

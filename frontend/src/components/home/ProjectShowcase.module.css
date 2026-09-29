@@ -36,7 +36,8 @@
 .head {
   padding-block: var(--ds-space-2);
   border-bottom: 1px solid var(--ds-c-hairline);
-  font-family: var(--ds-font-mono);
+  /* r2：表头含中文（项目 / 角色 · 状态），不能走等宽栈（无 CJK 字形，decisions #41）。
+     ID 列的数字仍是等宽（见 .idx）—— 那条规则针对的是「含中文」的文本。 */
   font-size: var(--ds-fs-xs);
   letter-spacing: 0.12em;
   color: var(--ds-c-text-subtle);

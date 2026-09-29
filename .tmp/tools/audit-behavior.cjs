@@ -304,6 +304,12 @@ const check = (name, pass, detail) => {
       flowAlphaMax: getComputedStyle(document.documentElement)
         .getPropertyValue('--ds-flow-alpha-max')
         .trim(),
+      // r2 新增：线宽必须钉在像素上（non-scaling-stroke），否则会被 preserveAspectRatio="none"
+      // 的拉伸按 1.84×/2.02× 放大 —— 那正是用户反馈「白天眼花」的几何根因。
+      maxStrokeWidth: Math.max(
+        ...paths.map((p) => Number.parseFloat(getComputedStyle(p).strokeWidth) || 0),
+      ),
+      nonScaling: paths.every((p) => p.getAttribute('vector-effect') === 'non-scaling-stroke'),
       dashArrayRaw: getComputedStyle(paths[0]).strokeDasharray,
       // 每条路径的动画条数：移动端性能的硬约束（见 design.md D8），必须为 1
       maxAnimationsPerPath: Math.max(
@@ -324,9 +330,9 @@ const check = (name, pass, detail) => {
   check(
     '流线剂量不超过令牌上限（描边 × 元素 × 布景层三层相乘，且令牌真的接线）',
     !!flow &&
-      flow.flowAlphaMax === '0.5' &&
-      flow.maxAlpha <= 0.5 &&
-      flow.maxEffective <= 0.5,
+      flow.flowAlphaMax === '0.28' &&
+      flow.maxAlpha <= 0.28 &&
+      flow.maxEffective <= 0.28,
     flow
       ? `令牌 --ds-flow-alpha-max=${flow.flowAlphaMax} / 计算描边 max=${flow.maxAlpha} / 屏上浓度 max=${flow.maxEffective.toFixed(3)}`
       : 'missing',
@@ -335,6 +341,65 @@ const check = (name, pass, detail) => {
     '单条流线只有一条动画（移动端性能的硬约束，见 design D8）',
     !!flow && flow.maxAnimationsPerPath === 1,
     flow ? `每条路径最多 ${flow.maxAnimationsPerPath} 条动画` : 'missing',
+  )
+  check(
+    '流线线宽 ≤1.5px 且用 non-scaling-stroke（不被拉伸放大）',
+    !!flow && flow.nonScaling && flow.maxStrokeWidth <= 1.5,
+    flow ? `计算线宽 max=${flow.maxStrokeWidth}px / 全部 non-scaling=${flow.nonScaling}` : 'missing',
+  )
+
+  // r2 新增：布景层与正文的**色调分离**（用户实测反馈「字看不清」的量化闸门）。
+  // 两个判据：① 正文主色与线色的 HSL 明度差 ≥25 个百分点（旧配色只有 13.7 → 会判失败）；
+  //          ② 把线色按最大等效剂量合成到底色之上后，正文主色与该合成色的对比度 ≥4.5:1。
+  const colorSepOf = (target) =>
+    target.evaluate(() => {
+    const toRgb = (css) => {
+      const d = document.createElement('div')
+      d.style.color = css
+      document.body.appendChild(d)
+      const v = getComputedStyle(d).color
+      d.remove()
+      return (v.match(/\d+(\.\d+)?/g) || []).slice(0, 3).map(Number)
+    }
+    const ch = (c) => {
+      const s = c / 255
+      return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
+    }
+    const lum = ([r, g, b]) => 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b)
+    const contrast = (a, b) => {
+      const l1 = lum(a)
+      const l2 = lum(b)
+      return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)
+    }
+    const hslL = ([r, g, b]) =>
+      ((Math.max(r, g, b) / 255 + Math.min(r, g, b) / 255) / 2) * 100
+    const root = getComputedStyle(document.documentElement)
+    const read = (k) => root.getPropertyValue(k).trim()
+    const text = toRgb(read('--ds-c-text'))
+    const line = toRgb(read('--ds-flow-line'))
+    const bg = toRgb(read('--ds-c-bg'))
+    const alpha = Number(read('--ds-flow-alpha-max'))
+    const composite = line.map((c, i) => c * alpha + bg[i] * (1 - alpha))
+    return {
+      text,
+      line,
+      alpha,
+      textL: hslL(text),
+      lineL: hslL(line),
+      dL: Math.abs(hslL(text) - hslL(line)),
+      worst: contrast(text, composite),
+    }
+    })
+  const colorSep = await colorSepOf(page)
+  check(
+    '布景层与正文的色调分离（HSL 明度差 ≥25 个百分点）',
+    colorSep.dL >= 25,
+    `正文 L=${colorSep.textL.toFixed(1)}% / 流线 L=${colorSep.lineL.toFixed(1)}% → Δ=${colorSep.dL.toFixed(1)}`,
+  )
+  check(
+    '最坏情况合成后正文仍达 AA（≥4.5:1）',
+    colorSep.worst >= 4.5,
+    `线色按 α=${colorSep.alpha} 合成到底色后，与正文主色的对比度 ${colorSep.worst.toFixed(2)}:1`,
   )
 
   // 效果 E2：光段真的在沿路径前进（两次采样 stroke-dashoffset 不同）
@@ -360,8 +425,8 @@ const check = (name, pass, detail) => {
   const paths768 = await flowPathsAt(768)
   const paths390 = await flowPathsAt(390)
   check(
-    '流线路径数按视口分档（1280→72 / 768→48 / 390→24）',
-    !!flow && flow.paths === 72 && paths768 === 48 && paths390 === 24,
+    '流线路径数按视口分档（1280→48 / 768→32 / 390→16）',
+    !!flow && flow.paths === 48 && paths768 === 32 && paths390 === 16,
     `1280→${flow ? flow.paths : '?'} 768→${paths768} 390→${paths390}`,
   )
 
@@ -689,6 +754,128 @@ const check = (name, pass, detail) => {
     overflowText.length ? overflowText.join(' | ') : '无溢出',
   )
 
+  // ---- r2：区块顺序 + 三块版式（技术栈能力带 / 获奖年份轴 / 联系邮箱主角）----
+  const r2Layout = await page.evaluate(() => {
+    const sectionOf = (title) =>
+      Array.from(document.querySelectorAll('main .section')).find(
+        (s) => (s.querySelector('h2')?.textContent || '').trim() === title,
+      )
+    const px = (el, prop) => Number.parseFloat(getComputedStyle(el)[prop]) || 0
+
+    // 顺序
+    const order = Array.from(document.querySelectorAll('main .section')).map((s) =>
+      (s.querySelector('h2')?.textContent || '').trim(),
+    )
+
+    // 技术栈：组名 vs 技能列
+    const skills = sectionOf('技术栈')
+    const group = skills?.querySelector('[class*="group"]')
+    const groupTitle = group?.querySelector('h3')
+    const items = group?.querySelector('ul')
+    const skillProbe =
+      group && groupTitle && items
+        ? {
+            titleLeft: groupTitle.offsetLeft,
+            itemsLeft: items.offsetLeft,
+            titleSize: px(groupTitle, 'fontSize'),
+            itemSize: px(items.querySelector('li span') || items, 'fontSize'),
+          }
+        : null
+
+    // 获奖：年份轴（按年份分组：年份是组头，奖项在其下）
+    const awardsSection = sectionOf('教育与荣誉')
+    const awardRows = Array.from(awardsSection?.querySelectorAll('li[data-award]') || [])
+    const yearEls = Array.from(awardsSection?.querySelectorAll('span[data-year]') || [])
+    const nameEls = awardRows.map((li) => li.querySelector('span'))
+    const awardsProbe = awardRows.length
+      ? {
+          rows: awardRows.length,
+          years: yearEls.length,
+          yearLefts: [...new Set(yearEls.map((el) => el.offsetLeft))],
+          yearSize: px(yearEls[0], 'fontSize'),
+          nameSize: px(nameEls[0], 'fontSize'),
+        }
+      : null
+
+    // 联系：邮箱主角
+    const contact = sectionOf('联系我')
+    const primary = contact?.querySelector('a[href^="mailto:"]')
+    const secondary = contact?.querySelector('dd a, dd span')
+    const contactProbe =
+      primary && secondary
+        ? {
+            primarySize: px(primary, 'fontSize'),
+            secondarySize: px(secondary, 'fontSize'),
+            href: primary.getAttribute('href'),
+          }
+        : null
+
+    return { order, skillProbe, awardsProbe, contactProbe }
+  })
+
+  check(
+    '区块顺序：经历排在能力之前',
+    JSON.stringify(r2Layout.order) ===
+      JSON.stringify(['拿得出手的数字', '实习经历', '项目经历', '技术栈', '教育与荣誉', '联系我']),
+    r2Layout.order.join(' → '),
+  )
+  check(
+    '技术栈：组名在左栏作锚点，且字号大于技能名',
+    !!r2Layout.skillProbe &&
+      r2Layout.skillProbe.itemsLeft - r2Layout.skillProbe.titleLeft >= 80 &&
+      r2Layout.skillProbe.titleSize > r2Layout.skillProbe.itemSize,
+    r2Layout.skillProbe
+      ? `组名 left=${r2Layout.skillProbe.titleLeft} / 技能列 left=${r2Layout.skillProbe.itemsLeft}；组名 ${r2Layout.skillProbe.titleSize}px > 技能 ${r2Layout.skillProbe.itemSize}px`
+      : 'missing',
+  )
+  check(
+    '获奖经历：年份成列、字号大于奖项名（年份轴），五项奖项全在',
+    !!r2Layout.awardsProbe &&
+      r2Layout.awardsProbe.rows === 5 &&
+      r2Layout.awardsProbe.yearLefts.length === 1 &&
+      r2Layout.awardsProbe.yearSize > r2Layout.awardsProbe.nameSize,
+    r2Layout.awardsProbe
+      ? `${r2Layout.awardsProbe.rows} 条奖项 / ${r2Layout.awardsProbe.years} 个年份组；年份对齐列数=${r2Layout.awardsProbe.yearLefts.length}；年份 ${r2Layout.awardsProbe.yearSize}px > 名称 ${r2Layout.awardsProbe.nameSize}px`
+      : 'missing',
+  )
+  check(
+    '联系我：邮箱是主入口（字号明显大于次级条目且是 mailto 链接）',
+    !!r2Layout.contactProbe &&
+      r2Layout.contactProbe.href?.startsWith('mailto:') &&
+      r2Layout.contactProbe.primarySize >= r2Layout.contactProbe.secondarySize * 2,
+    r2Layout.contactProbe
+      ? `邮箱 ${r2Layout.contactProbe.primarySize}px vs 次级 ${r2Layout.contactProbe.secondarySize}px；href=${r2Layout.contactProbe.href}`
+      : 'missing',
+  )
+
+  // ---- 等宽字白名单（decisions #41）：等宽栈没有 CJK 字形，含中文的文本不得用它 ----
+  // 这条规格一直在主干 spec 里，但**此前没有任何判据** —— r2 顺手补上（并已按它修掉 5 处违规）。
+  const monoViolations = await page.evaluate(() => {
+    const monoFirst = getComputedStyle(document.documentElement)
+      .getPropertyValue('--ds-font-mono')
+      .split(',')[0]
+      .trim()
+      .replace(/["']/g, '')
+    const bad = []
+    for (const el of document.querySelectorAll('body *')) {
+      const cs = getComputedStyle(el)
+      if (!cs.fontFamily.startsWith(monoFirst)) continue
+      const own = Array.from(el.childNodes)
+        .filter((n) => n.nodeType === 3)
+        .map((n) => n.textContent)
+        .join('')
+      if (/[\u4e00-\u9fff]/.test(own)) bad.push(`${el.tagName}「${own.trim().slice(0, 14)}」`)
+    }
+    return { monoFirst, bad }
+  })
+  check(
+    '等宽字只用于纯 Latin / 数字（不得含中文）',
+    monoViolations.bad.length === 0,
+    `等宽栈首族=${monoViolations.monoFirst}；违规 ${monoViolations.bad.length} 处${
+      monoViolations.bad.length ? '：' + monoViolations.bad.join(' / ') : ''
+    }`,
+  )
+
   // 窄屏塌回单列：标题与正文左边缘对齐（手机上不许出现一窄一宽）
   const narrowCtx = await browser.newContext({ viewport: { width: 390, height: 844 } })
   const narrowPage = await narrowCtx.newPage()
@@ -700,9 +887,12 @@ const check = (name, pass, detail) => {
       const h2 = s.querySelector('h2')
       const body = s.querySelector(':scope > *:not(.sectionTitle):not(.sectionLead)')
       if (!h2 || !body) continue
+      // ⚠️ 用 offsetLeft（布局位置）而不是 getBoundingClientRect：
+      // r2 的入场加了 scale(0.985)，揭示中的元素 rect 会横向缩进约 2.6px，
+      // 于是「左边缘是否对齐」这条**布局**断言会被**动画中间态**干扰（实测报 -3px）。
       out.push({
         name: (h2.textContent || '').trim().slice(0, 6),
-        d: Math.round(body.getBoundingClientRect().left - h2.getBoundingClientRect().left),
+        d: body.offsetLeft - h2.offsetLeft,
       })
     }
     return out
@@ -723,8 +913,7 @@ const check = (name, pass, detail) => {
   const darkPage = await darkCtx.newPage()
   await darkPage.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle', timeout: 60000 })
   await darkPage.waitForTimeout(500)
-  const darkHome = await darkPage.evaluate(() => {
-    const qa = (s) => Array.from(document.querySelectorAll(s))
+  const darkHome = await darkPage.evaluate(() => {    const qa = (s) => Array.from(document.querySelectorAll(s))
     const labels = qa('*')
       .filter((el) => {
         if (el === document.body || el === document.documentElement) return false
@@ -755,7 +944,13 @@ const check = (name, pass, detail) => {
       nameGradient: labels.filter((l) => l === 'gradient').length,
     }
   })
+  const darkSep = await colorSepOf(darkPage)
   await darkCtx.close()
+  check(
+    '暗色主题下的色调分离同样成立（HSL 明度差 ≥25 个百分点、最坏合成 ≥4.5:1）',
+    darkSep.dL >= 25 && darkSep.worst >= 4.5,
+    `正文 L=${darkSep.textL.toFixed(1)}% / 流线 L=${darkSep.lineL.toFixed(1)}% → Δ=${darkSep.dL.toFixed(1)}；最坏合成 ${darkSep.worst.toFixed(2)}:1`,
+  )
   check(
     '暗色首页同样成立：流线层在、环标记在、渐变仍只走登记的宿主',
     darkHome.theme === 'dark'

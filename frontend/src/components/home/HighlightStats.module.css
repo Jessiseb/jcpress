@@ -23,9 +23,9 @@
   border-top: 1px solid var(--ds-c-hairline);
 }
 
-/* 指标名：等宽小字。它在数据块里是「这一格量的是什么」，不是装饰性 eyebrow */
+/* 指标名：小字 + 弱化色。**不是等宽** —— 内容是中文，等宽栈没有 CJK 字形，
+   会逐字回落到系统字体、与相邻 Latin 不同款（decisions #41 明确禁止；r2 修正）。 */
 .label {
-  font-family: var(--ds-font-mono);
   font-size: var(--ds-fs-xs);
   letter-spacing: 0.02em;
   color: var(--ds-c-text-subtle);

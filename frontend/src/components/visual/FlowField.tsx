@@ -35,16 +35,19 @@ import styles from './FlowField.module.css'
  *    （这是 RingField 踩过的坑，见 docs/decisions.md #28）。
  */
 
-/** 视口分档。顺序即优先级：先匹配到的档生效。 */
+/** 视口分档。顺序即优先级：先匹配到的档生效。
+ *
+ * 2026-09-30（r2）：路径数整体减半（48/32/16），并给每档一个**线宽**（px）。
+ * 用户实测反馈白天形态「眼花」—— 数量与剂量是两个独立旋钮，这一轮两个都收紧。 */
 const TIERS = [
-  { query: '(min-width: 960px)', count: 36 },
-  { query: '(min-width: 720px)', count: 24 },
-  { query: '(max-width: 719px)', count: 12 },
+  { query: '(min-width: 960px)', count: 24, width: 0.9 },
+  { query: '(min-width: 720px)', count: 16, width: 0.85 },
+  { query: '(max-width: 719px)', count: 8, width: 0.8 },
 ] as const
 
 /** 描边浓度的目标上限。必须与 `--ds-flow-alpha-max`（theme.jcpress.css）保持一致；
  *  CSS 侧用 `min()` 真正封顶，所以这个常量只是「目标值」，不是不可绕过的硬编码。 */
-const MAX_ALPHA = 0.5
+const MAX_ALPHA = 0.28
 
 /**
  * 参考组件的三次贝塞尔路径，逐项照搬它的符号（**前两个 x 带前导负号，第三个 x 没有**）。
@@ -70,22 +73,23 @@ function buildPath(i: number, position: number): string {
   )
 }
 
-function pickCount(): number {
-  if (typeof window === 'undefined' || !window.matchMedia) return TIERS[0].count
-  const hit = TIERS.find((tier) => window.matchMedia(tier.query).matches)
-  return hit ? hit.count : TIERS[TIERS.length - 1].count
+function pickTier() {
+  if (typeof window === 'undefined' || !window.matchMedia) return TIERS[0]
+  return TIERS.find((tier) => window.matchMedia(tier.query).matches) ?? TIERS[TIERS.length - 1]
 }
 
 export default function FlowField() {
-  const [count, setCount] = useState(pickCount)
+  const [tier, setTier] = useState(pickTier)
 
   useEffect(() => {
-    const lists = TIERS.map((tier) => window.matchMedia(tier.query))
-    const sync = () => setCount(pickCount())
+    const lists = TIERS.map((t) => window.matchMedia(t.query))
+    const sync = () => setTier(pickTier())
     lists.forEach((list) => list.addEventListener('change', sync))
     sync()
     return () => lists.forEach((list) => list.removeEventListener('change', sync))
   }, [])
+
+  const count = tier.count
 
   return (
     <div className={styles.field} data-flow="" data-parallax="" aria-hidden="true">
@@ -104,13 +108,17 @@ export default function FlowField() {
                 d={buildPath(i, position)}
                 pathLength={1}
                 stroke="currentColor"
-                strokeWidth={(0.5 + t * 1.05).toFixed(2)}
+                /* non-scaling-stroke：线宽以**设备像素**为单位，不受 preserveAspectRatio="none"
+                   的拉伸影响。r2 之前线宽是 viewBox 单位，被 x1.84 / y2.02 的拉伸放大到 ≈2.9px，
+                   白天看着像满屏灰带 —— 用户实测反馈的「眼花」一半来自这里。 */
+                vectorEffect="non-scaling-stroke"
+                strokeWidth={(tier.width + t * 0.4).toFixed(2)}
                 style={
                   {
                     // 描边浓度的「目标值」按索引递增；**真正的上限由 CSS 的
                     // `stroke-opacity: min(var(--path-alpha), var(--ds-flow-alpha-max))` 封顶**，
                     // 所以改令牌是有效的（第一版把上限硬编码在 JS 里，令牌成了死令牌）。
-                    '--path-alpha': (0.16 + t * (MAX_ALPHA - 0.16)).toFixed(3),
+                    '--path-alpha': (0.06 + t * (MAX_ALPHA - 0.06)).toFixed(3),
                     // 确定性的时长与**负延迟**：负延迟让每条线一开始就处在自己周期的中段，
                     // 避免加载瞬间全族同相（前几秒看起来是空的）。
                     // 只注入一条动画的时长/延迟 —— 每条路径**只有一条动画**（移动端实测的硬约束）。

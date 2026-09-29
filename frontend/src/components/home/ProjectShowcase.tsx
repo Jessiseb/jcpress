@@ -101,7 +101,7 @@ export default function ProjectShowcase({ projects }: Props) {
     <section
       className="container section"
       aria-labelledby="projects-title"
-      data-rhythm="minor"
+      data-rhythm="major"
     >
       <h2 id="projects-title" className="sectionTitle" data-reveal>
         项目经历

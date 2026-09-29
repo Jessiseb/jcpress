@@ -1,65 +1,70 @@
-/* 技术栈：三列定义列表。
-   没有卡片、没有边框包裹 —— 每组靠一条顶部发丝线定位，横向压成一张「技术索引表」。
-   分组标题刻意用无衬线：正文与区块标题已经是衬线，第三层再上衬线就糊了。 */
+/* 技术栈：能力带（r2 重做）
+   --------------------------------------------------------------------------
+   r1 是三列「名称 — 右侧等宽标签」的规格表：信息清楚，但没有版式主角，用户反馈「太普通」。
+   r2 改成一条一条的**能力带**：
+     · 组名进固定左栏，用展示衬线 + 700（比技能名明显大一档）—— 它是这一行的版式锚点；
+     · 技能以**流式词组**排右栏（不再逐行两端对齐成表格）；
+     · 档位是紧贴技能名右侧的极小标记（不再是等宽小字：内容是中文，等宽栈没有 CJK 字形，
+       decisions #41 明确禁止）。
+   组与组之间仍是通栏发丝线 —— 一期「对齐即秩序」的分块语言保留。 */
 
 .grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--ds-space-6);
+  display: flex;
+  flex-direction: column;
 }
 
 .group {
-  padding-top: var(--ds-space-3);
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr);
+  gap: var(--ds-space-4);
+  align-items: baseline;
+  padding-block: var(--ds-space-4);
   border-top: 1px solid var(--ds-c-hairline);
 }
 
+/* 组名：版式锚点。700 真字重（组名已纳入展示字子集的字符表，见 scripts/collect-display-charset.cjs） */
 .groupTitle {
-  margin-bottom: var(--ds-space-2);
-  font-family: var(--ds-font-sans);
-  font-size: var(--ds-fs-sm);
-  font-weight: var(--ds-fw-semibold);
-  letter-spacing: 0.02em;
+  font-family: var(--ds-font-display);
+  font-size: 1.375rem;
+  font-weight: var(--ds-fw-display-strong);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
   color: var(--ds-c-text);
 }
 
 .items {
   display: flex;
-  flex-direction: column;
-  /* 限宽：不让档位标签被推到列的最右端，否则标签和技术名之间空出上百像素 */
-  max-width: 22rem;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2) var(--ds-space-5);
 }
 
 .item {
-  display: flex;
+  display: inline-flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: var(--ds-space-3);
-  padding-block: 3px;
-  font-size: var(--ds-fs-sm);
+  gap: 6px;
 }
 
 .itemName {
-  color: var(--ds-c-text-mute);
+  font-size: 0.9375rem;
+  color: var(--ds-c-text);
 }
 
-/* 档位标签：右侧对齐的小字，等信息量但不出声。
-   等宽字：跟区块表头、年份、单位同一档，把「这是一条数据」和「这是一句话」区分开 */
+/* 档位：紧贴名字的极小标记。用正文无衬线（不是等宽）—— 内容是中文 */
 .level {
-  flex-shrink: 0;
-  font-family: var(--ds-font-mono);
-  font-size: var(--ds-fs-xs);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
   color: var(--ds-c-text-subtle);
 }
 
 @media (max-width: 959px) {
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .group {
+    grid-template-columns: 10rem minmax(0, 1fr);
   }
 }
 
 @media (max-width: 719px) {
-  .grid {
+  .group {
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--ds-space-5);
+    gap: var(--ds-space-2);
   }
 }

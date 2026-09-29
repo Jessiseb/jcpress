@@ -35,7 +35,12 @@ export default function SkillMatrix({ groups }: Props) {
       <div className={styles.grid}>
         {groups.map((group, index) => (
           <div key={group.category} className={styles.group} data-reveal style={stagger(index + 2)}>
-            <h3 className={styles.groupTitle}>{group.category}</h3>
+            {/* data-display：组名是这一条能力带的版式锚点，用展示衬线 700。
+                标上它，字符表收集（scripts/collect-display-charset.cjs）才会把组名纳入 700 子集；
+                否则这些字会回落到 500 档 —— 同一行混两档字重，正是 audit-display-font.cjs 守的东西。 */}
+            <h3 className={styles.groupTitle} data-display="">
+              {group.category}
+            </h3>
             <ul className={styles.items}>
               {group.items.map((item) => (
                 <li key={item.name} className={styles.item}>

@@ -21,8 +21,8 @@ const EXPECT = {
     '--ds-fw-display': '500',
     '--ds-fw-display-strong': '700',
     // ---- 二期新增（phase-2-visual）----
-    '--ds-flow-line': '#0f172a',
-    '--ds-flow-alpha-max': '0.6',
+    '--ds-flow-line': '#0a6fd8',
+    '--ds-flow-alpha-max': '0.28',
     '--ds-c-panel': 'rgb(255 255 255 / 62%)',
     '--ds-c-panel-border': 'rgb(20 22 26 / 10%)',
     '--ds-panel-sheen': 'rgb(255 255 255 / 55%)',
@@ -30,7 +30,7 @@ const EXPECT = {
     '--ds-blur-panel': '14px',
     '--ds-c-progress': 'rgb(15 17 21 / 72%)',
     '--ds-progress-h': '2px',
-    '--ds-parallax-shift': '6vh',
+    '--ds-parallax-shift': '5vh',
     '--ds-parallax-scale': '1.04',
   },
   dark: {
@@ -45,8 +45,8 @@ const EXPECT = {
     '--ds-fw-display': '500',
     '--ds-fw-display-strong': '700',
     // ---- 二期新增（phase-2-visual）----
-    '--ds-flow-line': '#ffffff',
-    '--ds-flow-alpha-max': '0.6',
+    '--ds-flow-line': '#4d9bff',
+    '--ds-flow-alpha-max': '0.28',
     '--ds-c-panel': 'rgb(16 18 24 / 58%)',
     '--ds-c-panel-border': 'rgb(255 255 255 / 12%)',
     '--ds-panel-sheen': 'rgb(255 255 255 / 7%)',
@@ -54,7 +54,7 @@ const EXPECT = {
     '--ds-blur-panel': '14px',
     '--ds-c-progress': 'rgb(235 235 245 / 78%)',
     '--ds-progress-h': '2px',
-    '--ds-parallax-shift': '6vh',
+    '--ds-parallax-shift': '5vh',
     '--ds-parallax-scale': '1.04',
   },
 }
