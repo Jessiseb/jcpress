@@ -113,3 +113,4 @@
 | **npm 缓存写入被拒** | `npx` 报 `EPERM ... AppData\Local\npm-cache\_cacache\tmp\...` | 把 `npm_config_cache` 指向项目内目录（如 `.npm-cache`）再执行；用完删除该目录 |
 | **自己起 dev server 会失败** | `npm run dev` 报 `spawn EPERM`（vite 加载配置时 esbuild 起子进程被拒），但 5173 上仍有一个可用的 dev server | 该服务是另一个会话留下的；Vite 的 HMR 会吃磁盘上的改动，直接用它即可。若它挂了，再用 `danger-full-access` 起一个 |
 | **编辑源文件偶发 `ReplaceFileW EIO (Win32 1175)`** | 写入被 Vite 的文件监听占用 | 重试同一次编辑即可（同一命令重试第二次都成功） |
+| **`.gitignore` 被进程独占锁住，`git checkout` / `git merge` 因此失败** | 报 `error: unable to unlink old '.gitignore': Invalid argument`，紧接着 `Please commit your changes or stash them before you switch branches`；改用 `Set-Content` 就地复写也报 `being used by another process`（能读、不能写、不能删）。git 换分支/合并需要「删+建」文件，所以被卡死 | 绕开一切文件写入即可解决：① `git update-ref refs/heads/<branch> $(git rev-parse main)` 把分支引用直接指过去；② `git reset -q` 只同步索引、不碰工作区；③ 再 `git checkout main` 就能成功（两边内容一致时 git 无需重写文件）。根因未查明（疑似编辑器或文件监听持有句柄） |
