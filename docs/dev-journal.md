@@ -594,4 +594,14 @@ M2 的 DoD 有四项，**两项做了、两项没做**：
 ### 14.6 提交与推送
 
 - 本期全部提交在分支 `feat/homepage-about`（相对 `main` 领先 21 个提交，`main` 无分叉，可 fast-forward 合并）。
-- 远端：`origin https://github.com/Jessiseb/jcpress.git`（当时 `origin` 上只有 `main`）。
+- 远端：`origin https://github.com/Jessiseb/jcpress.git`。
+- **推送结果**：`feat/homepage-about` 已推送成功（`* [new branch]`，上游跟踪已设置）。
+  GitHub 给出的 PR 入口：`https://github.com/Jessiseb/jcpress/pull/new/feat/homepage-about`。
+
+**推送过程踩的三个坑（已同步 decisions 环境注意事项）**：
+
+| # | 现象 | 根因 | 处理 |
+| --- | --- | --- | --- |
+| ⑲ | `git push` 报 `Failed to connect to github.com port 443 ... Timed out` | **直连 github.com:443 被墙**（`Test-NetConnection` 为 False；而 `codeload.github.com:443` 是 True）。本机 `127.0.0.1:7890` 有代理在监听、环境变量 `HTTP(S)_PROXY` 也设了，但 git 仍然走直连 | 命令级指定代理 + 退回 HTTP/1.1：`git -c http.proxy=http://127.0.0.1:7890 -c http.version=HTTP/1.1 push -u origin <branch>` —— 成功 |
+| ⑳ | `git ls-remote` 卡住 3 分钟不返回 | 同上（直连被黑洞，而不是立刻拒绝），表现为「挂住」而不是「报错」 | 任何远端操作都加 `GIT_TERMINAL_PROMPT=0` + 代理；否则会误以为是凭据问题 |
+| ㉑ | 用户提供 `SHA256:jiJht2W…` 希望用它推送 | **指纹不等于私钥**。本机只有一把 `id_rsa`（RSA 3072，指纹 `SHA256:NKZsTiT…`，注释 `zhuangjiaxi@yonyou.com`），与那把不是同一个；SSH 实测 `Permission denied (publickey)` —— 说明**端口是通的**（22 与 443 都连上了），只是这把钥匙没加到 GitHub 账号 | 走 HTTPS + 代理即可，无需动 SSH。若将来要用 SSH：把 `~/.ssh/id_rsa.pub` 加进 GitHub → Settings → SSH keys，再 `git remote set-url origin git@github.com:Jessiseb/jcpress.git` |
