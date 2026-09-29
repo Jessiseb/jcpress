@@ -1,17 +1,23 @@
 /* ==========================================================================
-   展示字子集：Noto Serif SC（思源宋体）wght=500，只含本站真正用到的字（551 字形 / 92.7KB）。
+   展示字子集：Noto Serif SC（思源宋体），两档真字重。
    --------------------------------------------------------------------------
+   ① 500 档：全站字符表（551 字形 / 92.7KB）—— 正文之外的衬线层用它。
+   ② 700 档：**只含展示字**（45 字 / 9.0KB）—— h1 / h2 / 关键数字用它（二期 phase-2-visual）。
+
    为什么自托管：中文衬线是参照站那种「大号衬线的优雅」的前提，而系统栈在 Windows 上
    会落到 SimSun / STSong —— 它们没有 500 字重，浏览器只能合成伪粗体，84px 下字面发糊。
    子集的 unicode-range 只覆盖 CJK，因此 Latin 仍然走 Georgia ——
    与参照站「Georgia 展示字 + 中文衬线」的搭配一致。
 
-   为什么是静态 500 而不是变量字体：全站展示字只需要一档（`.brandName` 用 700，
-   但那是 Latin，走 Georgia 的真粗体），变量子集要 176.8KB，静态 500 只要 92.7KB。
-   将来真需要第二档，跑一次生成脚本即可（约 30 秒）。
+   为什么是两档静态实例而不是变量字体：全站只用到 500 与 700 两档，
+   两档静态子集合计 ≈ 101.7KB，而变量子集要 176.8KB。
+   700 档只打包「会以 700 渲染的字」（45 个），所以只有 9.0KB。
 
-   生成方式：`node .tmp/tools/collect-charset.cjs`（收集真实渲染的字符）
-             + `python -m fontTools.subset …`，完整流水线见 `.tmp/tools/build-font-subset.cjs`。
+   ⚠️ 两档的字符表**分别收集**（collect-charset.cjs / collect-display-charset.cjs）。
+   若 700 档漏了某个展示字，浏览器会为那个字回落到 500 档 —— 同一行标题里混两档字重，
+   观感就是「发糊」。这条由 frontend/scripts/audit-display-font.cjs 断言守住。
+
+   生成方式：`npm run fonts:build`（500）/ `npm run fonts:build:display`（700）
    ========================================================================== */
 @font-face {
   font-family: 'JCPress Serif SC';
@@ -20,6 +26,17 @@
   font-style: normal;
   font-display: swap;
   /* 只认 CJK 与中文标点：Latin 交给 Georgia，避免子集把正文英文也接管过去 */
+  unicode-range: U+3000-303F, U+4E00-9FFF, U+FF00-FFEF, U+2018-201D, U+2026;
+}
+
+/* 700 档：unicode-range 与 500 档**逐字一致** ——
+   一旦两者不同，就会出现「某个字按 Latin 走 Georgia 粗体、按 CJK 走子集」的分裂。 */
+@font-face {
+  font-family: 'JCPress Serif SC';
+  src: url('/fonts/serif-sc-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
   unicode-range: U+3000-303F, U+4E00-9FFF, U+FF00-FFEF, U+2018-201D, U+2026;
 }
 
@@ -55,8 +72,9 @@
 
      现在的策略（两端都要成立）：
        ① Latin（Agent / Java / AIWorker…）用 Georgia —— 参照站的展示字就是 Georgia 400；
-       ② 中文用自托管的 Noto Serif SC 子集（`/fonts/serif-sc-400.woff2`，见下方 @font-face），
-          只打包本站真正用到的字，保证**换台没装思源宋体的机器也是同一个样子**；
+       ② 中文用自托管的 Noto Serif SC 子集（`/fonts/serif-sc-500.woff2` 与
+          `/fonts/serif-sc-700.woff2`，见下方两个 @font-face），只打包本站真正用到的字，
+          保证**换台没装思源宋体的机器也是同一个样子**；
        ③ 本机装了思源宋体时，子集文件仍然优先（@font-face 的 unicode-range 只认 CJK），
           行为一致、不依赖系统装了啥。
      栈序含义：Georgia 先试（它没有 CJK 字形，中文自然落到下一档），再 Times，再我们的子集。 */
@@ -124,11 +142,56 @@
      照抄大环的不透明度会看不见（截图确认过）。 */
   --ds-ring-badge: rgb(9 111 220 / 22%);
 
+  /* ---- 流线布景层（二期 phase-2-visual）----
+     图案纪律从「只有一种语言」修订为「两层」：**流线是布景层（可流动）、环是标记层（静止）**。
+     修订理由与被替换的原文见 docs/decisions.md（#19 修订条）与
+     openspec/changes/phase-2-visual/specs/visual-language/spec.md。
+     颜色取参考组件 background-paths 的深板岩（15,23,42）；逐条线的 alpha 由组件按索引内联写入
+     （参考的 `0.1 + i * 0.03`），令牌只负责「线是什么颜色」与「底光多亮」。 */
+  --ds-flow-line: #0f172a;
+  --ds-flow-glow: rgb(9 111 220 / 5%);
+  /* 单条流线的**描边上限**。由组件给每条线算一个「按索引递增」的目标值写进 `--path-alpha`，
+     再用 CSS `min()` 卡在这条上限上 —— 这样这条令牌是**真的接线**（评审发现第一版它是死令牌：
+     组件里硬编码了 0.5，改令牌零效果，注释却声称「这条上限同时是断言的上界」）。 */
+  --ds-flow-alpha-max: 0.5;
+
+  /* ---- 玻璃面板（二期）----
+     #46 的修订：从「不做卡片」改为「**有限**面板化」——只用于「关键数字」与「项目经历」
+     两类区块，其余区块保持通栏。比 --ds-c-glass 更透一点：面板面积大，太实就又变成卡片了。 */
+  --ds-c-panel: rgb(255 255 255 / 62%);
+  --ds-c-panel-border: rgb(20 22 26 / 10%);
+  /* 面板顶部高光：玻璃「有一层」的关键，也是面板作为渐变宿主的身份（data-glass） */
+  --ds-panel-sheen: rgb(255 255 255 / 55%);
+  --ds-radius-panel: 14px; /* 圆角上限由 8px 放宽到 14px，仅面板可用；卡片仍 8px */
+  --ds-blur-panel: 14px;
+
+  /* ---- 滚动进度指示（二期）----
+     用**实色**而不是渐变：渐变宿主白名单只有 6 类（每类都必须显式登记），
+     为一条 2px 的进度条再开一个宿主不划算 —— audit-behavior.cjs 会把它当装饰性渐变亮红。 */
+  --ds-c-progress: rgb(15 17 21 / 72%);
+  --ds-progress-h: 2px;
+
+  /* ---- 视差剂量（二期）----
+     spec 的上限是「位移 ≤ 视口高度 8%、缩放 ≤ 1.06」。
+     注意位移要按**层的边缘**算，不是 transform 的平移分量：默认 transform-origin 是 50% 50%，
+     缩放会额外把上边缘推出去 (scale−1)/2 × H。所以 5vh 平移 + 1.04 缩放 → 边缘位移
+     5% + 2% = **7% < 8%**，这才是真的留了余量；
+     （评审指出第一版取 6vh 时边缘位移正好是 6%+2% = 8.0%，贴着上限，"留余量"的说法不成立。） */
+  --ds-parallax-shift: 5vh;
+  --ds-parallax-scale: 1.04;
+
   /* ---- 展示字字重 ----
      参照站用 Georgia 400 撑起 96–102px 标题；中文字形比 Georgia 细，
      同字号下需要一档更实，因此取 500 —— 但必须是**真字重**：
      子集就打包了 wght=500（改版前用系统宋体合成伪粗体，正是 84px 姓名发糊的原因）。 */
   --ds-fw-display: 500;
+
+  /* ---- 展示字重档（二期新增）----
+     只给 `h1` / `h2`（global.css 的标题规则）与关键数字（HighlightStats 的 `.value`）用。
+     700 档子集只含展示字需要的 45 个字（9.0KB）；**正文与导语保持 500** ——
+     满页加粗等于没有重点，那是「一眼看到重点」的反面。
+     必须是真字重：`font-synthesis: none` 全局生效，缺档不会被合成。 */
+  --ds-fw-display-strong: 700;
 
   /* ---- 文本灰阶校正 ----
      基线的两档弱化文字对比度不达标（实测：mute 5.67:1 尚可，subtle 仅 3.12:1，
@@ -229,6 +292,20 @@
   /* 暗色下氛围层要提亮，否则压在 #1b1b1f 上完全看不见 */
   --ds-atmosphere-1: rgb(35 136 246 / 10%);
   --ds-atmosphere-2: rgb(144 35 246 / 7%);
+
+  /* ---- 流线布景层（暗色，二期）----
+     参考组件在暗色下把线翻成白色；底光提亮一档，否则近黑底上流线像「划痕」。 */
+  --ds-flow-line: #ffffff;
+  --ds-flow-glow: rgb(59 130 246 / 12%);
+
+  /* ---- 玻璃面板（暗色，二期）----
+     近黑底上玻璃要比亮色更「厚」一点才看得出层次，但仍保留透明度让流线透上来。 */
+  --ds-c-panel: rgb(16 18 24 / 58%);
+  --ds-c-panel-border: rgb(255 255 255 / 12%);
+  --ds-panel-sheen: rgb(255 255 255 / 7%);
+
+  /* 暗色进度条翻白（与暗色实心胶囊同一套按钮语言） */
+  --ds-c-progress: rgb(235 235 245 / 78%);
 }
 
 /* ==========================================================================

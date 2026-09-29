@@ -59,7 +59,21 @@ const { chromium } = require('playwright-core')
       await page.waitForTimeout(300)
     }
 
-    await el.screenshot({ path: `${out}/${prefix}-${theme}.png` })
+    // ⚠️ 二期：元素截图同样会被「常驻无限动画 + 捕获」这条路径打坏 ——
+    // 实测裁图只拍到了流线布景层、正文全丢。处理方式与 shot-final 一致：
+    // 先把流线定格在一帧代表态，再用 `animations: 'disabled'` 拍。
+    await page.evaluate(() => {
+      const paths = Array.from(document.querySelectorAll('[data-flow] path'))
+      paths.forEach((p, idx) => {
+        p.style.animation = 'none'
+        p.style.strokeDashoffset = String(-((idx * 0.37) % 1))
+        p.style.strokeDasharray = '0.62 0.38'
+        p.style.opacity = '0.5'
+      })
+    })
+    await page.waitForTimeout(200)
+
+    await el.screenshot({ path: `${out}/${prefix}-${theme}.png`, animations: 'disabled' })
     console.log(`✔ ${out}/${prefix}-${theme}.png`)
     await ctx.close()
   }

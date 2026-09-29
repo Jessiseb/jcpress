@@ -1,7 +1,6 @@
 import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 
-import RingField from '@/components/layout/RingField'
 import type { ProfileVO } from '@/data/profile'
 import { useSpotlight } from '@/hooks/useSpotlight'
 import { withLatinEmphasis } from '@/utils/latin'
@@ -20,6 +19,11 @@ const stagger = (step: number) => ({ '--reveal-delay': `${step * 70}ms` }) as CS
  * 2026-09-29：字体统一（见 docs/design-visual-language.md §4.4）；
  * 两个动作改用全局按钮系统（.btn + .btnSolid/.btnOutline），主按钮带指针跟随聚光。
  *
+ * 2026-09-29（二期）：**首屏环装置退役**，背景改由全站的流线布景层承担
+ * （`components/visual/FlowField`，挂在 App 上）。图案纪律因此从「只有一种」变成「两层」：
+ * 流线是布景层（可流动），环退为标记层（顶栏 / 项目徽标 / 页脚，静止）。
+ * 首屏不再需要 `isolation` 与「环层垫在 z-index:-1」这套结构。
+ *
  * 刻意保留的克制：只有一个实心按钮，第二个动作降级成描边胶囊。
  */
 export default function Hero({ profile }: Props) {
@@ -31,12 +35,6 @@ export default function Hero({ profile }: Props) {
 
   return (
     <section className={`container ${styles.hero}`} aria-labelledby="hero-title">
-      {/* 环层：与首屏一起淡入。data-reveal 写在包裹层上，环自身的 opacity 不参与动画，
-          否则 [data-reveal].is-revealed 的 opacity:1 会把 --ring-opacity 覆盖掉。 */}
-      <div className={styles.ringLayer} data-reveal style={stagger(0)}>
-        <RingField size={1200} />
-      </div>
-
       <p className={styles.kicker} data-reveal style={stagger(1)}>
         {profile.location} · AI 应用开发
       </p>
@@ -45,7 +43,12 @@ export default function Hero({ profile }: Props) {
         <span className={styles.nameMain} data-gradient="">
           {profile.displayName}
         </span>
-        <span className={styles.nameSub}>{position}</span>
+        {/* data-weight：显式声明这一行**故意**是 500（姓名才是 700）。
+            评审指出「展示字元素的计算字重为 700」这条规格在 h1 内部其实并存两档，
+            口径只覆盖了一半 —— 因此这里把它标出来，并让断言按**文本节点**而不是元素判。 */}
+        <span className={styles.nameSub} data-weight="500">
+          {position}
+        </span>
       </h1>
 
       <p className={styles.headline} data-reveal style={stagger(3)}>

@@ -20,7 +20,11 @@ const LEVEL_LABEL: Record<number, string> = {
 
 export default function SkillMatrix({ groups }: Props) {
   return (
-    <section className={`container section ${styles.section}`} aria-labelledby="skills-title">
+    <section
+      className="container section"
+      aria-labelledby="skills-title"
+      data-rhythm="minor"
+    >
       <h2 id="skills-title" className="sectionTitle" data-reveal>
         技术栈
       </h2>

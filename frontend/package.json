@@ -10,7 +10,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "fonts:chars": "node scripts/collect-charset.cjs",
-    "fonts:build": "node scripts/build-font-subset.cjs"
+    "fonts:chars:display": "node scripts/collect-display-charset.cjs",
+    "fonts:build": "node scripts/build-font-subset.cjs",
+    "fonts:build:display": "node scripts/build-font-subset.cjs --weight=700 --chars=.tmp/fonts/chars-display.txt --collect=collect-display-charset.cjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.7",

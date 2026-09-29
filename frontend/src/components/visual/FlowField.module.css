@@ -1,0 +1,92 @@
+/* 流线布景层（二期 phase-2-visual）。
+   图案纪律的两层结构：**本层是布景层（可流动）**，环是标记层（静止）。
+   修订记录见 docs/decisions.md #45 与 openspec/changes/phase-2-visual/specs/visual-language/spec.md。 */
+
+.field {
+  position: fixed;
+  inset: 0;
+  /* 落在正文之下、body 画布（晕影 + 氛围层）之上：
+     body 的背景会传播到画布，因此 z-index:-1 的层压在画布背景之上、正常流内容之下。 */
+  z-index: -1;
+  overflow: hidden;
+  /* 纯装饰：不进无障碍树、不吃点击（与 RingField 同一套纪律） */
+  pointer-events: none;
+  color: var(--ds-flow-line);
+  /* 底光：让布景层不是「凭空出现的线」。这也是本层的渐变宿主身份（data-flow）。 */
+  background-image: radial-gradient(60rem 40rem at 50% 0%, var(--ds-flow-glow), transparent 70%);
+  /* ---- 装饰层视差（二期）----
+     消费 useScrollProgress 写的 --scroll-p（缺省 0，JS 未接管时就是静止的原位）。
+     剂量：位移 6vh（spec 上限是视口 8%）、缩放 1.04（上限 1.06）—— 留余量，不贴上限跑。
+     **只有装饰层允许滚动联动**：正文、关键数字、控件一律不参与（会动的数字会让人怀疑数据真实性）。 */
+  transform: translate3d(0, calc(var(--scroll-p, 0) * var(--ds-parallax-shift) * -1), 0)
+    scale(var(--ds-parallax-scale));
+  will-change: transform;
+  /* 「呼吸」上提到整层：1 个元素 1 条动画，替代原来每条线各一条 opacity 脉冲。
+     剂量上限由 --ds-flow-alpha-max（0.6）约束：层不透明度最低 0.78，
+     单条线描边不透明度上限 0.5 → 屏上最浓处 0.5 × 0.78 ≈ 0.39，不抢正文。 */
+  animation: fieldBreathe 16s ease-in-out infinite alternate;
+}
+
+@keyframes fieldBreathe {
+  from {
+    opacity: 0.78;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* 「减少动态效果」下视差撤销（进度条本身仍照常工作 —— 它是信息，不是动效） */
+@media (prefers-reduced-motion: reduce) {
+  .field {
+    transform: none;
+    will-change: auto;
+  }
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 单条流线。**只有一条动画**（这是实测出来的硬约束，不是省事）。
+   `pathLength="1"`（写在组件里）把路径长度归一化，因此 dash 数值全是「占整条路径的比例」，
+   36 条几何各异的路径可以共用同一套关键帧 —— 这是不用动效库也能复刻 pathOffset 的关键。
+
+   ⚠️ 移动端性能实测（`.tmp/tools/audit-perf.cjs`，390×844 + CPU 4× 降速，各采样 3 秒）：
+     每条路径跑 2 条动画（位移 + 呼吸/脉冲）→ **21 FPS / 掉帧 97%**
+     每条路径只跑 1 条动画（只位移）      → **118 FPS / 掉帧 0%**
+     路径数减半但仍跑 2 条动画            → 45 FPS（说明瓶颈是「动画条数」而不是「节点数」）
+   原因是 `stroke-dasharray` 每帧都要重算 dash 图案并重新细分描边；
+   而「位移 + 任意第二条动画」同样会把每条线的每帧工作翻倍。
+   所以：**位移留在元素上，呼吸上提到整层**（`.field` 的 fieldBreathe，1 个元素 1 条动画）。 */
+.path {
+  stroke-dasharray: 0.55 0.45;
+  /* 描边浓度：组件按索引写 `--path-alpha`（0.16 → 递增），这里用 min() **真的**卡在
+     `--ds-flow-alpha-max` 上 —— 令牌因此是可生效的上限，而不是摆设。 */
+  stroke-opacity: min(var(--path-alpha, 0.3), var(--ds-flow-alpha-max, 0.6));
+  /* dashoffset 从 0 动到 -1（整条路径长度），dash 图案周期正好等于路径长度，
+     因此循环边界处首尾无缝（不会"跳回去"）。 */
+  animation: flowTravel 22s linear infinite;
+}
+
+@keyframes flowTravel {
+  from {
+    stroke-dashoffset: 0;
+  }
+
+  to {
+    stroke-dashoffset: -1;
+  }
+}
+
+/* 「减少动态效果」下完全静止（显式关掉动画，而不是只靠 global.css 把时长压到 0.001ms ——
+   那会让动画停在第 100% 帧上，看起来像「卡住」而不是「安静的图案」）。 */
+@media (prefers-reduced-motion: reduce) {
+  .field,
+  .path {
+    animation: none;
+  }
+}

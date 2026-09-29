@@ -1,12 +1,9 @@
 /* 首屏：居中单列。没有任何卡片、徽章、标签胶囊 —— 这些是模板感的来源。
-   2026-09-28：背后加环装置层，因此需要建立自己的层叠上下文。 */
+   2026-09-29（二期）：环层退役，背景由全站固定的流线布景层（FlowField）承担，
+   因此这里不再需要 `isolation`（原来是为了把 z-index:-1 的环留在首屏内部）。 */
 
 .hero {
   position: relative;
-  /* 让 z-index:-1 的环层留在首屏内部，不跑到 body 背景后面去 */
-  isolation: isolate;
-  /* 环宽 1200px，窄屏必须裁掉，否则整页横向滚动（audit 会亮红） */
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -14,18 +11,6 @@
   /* 2026-09-29 放开留白：参照站的首屏是「稀疏而有秩序」，挤在一起就没有气场 */
   gap: var(--ds-space-4);
   padding-block: calc(var(--ds-space-7) + var(--ds-space-4)) var(--ds-space-7);
-}
-
-/* 环层：绝对定位铺满首屏，内部再由 RingField 自身定位（left:50% + margin 居中） */
-.ringLayer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-/* 环中心落在首屏偏上 45% 处；截图确认后允许 ±60px 微调 */
-.ringLayer > * {
-  top: -240px;
 }
 
 /* 地点行两侧压一条短发丝线：给居中标题一个「印刷品」的锚点，
@@ -57,9 +42,10 @@
   flex-direction: column;
   align-items: center;
   font-family: var(--ds-font-display);
-  /* 96px：参照站是 102px。中文三个字在 96px 下已经非常有分量，再大就压住整屏 */
-  font-size: 6rem;
-  font-weight: var(--ds-fw-display);
+  /* 104px（二期）：从 96px 再提一档，配合 700 真字重让「映入眼帘」的第一眼更有分量。
+     仍然守住一期的结论「再大就只剩字」—— 不继续往上顶，也不与 h1/h2 的字重规则脱钩。 */
+  font-size: 6.5rem;
+  font-weight: var(--ds-fw-display-strong);
   line-height: 1;
   /* 中文收紧到 -0.01em 就够：再紧会粘连（参照站 -0.02em 是 Latin 的取值） */
   letter-spacing: -0.01em;
@@ -80,7 +66,9 @@
 }
 
 /* 第二行：定位。同一套衬线（思源宋体 + Georgia），靠字号与灰度分层，不换字体。
-   刻意不用斜体 —— `AI` 只有两个字母，斜体后读起来像 /\I */
+   刻意不用斜体 —— `AI` 只有两个字母，斜体后读起来像 /\I。
+   二期显式写回 500：h1 现在是 700（global.css），这一行**故意不跟着粗** ——
+   它是姓名下面的说明，粗了就会与姓名争第一眼。 */
 .nameSub {
   margin-top: 0.55rem;
   font-size: 0.36em;
@@ -139,16 +127,16 @@
   transform: translateX(3px);
 }
 
-/* 响应式降级阶梯：96 → 60 → 50 → 42px（沿用基线四档断点） */
+/* 响应式降级阶梯：104 → 64 → 52 → 44px（沿用基线四档断点） */
 @media (max-width: 959px) {
   .name {
-    font-size: 3.75rem;
+    font-size: 4rem;
   }
 }
 
 @media (max-width: 719px) {
   .name {
-    font-size: 3.125rem;
+    font-size: 3.25rem;
   }
 
   .headline {
@@ -159,16 +147,11 @@
   .kicker::after {
     width: 1.5rem;
   }
-
-  /* 窄屏首屏更矮，环要跟着上移，否则只能看到一片空白 */
-  .ringLayer > * {
-    top: -120px;
-  }
 }
 
 @media (max-width: 419px) {
   .name {
-    font-size: 2.625rem;
+    font-size: 2.75rem;
   }
 
   .actions {

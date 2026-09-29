@@ -1,0 +1,34 @@
+/* 顶部滚动进度指示（二期 phase-2-visual）。
+   修订记录：一期的禁止清单里明写「不做滚动进度条」，二期解禁并收窄为
+   「只作用于装饰层 + 剂量上限」（见 docs/decisions.md #46 与
+   openspec/changes/phase-2-visual/specs/site-shell/spec.md 的「滚动进度指示」）。 */
+
+.track {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--ds-progress-h, 2px);
+  /* 高于顶栏（顶栏 z-index: 50），但只有 2px、且不吃指针，不会挡住任何东西 */
+  z-index: 60;
+  pointer-events: none;
+}
+
+.bar {
+  height: 100%;
+  background: var(--ds-c-progress);
+  /* 填充量来自 useScrollProgress 写的 --scroll-p（缺省 0：JS 未接管时是空条，不会满格假象） */
+  transform: scaleX(var(--scroll-p, 0));
+  transform-origin: left center;
+  will-change: transform;
+  /* 120ms 线性过渡：把 rAF 的离散帧抹平，且不至于「跟不上手」 */
+  transition: transform 120ms linear;
+}
+
+/* 「减少动态效果」下进度条**仍然显示并反映进度**（它是信息，不是装饰动效），
+   只是去掉过渡动画。 */
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    transition: none;
+  }
+}

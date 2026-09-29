@@ -98,7 +98,11 @@ export default function ProjectShowcase({ projects }: Props) {
   const [openSlug, setOpenSlug] = useState<string | null>(null)
 
   return (
-    <section className={`container section ${styles.section}`} aria-labelledby="projects-title">
+    <section
+      className="container section"
+      aria-labelledby="projects-title"
+      data-rhythm="minor"
+    >
       <h2 id="projects-title" className="sectionTitle" data-reveal>
         项目经历
         {/* 环母题的中尺寸变体：这一块是首页的信息重心，给它一枚区块标记 */}
@@ -108,7 +112,8 @@ export default function ProjectShowcase({ projects }: Props) {
         两个从 0 到 1 自研的项目，都由我负责后端与整体方案。展开看难点与取舍。
       </p>
 
-      <div className={styles.table} data-reveal style={stagger(2)}>
+      {/* data-glass + .panel：与「关键数字」并列的第二处（也是最后一处）面板 */}
+      <div className={`panel ${styles.table}`} data-glass="" data-reveal style={stagger(2)}>
         <div className={styles.head} aria-hidden="true">
           <span>ID</span>
           <span>项目</span>

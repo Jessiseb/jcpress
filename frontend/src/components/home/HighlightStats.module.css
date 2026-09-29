@@ -6,8 +6,10 @@
 .list {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--ds-space-6);
-  margin: var(--ds-space-6) 0 0;
+  /* 2026-09-29（二期）：面板 + 不对称栅格之后，正文栏从 1160px 收到 828px，
+     四列的间距必须跟着收，否则每格只剩 ~170px 放不下「1200ms → 50ms」 */
+  gap: var(--ds-space-4);
+  margin: 0;
 }
 
 .cell {
@@ -15,6 +17,8 @@
   flex-direction: column;
   gap: var(--ds-space-1);
   padding-top: var(--ds-space-3);
+  /* 允许收缩，避免长数值把列撑开（配合下面 .value 的 nowrap） */
+  min-width: 0;
   /* 每格一条顶部发丝线：与全站「对齐即秩序」的分块语言一致，同时不需要卡片 */
   border-top: 1px solid var(--ds-c-hairline);
 }
@@ -27,14 +31,18 @@
   color: var(--ds-c-text-subtle);
 }
 
-/* 数值：衬线 + 强调色 + 30px。
-   对比度：亮色 #0756ab 于白底 7.11:1 ✔；暗色 #4d9bff 于 #08090c 7.05:1 ✔ */
+/* 数值：衬线 + 强调色，是这一区的视觉重心。
+   2026-09-29（二期）：字重提到 700 —— 关键数字是「一眼看到重点」里最该被看到的那个东西；
+   数值本体是 Latin/数字，走 Georgia 的真粗体，不占 CJK 子集。
+   字号 30 → 24px：二期面板 + 不对称栅格把每格宽度收到约 175px，
+   30px 下「1200ms → 50ms」放不下，会与邻格叠在一起（截图确认过的真缺陷）。
+   对比度：亮色 #0756ab 于面板底 7.11:1 ✔；暗色 #4d9bff 于 #08090c 7.05:1 ✔ */
 .value {
   margin: 0;
   font-family: var(--ds-font-display);
-  font-size: 1.875rem;
-  font-weight: var(--ds-fw-display);
-  line-height: 1.1;
+  font-size: 1.5rem;
+  font-weight: var(--ds-fw-display-strong);
+  line-height: 1.15;
   font-variant-numeric: tabular-nums;
   color: var(--ds-c-accent);
   white-space: nowrap;
@@ -56,6 +64,6 @@
 
 @media (max-width: 419px) {
   .value {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
   }
 }

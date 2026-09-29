@@ -24,7 +24,11 @@ export default function ContactBar({ contacts }: Props) {
   }
 
   return (
-    <section className={`container section ${styles.section}`} aria-labelledby="contact-title">
+    <section
+      className="container section"
+      aria-labelledby="contact-title"
+      data-rhythm="minor"
+    >
       <h2 id="contact-title" className="sectionTitle" data-reveal>
         联系我
       </h2>

@@ -12,7 +12,11 @@ const stagger = (step: number) => ({ '--reveal-delay': `${step * 70}ms` }) as CS
 
 export default function EducationAwards({ education, awards }: Props) {
   return (
-    <section className={`container section ${styles.section}`} aria-labelledby="edu-title">
+    <section
+      className="container section"
+      aria-labelledby="edu-title"
+      data-rhythm="major"
+    >
       <h2 id="edu-title" className="sectionTitle" data-reveal>
         教育与荣誉
       </h2>

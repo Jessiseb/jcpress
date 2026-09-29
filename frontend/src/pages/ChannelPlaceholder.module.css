@@ -24,7 +24,8 @@
 
 .title {
   font-size: 2.5rem;
-  font-weight: var(--ds-fw-display);
+  /* 二期：h1 走 700 真字重（与 global.css 的标题规则一致） */
+  font-weight: var(--ds-fw-display-strong);
 }
 
 .lead {

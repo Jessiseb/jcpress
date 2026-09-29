@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="庄家希 · AI 应用开发工程师：Agent 工程、Java 后端、RAG 与知识库。个人经历、技术栈与项目笔记。" />
     <meta name="color-scheme" content="light dark" />
+    <!-- 展示字 700 档（二期）：首屏 h1 姓名用的是它，而它只有 9.0KB，
+         用 preload 抢在 CSS/JS 之前取回，避免大名在首屏闪一下系统宋体。
+         500 档（92.7KB，全站字符表）**刻意不 preload**：它的使用者是首屏的定位行与
+         正文标题，体积大、优先级高的预取会与关键 JS/CSS 抢带宽，交给 font-display: swap 更划算。 -->
+    <link rel="preload" href="/fonts/serif-sc-700.woff2" as="font" type="font/woff2" crossorigin />
     <title>庄家希 · AI 应用开发工程师</title>
     <script>
       // 主题首帧前写入，避免闪白（规划 §5.2 预渲染约束）

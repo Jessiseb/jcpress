@@ -62,6 +62,16 @@ h4 {
   text-wrap: balance;
 }
 
+/* 展示字重档（二期 phase-2-visual）：**只有 h1 / h2 用 700**。
+   「一眼看过去能看到重点」靠的是层级对比，不是满页加粗 —— 全都粗，重点就不存在了。
+   h3 / h4 保持 500：项目名、分组名属于二级信息，跟着一起粗会把主次抹平。
+   必须是真字重：700 档子集只含展示字（45 字 / 9.0KB），
+   漏字会让同一行标题混两档字重（发糊），由 `frontend/scripts/audit-display-font.cjs` 守住。 */
+h1,
+h2 {
+  font-weight: var(--ds-fw-display-strong);
+}
+
 p {
   margin: 0;
   /* 段落末端避免孤字（Chrome 117+ 支持；不支持的浏览器直接忽略） */
@@ -115,17 +125,91 @@ button {
   }
 }
 
-/* 区块节奏：桌面 64px，移动端压缩到 32px。
-   2026-09-29：桌面从 48px 提到 64px —— 参照站的通栏留白是「稀疏而有秩序」，
-   区块贴太近会把整页压成一张长表。 */
+/* 区块节奏（二期 phase-2-visual 改写）：
+   一期是「所有区块同一个 64px 上留白」，读起来像一条均匀的长表 —— 用户的原话是「太硬了」。
+   二期改成**大节 / 小节交替**：大节 96px、小节 48px（`data-rhythm` 写在区块容器上）。
+   为什么用 96/48 而不是 80/40：两档要**一眼看得出差别**，差 24px 在长页面上读不出来。
+   移动端两档都压缩，但保留差别。 */
 .section {
-  padding-block: calc(var(--ds-space-7) + var(--ds-space-4));
+  padding-block: 4rem;
 }
 
+.section[data-rhythm='major'] {
+  padding-block: 6rem;
+}
+
+.section[data-rhythm='minor'] {
+  padding-block: 3rem;
+}
+
+/* 区块栅格（二期）：**不对称**编辑式排版。
+   一期的区块是「标题 + 导语 + 正文」全部左对齐顶格，每一节长得一模一样；
+   二期把它们放进 12 列栅格，做成「通栏标题 + 左栏导语 + 右移正文」：
+     · 标题仍通栏 —— 保留一期「顶部通栏发丝线 + 标题」这个编辑式签名（不丢）；
+     · 导语进左栏（1–3 列），栏宽明显窄于正文；
+     · 正文整体右移到第 4 列起，与标题、导语形成可见错位。
+   这样每一节仍然有秩序，但不再是「一叠同样的行」。 */
+.section {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--ds-space-5);
+  row-gap: var(--ds-space-3);
+  align-items: start;
+}
+
+.section > .sectionTitle {
+  grid-column: 1 / -1;
+}
+
+.section > .sectionLead {
+  grid-column: 1 / span 3;
+}
+
+/* 正文：除标题与导语之外的所有直接子元素，统一右移到第 4 列起 */
+.section > *:not(.sectionTitle, .sectionLead) {
+  grid-column: 4 / -1;
+}
+
+/* 「正文需要更宽」的区块（目前只有关键数字）：从第 3 列起。
+   原因是这一节要平铺四个数字块，收窄到 8 列之后「1200ms → 50ms」这类长数值会文字溢出、
+   和邻格贴在一起（截图确认过的真缺陷）。第 3 列起仍与标题错开近 190px，错位本身不丢。 */
+.section[data-wide] > *:not(.sectionTitle, .sectionLead) {
+  grid-column: 3 / -1;
+}
+
+/* 窄屏塌回单列：标题与正文左边缘对齐，不许出现「手机上一窄一宽」的错位 */
 @media (max-width: 719px) {
   .section {
+    display: block;
+  }
+
+  .section[data-rhythm='major'] {
     padding-block: var(--ds-space-6);
   }
+
+  .section[data-rhythm='minor'] {
+    padding-block: var(--ds-space-5);
+  }
+}
+
+/* ==========================================================================
+   玻璃面板（二期 phase-2-visual）
+   --------------------------------------------------------------------------
+   #46 的反模式是「**每个**区块都包一层卡片」，不是「任何地方都不能有面」。
+   因此这里是一个**限定用途**的类：只给「关键数字」与「项目经历」两类区块用，
+   其余区块保持通栏（不着色 / 不描边 / 不投影）。
+   圆角从 8px 放宽到 14px（--ds-radius-panel），仅面板可用。
+   ========================================================================== */
+.panel {
+  padding: var(--ds-space-4) var(--ds-space-5);
+  border: 1px solid var(--ds-c-panel-border);
+  border-radius: var(--ds-radius-panel);
+  background-color: var(--ds-c-panel);
+  /* 顶部高光：玻璃「有一层」的关键；这也是本元素的渐变宿主身份（data-glass，已登记进断言白名单） */
+  background-image: linear-gradient(180deg, var(--ds-panel-sheen), transparent 46%);
+  /* 面板后面的流线会被磨砂，这是「透明 + 一点科技感」的主要来源 */
+  backdrop-filter: blur(var(--ds-blur-panel));
+  -webkit-backdrop-filter: blur(var(--ds-blur-panel));
 }
 
 /* 区块标题：上方压一条通栏发丝线，是本站的编辑式签名。
@@ -134,15 +218,17 @@ button {
 .sectionTitle {
   padding-top: var(--ds-space-4);
   border-top: 1px solid var(--ds-c-hairline);
-  /* 30px：比原来的 26.4px 提一档，配合字重降到 500，让区块标题有「版面标题」的分量 */
-  font-size: 1.875rem;
+  /* 34px（二期）：原 30px。配合 700 真字重，区块标题才有「版面标题」的分量 ——
+     一期靠字号（26.4 → 30px）拉分量，二期再加一档字号并换成 700，
+     理由见 docs/decisions.md #48。移动端仍降一档，不跟着放大。 */
+  font-size: 2.125rem;
   line-height: 1.3;
   margin-bottom: var(--ds-space-3);
 }
 
 @media (max-width: 719px) {
   .sectionTitle {
-    font-size: 1.55rem;
+    font-size: 1.65rem;
     padding-top: var(--ds-space-3);
   }
 }

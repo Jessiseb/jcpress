@@ -98,6 +98,28 @@
 | 43 | **指针聚光移植为 `useSpotlight`，拒绝 Tailwind + shadcn** | 外部组件要求 shadcn 结构 + Tailwind + `/components/ui`，本项目三条都不满足，且选型在规划里定死（#7 D4=A）。**不装 Tailwind / shadcn / lucide-react**，只移植效果：`useSpotlight` 写 `--spot-x/--spot-y`，表格行用 `.host`（伪元素两层：底光 + 边框高光，`z-index:-1` + `isolation`），按钮用 `.btnSpot`（背景图叠加，因为实心底色会盖住 `-1` 的伪元素）。四处与原始实现的差异：监听元素自身而非 `document`、元素相对坐标而非视口坐标 + `background-attachment: fixed`、只在 `(hover: hover)` 且非 reduced-motion 时绑定、进入/离开只切一个属性 |
 | 44 | **中文排版细则与区块节奏** | `font-synthesis: none`（**禁止合成字重**——这是阶段 11「中文姓名发糊」的根因，从机制上杜绝复发）、`line-break: strict`（避头尾）、`text-spacing-trim: trim-start`、正文行高 1.7 → 1.8、标题 `text-wrap: balance` / 段落 `pretty`、区块纵向节奏 48 → 64px、区块导语 16 → 17px（导语要比正文大一档，不是小一号） |
 
+## 2026-09-29 · 二期视觉语言修订（phase-2-visual）
+
+> 触发：用户「整体字体要**大气**，一眼看过去能看到重点，而且**背景要有灵动**效果」+「首页排版感觉**太硬**了，而且没有使用一些好看的**图案修饰**」，
+> 并贴来两份外部参考组件（`background-paths` 的流线动画、滚动 globe 落地页）。
+> 上游：`openspec/changes/phase-2-visual/`（proposal / design / 3 份 delta specs / tasks）。
+> **本条目的性质**：下面几张表是「按 mock 补齐」，而这一节是**把已归档的纪律本身改写**——
+> 依据正是 #36 之后的教训：「实现阶段要偏离，必须显式提出并得到确认，不能默默收敛」。
+> 因此每条都写清了**它推翻的是哪一条**。
+
+| # | 决策 / 偏差 | 说明 |
+| --- | --- | --- |
+| 45 | **图案纪律从「只有一种语言」改写为「两层」**（修订 #19） | 用户从四个选项中选了「**流线路径当背景主视觉**」。新结构：**布景层 = 沿路径流动的流线**（内联 SVG，`viewBox 696×316`，36 条 × 2 组镜像，零网络请求），**标记层 = 同心圆环 + 中心聚光**（静止，只做项目徽标 / 频道页徽标 / 页脚）。首屏环装置**退役**（让位给流线）。#19 里「全站图案统一走环装置」的**唯一性**作废，但「**不得引入第三类纹理**（噪点 / 网格 / 斜纹）」**保留并继续有效**。渐变宿主白名单 4 类 → **6 类**（新增 `data-flow` 流线层、`data-glass` 玻璃面板），每一类都必须显式登记在 `.tmp/tools/audit-behavior.cjs`。**注**：一期文档里「顶栏 logo 环」的说法不成立 —— 实现时查明 TopNav 根本没有任何环元素，标记层实际只有项目徽标、频道页徽标（`/tech`、`/algo`、`/projects`）与页脚三处，已按实况修正 proposal / spec / 本条 |
+| 46 | **禁止清单里的「视差」「滚动进度条」解禁，但收窄为「只作用于装饰层 + 剂量上限」**（修订 `design-homepage.md §5` 与 `design-visual-language.md:354` 的禁止清单） | 用户在多选里明确选了这两项（它们是一期写死「不做」的）。解禁形态：位移 **≤ 视口高度 8%**、缩放 **≤ 1.06**（实现取 `--ds-parallax-shift: 6vh` / `--ds-parallax-scale: 1.04`，留出余量不贴上限）；**只允许加在带 `data-parallax` 的装饰层上**，正文、关键数字、控件及其容器一律不参与——会动的数字会让人怀疑数据真实性。进度条用**实色**（`--ds-c-progress`）而不是渐变：不为一条 2px 的条再开一个渐变宿主。「粒子背景 / 打字机 / 光标拖尾 / 3D 倾斜」**仍然不做** |
+| 47 | **#46「不做卡片」修订为「有限面板化」**（修订 #33 的「仍然不做卡片」与圆角 8px 上限） | 用户选了「区块容器软化（玻璃面板 / 大圆角）」。落地形态是**有限**的：玻璃面板（`--ds-c-panel` / `--ds-c-panel-border` / `--ds-blur-panel: 14px`）**只给「关键数字」与「项目经历」两类区块**；其余区块保持通栏（不着色 / 不描边 / 不投影）。圆角上限放宽为**面板 14px、卡片仍 8px**。理由：#46 记录的反模式是「**每个**区块都包一层卡片」，不是「任何地方都不能有面」——全面板化会直接退回那个反模式 |
+| 48 | **展示字新增 700 一档真字重**（修订 #37 的「只要一档」） | 用户选了「只给展示字加一档 700 子集」。新增 `frontend/public/fonts/serif-sc-700.woff2`，字符表由 `collect-display-charset.cjs` **只从真实渲染的展示字元素**（`h1` / `h2` / 关键数字）收集；`@font-face` 的 `unicode-range` 与 500 档逐字一致（Latin 仍走 Georgia 真粗体）；**正文与导语保持 500**，否则满页加粗等于没有重点。新增硬条款：**展示字字符集合必须被 700 子集完整覆盖**（`frontend/scripts/audit-display-font.cjs` 断言），否则同一行标题会出现两档字重、观感就是「发糊」（这正是阶段 11 的根因形态）。字号阶梓：姓名 96 → **104px**、区块标题 30 → **34px**（一期的「再大就只剩字」结论仍成立，不继续往上顶） |
+| 49 | **动效实现路线：零依赖优先，`framer-motion` 只作逃生舱** | 参考组件用 `motion.path` 的 `pathLength` / `pathOffset`。经查证：SVG 原生有 **`pathLength="1"` 属性**可归一化路径长度，配 `stroke-dasharray: .3 .7` + `stroke-dashoffset` 关键帧即可 **1:1 复刻**「光段沿线前进 + 长度呼吸」。因此**不引入动效库**（「预算里没有动效库」这条纪律不必提前作废）。两处刻意偏离参考：① 用**确定性错峰** `20 + i % 11` 秒替代 `Math.random()`（随机相位会让每次截图与断言都不可复现）；② 路径数按视口分档（桌面 36×2 / 平板 24×2 / 手机 12×2），因为 72 条 SVG 线每帧重绘 stroke 在低端机上会掉帧发热。若动画质感验收不达标，**另开 change** 引入 `motion` |
+| 50 | **`probe-tokens.cjs` 重同步（一期遗留的 3 处假失败）** | 二期开工时探针报 3 处不符：亮 `--ds-ring` 期望 6% / 实际 13%、暗 `--ds-glow` 期望 20% / 实际 26%、暗 `--ds-ring` 期望 8% / 实际 10%。**实际值是主题文件里经过校准并写有注释的取值**（见 #21 环周期校准、#36 剧场底色那一轮），探针没跟着改。处置：**以 `theme.jcpress.css` 为准重同步探针期望**，并在探针里注明重同步原因；没有反过来改主题去迁就旧期望 |
+| 51 | **布景层动画的硬约束：每条流线只允许一条 CSS 动画**（性能实测得出，非设计阶段预判） | 二期第一次跑生产构建的 Lighthouse 移动端只有 **70 分**（TBT 2160ms）。用 `.tmp/tools/audit-perf.cjs`（390×844 / CPU 4× 降速 / 3 秒采样）归因，得到两条反直觉结论：① **主导项是「每条路径的动画条数」，不是「路径数量」** —— 把手机档节点砍一半（12×2→6×2）仍只有 45 FPS，而只要每条线只剩一条动画就回到 117+ FPS；② **任意两条动画叠加都会崩**（位移+dasharray 呼吸 21 FPS、位移+透明度脉冲 27 FPS），不是"避开 dasharray 就行"。原因是 `stroke-dasharray` 每帧要重算 dash 图案并重新细分描边。**最终实现**：位移（`stroke-dashoffset`）留在每条路径（1 条动画），「呼吸」上提到布景层一层（`.field` 的 `fieldBreathe`）。修完：**76 FPS / 掉帧 0%**（长任务 310→162ms），Lighthouse 移动端 **70 → 98 分**（TBT 2160→0ms、FCP 1.8s、LCP 2.0s、CLS 0）。这条约束写进 `openspec/changes/phase-2-visual/specs/visual-language` 并在 `.tmp/tools/audit-perf.cjs` 长期把关 |
+| 52 | **一期 M2 DoD 的「Lighthouse 移动端 ≥ 90」在二期首次验掉** | 一期收尾时（`dev-journal.md` 14.3）明确记着这项「未测」。二期第 7 组补跑：**对生产构建**（`vite preview`，不是 dev server）跑 `lighthouse@12 --form-factor=mobile`，得 **98 分**。注意两条环境事实：① 对 **dev server** 跑只有 30 分（Vite 不打包 + React development 版），**任何性能数字都必须标明测的是 dev 还是生产构建**；② Lighthouse 跑完会在清理系统临时目录时报 `EPERM`（不影响报告落盘），报告仍在 `.tmp/lh-prod2.json` |
+| 53 | **判据纪律：容差必须与门槛同量级；「我声称通过」不算证据** | 二期两次栽在同一类问题上：① `audit-behavior.cjs` 的「面板内数值不溢出」用 `getBoundingClientRect` 比盒子宽度 —— 块级元素文字溢出时盒子不变宽，断言**假绿**，而截图里 `1200ms → 50ms` 已经和 `100%` 贴在一起；② 进度条断言的轮询容差 `0.03` 比断言门槛 `0.99` 还宽，于是「过渡还差 2.8%」被判为已收敛，断言随机亮红，而我在 journal 里写了「连跑 4 次稳定」。对抗性复核（独立子代理只跑命令、不看自述）当场把这句话打回。**纪律**：判据的容差必须 ≤ 门槛量级；任何"稳定/通过"的结论必须能被第二双眼睛按同样标准复跑，自述不作为证据 |
+| 54 | **`:not(.sectionTitle, .sectionLead)` 的构建目标依赖（遗留）** | 二期的不对称栅格用 Selectors 4 的 `:not()` 列表定位正文列。当前 `vite.config.ts` 未设 `build.target`，默认目标覆盖该语法，**暂无问题**；但一旦将来下调 target 或加 `browserslist`，含 `:not()` 列表的**整条规则会被丢弃**（不是逐条降级），正文会退回 12 列自动放置（横排成 1/12 宽）而不是优雅塌成单列。列入遗留：调 target 时同步复核该规则 |
+
 ## 环境注意事项（Windows + WorkBuddy 沙箱）
 
 | 坑 | 现象 | 绕过方式 |
@@ -114,3 +136,4 @@
 | **自己起 dev server 会失败** | `npm run dev` 报 `spawn EPERM`（vite 加载配置时 esbuild 起子进程被拒），但 5173 上仍有一个可用的 dev server | 该服务是另一个会话留下的；Vite 的 HMR 会吃磁盘上的改动，直接用它即可。若它挂了，再用 `danger-full-access` 起一个 |
 | **编辑源文件偶发 `ReplaceFileW EIO (Win32 1175)`** | 写入被 Vite 的文件监听占用 | 重试同一次编辑即可（同一命令重试第二次都成功） |
 | **`.gitignore` 被进程独占锁住，`git checkout` / `git merge` 因此失败** | 报 `error: unable to unlink old '.gitignore': Invalid argument`，紧接着 `Please commit your changes or stash them before you switch branches`；改用 `Set-Content` 就地复写也报 `being used by another process`（能读、不能写、不能删）。git 换分支/合并需要「删+建」文件，所以被卡死 | 绕开一切文件写入即可解决：① `git update-ref refs/heads/<branch> $(git rev-parse main)` 把分支引用直接指过去；② `git reset -q` 只同步索引、不碰工作区；③ 再 `git checkout main` 就能成功（两边内容一致时 git 无需重写文件）。根因未查明（疑似编辑器或文件监听持有句柄） |
+| **本会话审批策略改为 `never`、文件策略放开为 `danger-full-access`**（2026-09-29 二期实施中途） | 提权请求会被**自动拒绝**（不是询问），因此带 `sandbox_permissions` 的调用会直接失败 | 不要再请求提权：命令按默认（full access）直接跑即可。二期开工时「vitest / 浏览器断言 / 构建都要提权」的结论随之作废，保留在 `docs/phase2-effect-matrix.md` 头部仅作历史记录 |

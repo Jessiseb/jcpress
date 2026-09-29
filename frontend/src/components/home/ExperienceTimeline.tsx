@@ -24,7 +24,11 @@ function formatPeriod(experience: ExperienceVO): string {
  */
 export default function ExperienceTimeline({ experiences }: Props) {
   return (
-    <section className={`container section ${styles.section}`} aria-labelledby="exp-title">
+    <section
+      className="container section"
+      aria-labelledby="exp-title"
+      data-rhythm="major"
+    >
       <h2 id="exp-title" className="sectionTitle" data-reveal>
         实习经历
       </h2>

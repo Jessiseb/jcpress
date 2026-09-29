@@ -13,23 +13,74 @@ const EXPECT = {
   light: {
     '--ds-c-hairline': 'rgb(20 22 26 / 12%)',
     '--ds-c-glass': 'rgb(255 255 255 / 72%)',
-    '--ds-ring': 'rgb(9 111 220 / 6%)',
+    // 2026-09-29 二期重同步：原期望 6% 是更早一版的取值，theme.jcpress.css 的
+    // 「环周期 46px 校准」一轮里已改成 13%（并有注释说明剂量），探针没跟着改，
+    // 于是在二期开工时暴露为 3 处**假失败**。这里以主题文件为准重同步，而不是反过来改主题。
+    '--ds-ring': 'rgb(9 111 220 / 13%)',
     '--ds-ring-period': '46px',
     '--ds-fw-display': '500',
+    '--ds-fw-display-strong': '700',
+    // ---- 二期新增（phase-2-visual）----
+    '--ds-flow-line': '#0f172a',
+    '--ds-flow-alpha-max': '0.6',
+    '--ds-c-panel': 'rgb(255 255 255 / 62%)',
+    '--ds-c-panel-border': 'rgb(20 22 26 / 10%)',
+    '--ds-panel-sheen': 'rgb(255 255 255 / 55%)',
+    '--ds-radius-panel': '14px',
+    '--ds-blur-panel': '14px',
+    '--ds-c-progress': 'rgb(15 17 21 / 72%)',
+    '--ds-progress-h': '2px',
+    '--ds-parallax-shift': '6vh',
+    '--ds-parallax-scale': '1.04',
   },
   dark: {
     '--ds-c-bg': '#08090c',
     '--ds-c-bg-alt': '#05060a',
     '--ds-c-glass': 'rgb(8 9 12 / 62%)',
     '--ds-c-hairline': 'rgb(255 255 255 / 13%)',
-    '--ds-glow': 'rgb(59 130 246 / 20%)',
-    '--ds-ring': 'rgb(255 255 255 / 8%)',
+    // 同上的重同步：暗色的聚光与环在「剧场底色 #08090c」那一轮里被提亮过
+    '--ds-glow': 'rgb(59 130 246 / 26%)',
+    '--ds-ring': 'rgb(255 255 255 / 10%)',
     '--ds-ring-period': '46px',
     '--ds-fw-display': '500',
+    '--ds-fw-display-strong': '700',
+    // ---- 二期新增（phase-2-visual）----
+    '--ds-flow-line': '#ffffff',
+    '--ds-flow-alpha-max': '0.6',
+    '--ds-c-panel': 'rgb(16 18 24 / 58%)',
+    '--ds-c-panel-border': 'rgb(255 255 255 / 12%)',
+    '--ds-panel-sheen': 'rgb(255 255 255 / 7%)',
+    '--ds-radius-panel': '14px',
+    '--ds-blur-panel': '14px',
+    '--ds-c-progress': 'rgb(235 235 245 / 78%)',
+    '--ds-progress-h': '2px',
+    '--ds-parallax-shift': '6vh',
+    '--ds-parallax-scale': '1.04',
   },
 }
 
-const KEYS = ['--ds-c-bg', '--ds-c-bg-alt', '--ds-c-glass', '--ds-c-hairline', '--ds-glow', '--ds-ring', '--ds-ring-period', '--ds-fw-display']
+const KEYS = [
+  '--ds-c-bg',
+  '--ds-c-bg-alt',
+  '--ds-c-glass',
+  '--ds-c-hairline',
+  '--ds-glow',
+  '--ds-ring',
+  '--ds-ring-period',
+  '--ds-fw-display',
+  '--ds-fw-display-strong',
+  '--ds-flow-line',
+  '--ds-flow-alpha-max',
+  '--ds-c-panel',
+  '--ds-c-panel-border',
+  '--ds-panel-sheen',
+  '--ds-radius-panel',
+  '--ds-blur-panel',
+  '--ds-c-progress',
+  '--ds-progress-h',
+  '--ds-parallax-shift',
+  '--ds-parallax-scale',
+]
 
 ;(async () => {
   const browser = await chromium.launch({ channel: 'msedge', args: ['--no-sandbox'] })

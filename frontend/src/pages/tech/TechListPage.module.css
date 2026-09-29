@@ -19,7 +19,9 @@
 
 .title {
   font-size: 2.5rem;
-  font-weight: var(--ds-fw-display);
+  /* 二期：h1 走 700 真字重（与 global.css 的标题规则一致）——
+     页面标题是「一眼看到重点」里最该被先看到的那个层级 */
+  font-weight: var(--ds-fw-display-strong);
 }
 
 .lead {
