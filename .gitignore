@@ -14,6 +14,8 @@ dist-ssr/
 .vite/
 *.local
 frontend/.tmp/
+# TypeScript 增量构建缓存：机器相关、会随编译变动，入库只会制造无意义的 diff
+*.tsbuildinfo
 
 # ---- 后端 ----
 target/
