@@ -605,3 +605,13 @@ M2 的 DoD 有四项，**两项做了、两项没做**：
 | ⑲ | `git push` 报 `Failed to connect to github.com port 443 ... Timed out` | **直连 github.com:443 被墙**（`Test-NetConnection` 为 False；而 `codeload.github.com:443` 是 True）。本机 `127.0.0.1:7890` 有代理在监听、环境变量 `HTTP(S)_PROXY` 也设了，但 git 仍然走直连 | 命令级指定代理 + 退回 HTTP/1.1：`git -c http.proxy=http://127.0.0.1:7890 -c http.version=HTTP/1.1 push -u origin <branch>` —— 成功 |
 | ⑳ | `git ls-remote` 卡住 3 分钟不返回 | 同上（直连被黑洞，而不是立刻拒绝），表现为「挂住」而不是「报错」 | 任何远端操作都加 `GIT_TERMINAL_PROMPT=0` + 代理；否则会误以为是凭据问题 |
 | ㉑ | 用户提供 `SHA256:jiJht2W…` 希望用它推送 | **指纹不等于私钥**。本机只有一把 `id_rsa`（RSA 3072，指纹 `SHA256:NKZsTiT…`，注释 `zhuangjiaxi@yonyou.com`），与那把不是同一个；SSH 实测 `Permission denied (publickey)` —— 说明**端口是通的**（22 与 443 都连上了），只是这把钥匙没加到 GitHub 账号 | 走 HTTPS + 代理即可，无需动 SSH。若将来要用 SSH：把 `~/.ssh/id_rsa.pub` 加进 GitHub → Settings → SSH keys，再 `git remote set-url origin git@github.com:Jessiseb/jcpress.git` |
+
+### 14.7 合入 main（用户选择：fast-forward 合并并推送）
+
+用户决策：「合并到 main 并推送（推荐）」。
+
+- `main` 是 `feat/homepage-about` 的**祖先**（分叉数 0），因此走 `git merge --ff-only`：无冲突、无合并提交，历史保持线性。
+- 合并后 `main` 与 `feat/homepage-about` 指向同一个提交，远端两个分支同步。
+- 分支**保留**（不删）—— 后续 M3（文章详情页）从这个状态另开分支即可。
+
+**一期到此收尾**：前端一期的成果已在远端 `main` 上；M1 后端骨架、M3 剩余、M5/M6 属下一阶段（见 14.4）。
