@@ -45,6 +45,16 @@ logs/
 Thumbs.db
 .workbuddy/
 
+# ---- Agent 工具生成物（不入库）----
+# openspec / skills CLI 会为每个 agent 工具各装一份相同的 skills 与斜杠命令
+# （.agents 通用 + .claude / .codebuddy / .trae，四份内容重复约 620KB）。
+# 它们是可再生成的：`openspec update` 或 `npx skills add …`。
+# 注意：openspec/ 是**规格基线**，必须入库 —— 这里只忽略工具的生成物。
+.agents/
+.claude/
+.codebuddy/
+.trae/
+
 # ---- 测试与覆盖率 ----
 coverage/
 .nyc_output/
