@@ -1200,3 +1200,37 @@ OpenSpec 的 `tasks.md`，已在 15.6 记为过程偏差；`frontend-design` 则
 已把 `dev-journal.md`（5 处）与 `phase2-effect-matrix.md`（2 处）里的错误日期全部纠正为 2026-09-29。
 **各段的钟点仍是近似值**（我没有逐步记时间戳），时间线以 `git log` 的提交时间为准。
 教训：留痕里的**日期不该凭感觉写** —— 一条 `Get-Date` 就能确认的事，我却在四个阶段标题里连续写错。
+
+---
+
+## 阶段 27 · 合并与推送（2026-09-29 23:1x）
+
+### 27.1 用户关键原话
+
+- 「**提交代码修改**」
+- （在我说明「本地已提交、远端还没推」并给出三个选项后）选择「**合并到 main 并推送（推荐）**」
+
+### 27.2 实际情况：这句话要的其实不是"再提交一次"
+
+用户说「提交代码修改」时，**本地已经全部提交完了**：`feat/phase-2-visual` 领先 `main` 3 个提交、工作区 0 处改动、`.tmp` 之外没有未跟踪文件。
+所以这句话真正剩下的一步是**远端**（`origin/main` 还停在一期的 `6efdbc9`）。我没有"再提交一次空改动"来敷衍这句话，而是把状态查清后列出三个选项让用户定 —— 用户选了合并 + 推送。
+
+### 27.3 产出
+
+| 步骤 | 命令 | 结果 |
+| --- | --- | --- |
+| 合并 | `git merge --ff-only feat/phase-2-visual`（在 `main` 上） | **fast-forward 成功**，无合并提交、历史线性；`main` == `feat/phase-2-visual` == `aa7de4f` |
+| 推送 main | `git -c http.proxy=… -c http.version=HTTP/1.1 push origin main` | `6efdbc9..aa7de4f  main -> main` |
+| 推送分支 | 同上，`push -u origin feat/phase-2-visual` | `* [new branch]`，上游跟踪已设置 |
+| 远端校验 | `git ls-remote origin` | `main = aa7de4f`、`feat/phase-2-visual = aa7de4f`、`feat/homepage-about = 6efdbc9`（一期分支保留） |
+
+### 27.4 翻车与返工
+
+- **本轮无翻车**。与一期的推送（`decisions.md` 环境注意事项第 ⑲⑳ 条：直连 `github.com:443` 被墙、`git ls-remote` 表现为**挂住几分钟**而不是报错）相比，这次**一开始就按记录带上代理与 HTTP/1.1**，先 `Test-NetConnection 127.0.0.1 -Port 7890` 确认代理在监听，并全程设 `GIT_TERMINAL_PROMPT=0`，因此没有出现挂起或超时。
+  → **这条经验的价值在于：环境坑记进 `decisions.md` 之后真的复用上了**，不需要第二次踩。
+
+### 27.5 收尾状态
+
+- 当前分支：`main`（与 `origin/main` 同步，工作区干净）；
+- 远端：`github.com/Jessiseb/jcpress`，`main` 已包含二期全部三个提交；
+- 待办（都是用户可选项，不影响交付）：三块版式是否继续微调、流线是否要加回一些数量（48 → 64/72）。
