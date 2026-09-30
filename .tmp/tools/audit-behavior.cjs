@@ -810,7 +810,23 @@ const check = (name, pass, detail) => {
           }
         : null
 
-    return { order, skillProbe, awardsProbe, contactProbe }
+    // 列表符号：必须是**看得见**的短横线（Markdown 的 `-`），不是 1px 发丝线。
+    // 用户实测反馈「内容列点的 - 没有以 markdown 的形式展示出来」指的就是这两处。
+    const marker = (el) => {
+      if (!el) return null
+      const cs = getComputedStyle(el, '::before')
+      return {
+        width: Math.round(Number.parseFloat(cs.width) || 0),
+        height: Math.round(Number.parseFloat(cs.height) || 0),
+        bg: cs.backgroundColor,
+      }
+    }
+    const markers = {
+      experience: marker(sectionOf('实习经历')?.querySelector('ol li ul li')),
+      project: marker(sectionOf('项目经历')?.querySelector('[id^="project-panel"] li')),
+    }
+
+    return { order, skillProbe, awardsProbe, contactProbe, markers }
   })
 
   check(
@@ -837,6 +853,13 @@ const check = (name, pass, detail) => {
     r2Layout.awardsProbe
       ? `${r2Layout.awardsProbe.rows} 条奖项 / ${r2Layout.awardsProbe.years} 个年份组；年份对齐列数=${r2Layout.awardsProbe.yearLefts.length}；年份 ${r2Layout.awardsProbe.yearSize}px > 名称 ${r2Layout.awardsProbe.nameSize}px`
       : 'missing',
+  )
+  // 列表符号可见性（用户点名的两处：实习经历 + 项目经历展开面板）
+  const markerOk = (m) => !!m && m.height >= 2 && m.width >= 8 && !/rgba\(0, 0, 0, 0\)/.test(m.bg)
+  check(
+    '列表符号是看得见的短横线（实习经历 + 项目经历展开面板）',
+    markerOk(r2Layout.markers.experience) && markerOk(r2Layout.markers.project),
+    `实习 ${JSON.stringify(r2Layout.markers.experience)} / 项目 ${JSON.stringify(r2Layout.markers.project)}`,
   )
   check(
     '联系我：邮箱是主入口（字号明显大于次级条目且是 mailto 链接）',

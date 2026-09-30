@@ -114,20 +114,25 @@
 .highlight {
   position: relative;
   max-width: var(--ds-measure-prose);
-  padding-left: 1rem;
+  padding-left: 1.1rem;
   font-size: var(--ds-fs-sm);
   line-height: 1.75;
   color: var(--ds-c-text-mute);
 }
 
+/* 项目符号：一条**看得见**的短横线（就是 Markdown 列表的 `-`）。
+   r2 之前是 8×1px 的发丝线：1px 高在 1 倍屏上几乎不可见，于是列表读起来像普通段落，
+   用户实测反馈「内容列点的 - 没有以 markdown 的形式展示出来」。
+   现在加粗到 2px、加长到 0.6em、颜色提到正文级（与实习经历同一套规则，两处必须一致）。 */
 .highlight::before {
   content: '';
   position: absolute;
-  top: 0.78em;
+  top: 0.72em;
   left: 0;
-  width: 0.5rem;
-  height: 1px;
-  background: var(--ds-c-text-subtle);
+  width: 0.6em;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--ds-c-text-mute);
 }
 
 .tech {
