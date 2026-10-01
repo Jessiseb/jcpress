@@ -43,6 +43,19 @@ class ArchitectureTest {
     private static final String ROOT = "com.jcpress.";
     private static final Set<String> VERB_PREFIXES =
             Set.of("get", "list", "count", "save", "insert", "remove", "delete", "update");
+
+    /**
+     * 显式放行的**领域动作**动词。
+     *
+     * Agent.md 那组前缀是给 CRUD 方法定的，而认证是领域动作、没有 CRUD 对应词：
+     * `login` 会写 Redis 会话、写审计、更新最近登录信息 —— 硬套成 `getToken` 是误导，
+     * `saveLogin` 更不像话。所以这里**显式列白名单**，而不是放宽整条命名规则
+     * （放宽会让 `handle()` / `process()` 这类名字也过闸）。
+     *
+     * 新增条目必须同样在注释里说明"为什么没有 CRUD 对应词"，并同步 docs/decisions.md。
+     */
+    private static final Set<String> ACTION_PREFIXES =
+            Set.of("login", "logout");
     private static final Set<String> OBJECT_METHODS =
             Set.of("equals", "hashCode", "toString", "clone", "finalize", "canEqual");
 
@@ -121,7 +134,8 @@ class ArchitectureTest {
                             if (OBJECT_METHODS.contains(name)) {
                                 return;
                             }
-                            boolean ok = VERB_PREFIXES.stream().anyMatch(name::startsWith);
+                            boolean ok = VERB_PREFIXES.stream().anyMatch(name::startsWith)
+                                    || ACTION_PREFIXES.stream().anyMatch(name::startsWith);
                             if (!ok) {
                                 events.add(SimpleConditionEvent.violated(method,
                                         method.getFullName() + " 未以动词前缀开头（Agent.md 命名规约）"));
