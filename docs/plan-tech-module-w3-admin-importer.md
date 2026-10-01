@@ -906,14 +906,17 @@ public class LocalFileStorage implements FileStorage {
     private static final byte[] WEBP_RIFF = {'R', 'I', 'F', 'F'};
 
     private final Path rootDir;
-    private final String urlPrefix;
+    private final String resourcePath;
+    private final String publicPrefix;
     private final long maxBytes;
 
     public LocalFileStorage(@Value("${jcpress.upload.dir:./uploads}") String dir,
-                            @Value("${jcpress.upload.url-prefix:/uploads}") String urlPrefix,
+                            @Value("${jcpress.upload.resource-path:/uploads}") String resourcePath,
+                            @Value("${jcpress.upload.public-prefix:/api/uploads}") String publicPrefix,
                             @Value("${jcpress.upload.max-bytes:5242880}") long maxBytes) {
         this.rootDir = Path.of(dir).toAbsolutePath().normalize();
-        this.urlPrefix = urlPrefix;
+        this.resourcePath = resourcePath;
+        this.publicPrefix = publicPrefix;
         this.maxBytes = maxBytes;
         // 目录在构造期建好：① 不依赖 @PostConstruct（单测直接 new 就能用）；
         //                      ② 启动即失败，而不是等到第一次上传才失败
@@ -922,7 +925,18 @@ public class LocalFileStorage implements FileStorage {
         } catch (IOException e) {
             throw new IllegalStateException("无法创建上传目录 " + this.rootDir, e);
         }
-        log.info("本地上传目录就绪 dir={} urlPrefix={} maxBytes={}", this.rootDir, urlPrefix, maxBytes);
+        log.info("本地上传目录就绪 dir={} resourcePath={} publicPrefix={} maxBytes={}",
+                this.rootDir, resourcePath, publicPrefix, maxBytes);
+    }
+
+    /**
+     * ⚠️ 两个前缀**不能是同一个值**：
+     * `resource-path` 是 `addResourceHandlers` 注册用的、**相对 context-path** 的路径（`/uploads`）；
+     * `public-prefix` 是写进 Markdown / 存库的**对外可访问 URL 前缀**（`/api/uploads`，含 context-path）。
+     * 混用会得到一个 404 的图片地址 —— 而这只会在肉眼看图时才发现。
+     */
+    public String getPublicPrefix() {
+        return publicPrefix;
     }
 
     @Override
@@ -956,7 +970,7 @@ public class LocalFileStorage implements FileStorage {
             log.error("写入上传文件失败 target={}", target, e);
             throw new BusinessException(ErrorCodeEnum.OPERATION_ERROR, "保存文件失败");
         }
-        return new StoredFile(urlPrefix + "/" + relativeDir + "/" + filename, target.toString(), file.getSize());
+        return new StoredFile(publicPrefix + "/" + relativeDir + "/" + filename, target.toString(), file.getSize());
     }
 
     private String resolveExtension(String originalFilename) {
@@ -1019,16 +1033,28 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Value("${jcpress.upload.dir:./uploads}")
     private String uploadDir;
-    @Value("${jcpress.upload.url-prefix:/uploads}")
-    private String urlPrefix;
+    /** 这里必须是**相对 context-path** 的路径（/uploads），不是对外 URL（/api/uploads） */
+    @Value("${jcpress.upload.resource-path:/uploads}")
+    private String resourcePath;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // 用 toUri()：Windows 上手拼 "file:" + 反斜杠路径会得到一个 Spring 解析不了的 location
         String location = java.nio.file.Path.of(uploadDir).toAbsolutePath().normalize().toUri().toString();
-        registry.addResourceHandler(urlPrefix + "/**").addResourceLocations(location);
+        registry.addResourceHandler(resourcePath + "/**").addResourceLocations(location);
     }
 }
+```
+
+> **两个前缀的分工（踩过才知道）**：`resource-path=/uploads` 决定**服务端从哪个路径提供文件**（因为 `context-path=/api`，最终对外是 `/api/uploads/...`）；`public-prefix=/api/uploads` 决定**写进正文与库里的 URL**。两者要是写成同一个值，正文里的图片地址就是 404 —— 而这只会在肉眼看图时才暴露。`application.yml` 里两个键都要配：
+
+```yaml
+jcpress:
+  upload:
+    dir: ./uploads
+    resource-path: /uploads        # 服务端映射（相对 context-path）
+    public-prefix: /api/uploads    # 对外 URL（含 context-path），正文与封面用它
+    max-bytes: 5242880
 ```
 
 - [ ] **Step 3: 写 Service + Controller**
@@ -1123,7 +1149,7 @@ class LocalFileStorageTest {
     @TempDir Path tempDir;
 
     private LocalFileStorage storage(long maxBytes) {
-        return new LocalFileStorage(tempDir.toString(), "/uploads", maxBytes);
+        return new LocalFileStorage(tempDir.toString(), "/uploads", "/api/uploads", maxBytes);
     }
 
     private LocalFileStorage storage() {
@@ -1138,7 +1164,7 @@ class LocalFileStorageTest {
         StoredFile stored = storage().save(
                 new MockMultipartFile("file", "shot.PNG", "image/png", REAL_PNG));
 
-        assertThat(stored.getUrl()).matches("/uploads/\\d{4}/\\d{2}/[0-9a-f]{32}\\.png");
+        assertThat(stored.getUrl()).matches("/api/uploads/\\d{4}/\\d{2}/[0-9a-f]{32}\\.png");
         assertThat(Files.exists(Path.of(stored.getAbsolutePath()))).isTrue();
     }
 
