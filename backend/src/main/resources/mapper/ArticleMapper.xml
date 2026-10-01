@@ -50,6 +50,33 @@
         LIMIT 1
     </select>
 
+    <!-- 后台列表：含草稿。关键词主路径走 ngram 全文索引（尾随 * 是前缀检索，不是左模糊/全模糊）；
+         长度不足 2 时回退标题前缀匹配 —— ngram_token_size=2，单字在全文索引里命中 0，
+         不回退的话"搜一个字永远搜不到"。 -->
+    <select id="listForAdmin" resultType="com.jcpress.domain.dataobject.ArticleDO">
+        SELECT <include refid="articleColumns"/>
+        FROM article a
+        LEFT JOIN category c ON c.id = a.category_id
+        WHERE a.type = #{query.type}
+        <if test="query.status != null">
+            AND a.status = #{query.status}
+        </if>
+        <if test="query.categoryId != null">
+            AND a.category_id = #{query.categoryId}
+        </if>
+        <if test="query.keyword != null and query.keyword != ''">
+            <choose>
+                <when test="query.keyword.length() &gt;= 2">
+                    AND MATCH(a.title, a.summary) AGAINST(CONCAT(#{query.keyword}, '*') IN BOOLEAN MODE)
+                </when>
+                <otherwise>
+                    AND a.title LIKE CONCAT(#{query.keyword}, '%')
+                </otherwise>
+            </choose>
+        </if>
+        ORDER BY a.gmt_modified DESC
+    </select>
+
     <!-- 后台用：与上面同构但**不带 status 条件**（要看得到草稿） -->
     <select id="getByTypeAndSlug" resultType="com.jcpress.domain.dataobject.ArticleDO">
         SELECT <include refid="articleColumns"/>

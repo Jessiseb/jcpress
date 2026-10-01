@@ -3,6 +3,7 @@ package com.jcpress.repository;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jcpress.domain.dataobject.ArticleDO;
+import com.jcpress.domain.query.AdminArticleQuery;
 import com.jcpress.domain.query.ArticleQuery;
 import org.apache.ibatis.annotations.Param;
 
@@ -20,6 +21,9 @@ public interface ArticleMapper extends BaseMapper<ArticleDO> {
 
     /** 公开列表：动态条件 + 分类联表；只取已发布 */
     Page<ArticleDO> listPublished(Page<ArticleDO> page, @Param("query") ArticleQuery query);
+
+    /** 后台列表：**含草稿**，支持状态/分类/关键词筛选 */
+    Page<ArticleDO> listForAdmin(Page<ArticleDO> page, @Param("query") AdminArticleQuery query);
 
     /** 详情：按 slug 取已发布 */
     ArticleDO getPublishedBySlug(@Param("type") String type, @Param("slug") String slug);
