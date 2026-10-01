@@ -1371,3 +1371,170 @@ A 档测的是「`load` 之后不等待、直接采样 3 秒」，这 3 秒里�
 | 新增依赖 | **1 个**（`lucide-react`）—— 拒绝 Tailwind / shadcn / framer-motion / next |
 
 归档：`openspec/changes/archive/2026-10-01-phase-2-r3/`（proposal / design / tasks / spec 增量）。
+
+---
+
+## 阶段 30 · 三期（技术分享模块）· brainstorm（2026-10-02 · **设计稿待批，本段为定稿前留痕**）
+
+### 30.1 我这一步发的关键原话
+
+需求原文（四条）：
+
+> 1. 完成技术分享模块的后端开发: 我可以在后台进行技术分享文章的新增\修改\删除, 用户可以在当前的首页中点击对应的文章查看详情, 以文章的形式查看,用户查看的时候要有让用户看起来眼睛舒服的效果
+> 2. 后端开发使用模板: `C:\Users\O\Desktop\官方项目模板\springboot-init`
+> 3. 开发规范需要遵守 `Agent.md`
+> 4. 技术分享的展示需要优化一下页面, 页面需要有博客的感觉,排版也是要华丽好看, 灵动
+
+工作要求原文（两条）：
+
+> 1. 全程走 OpenSpec 流程,技能自动触发;产出不是可单测代码的任务(纯 Prompt、数据类),把 TDD 那步换成拿标注样例或评估集跑一遍验证,其余步骤照走;
+> 2. 过程留痕:追记开发过程,每完成一个阶段(brainstorm 定稿、计划评审通过、每个任务完成、code review 结论、finish)就补一段,记四样:我这一步发的关键原话、你的关键产出(spec / plan 路径、评审结论)、我拒绝或纠偏了什么、翻车与返工;不许收尾时一次性补记
+
+五个澄清答复原文：
+
+| # | 我问的 | 用户答（原话） |
+| --- | --- | --- |
+| 1 | 模板（SB 2.7.2 / Java 8）与规划文档（Java 21 / SB 3）冲突，按哪条走 | **「改成 Java17 文档和项目都改成17」** |
+| 2 | 「后端开发」到哪一步：能不能只能在浏览器里增改删 | **A. 后端 API + 后台写入口 UI + 前台列表/详情** |
+| 3 | 「首页点文章」的入口具体指哪里（首页现在没有文章） | **A. 首页新增最新文章区块 + /tech 列表可点击** |
+| 4 | 「博客感、华丽、灵动」往哪个方向 | **B. 现代卡片博客风（medium / dribbble 那种）** |
+| 5 | 内容侧做到哪里（封面 / 上传 / 导入器） | **「都在这期实现」** |
+
+### 30.2 AI 关键产出
+
+| 产出 | 内容 | 落盘状态 |
+| --- | --- | --- |
+| 设计稿 D1–D10 | 模板移植清单、包结构与 ArchUnit 卡口、数据模型与 seed、API 契约、前台三页 + 后台两页、导入器、验收（TDD + 评估集）、已知缺口 | **会话内，未落盘**（`docs/design-tech-module.md` 待设计稿获批后写） |
+| 环境探针 | 见 30.4；三条新的沙箱/环境结论 | 本段 + 下方 `decisions.md` 环境表 |
+| D1 修订（本轮新增） | 模板升 SB **3.3.4** / Java **17**；Sa-Token 由规划写死的 **1.46.0 降到 1.44.0**（理由见 30.4 ③） | 同上 |
+
+本轮**没有** spec / plan 路径 —— 按技能顺序（brainstorm 定稿 → writing-plans → OpenSpec propose），两条都还没到。
+
+### 30.3 被驳回 / 纠偏（4 条，全部是用户改我的）
+
+1. **技术基线 Java 21 → Java 17**：推翻的是**规划文档自己**（§5.3 写「Java 21 + Spring Boot 3.x」）。用户明确要求「文档和项目都改成 17」→ 三期里要顺带改 `docs/项目前期规划.md` 与 `README.md` 的基线描述（**改文档属本期交付物，不是顺手改**）。
+2. **我推荐「封面走渐变/字体设计、不做图片上传、导入器留下一期」→ 用户「都在这期实现」**：范围直接加两项交付物（`/api/v1/admin/upload` 本地存储 + Markdown 导入器 CLI）。
+3. **我推荐视觉方向 A（中文杂志/学术出版社感）→ 用户选 B（现代卡片博客风）**：与二期刚立的纪律正面冲突（圆角 ≤8px、面板只给两类区块、颜色只承担语义）。按 #29.4 的教训（用户连续要的东西优先于自设纪律），处置是**只对 `/tech` 与详情页放开四条并写进 `decisions.md` 显式修订**，不偷偷放宽。
+4. **范围从「只做后端」被澄清为「后端 + 后台写入口 UI + 前台列表/详情」**：我原以为后台 UI 属 M5 可延后，用户选了工作量最大的那一档。
+
+### 30.4 翻车与返工（如实记录）
+
+| # | 现象 | 归因 | 处置 |
+| --- | --- | --- | --- |
+| ① | 首轮两个探查命令被 `aborted`（`Get-ChildItem` + `git log`） | 用户在我的消息发出后又补发了完整需求，工具调用被中断 | 无损失，重跑即得；如实记以免被当成「命令失败」 |
+| ② | `mvn dependency:get` 报 `D:\maven\repository\...\*.pom.part.lock（系统找不到指定的路径）`；直接 `New-Item D:\maven\repository\__dsh_probe` 报 **Access denied** | Maven 本地仓库在**工作区之外**，当前策略（workspace-write）不允许写 | 工作区内建 `.tmp\m2` 作 `-Dmaven.repo.local`。**实测有效**：`dependency:resolve` 全量依赖 **BUILD SUCCESS（1:20）** |
+| ③ | **规划 §5.5 自己写明的坑，这次真的踩上**：本机 Redis 是 **5.0.14.1（Windows 移植版）**，而 `sa-token-redis-template` 要求 Redis ≥ 6.0 | 规划里那句「v1.46.0 使用了 `SET KEEPTTL`，Redis < 6.0 会报 `ERR syntax error`」是**真的**。我没有停在「文档这么说」，而是**打开 jar 验证**：`SaTokenDaoForRedisTemplate.class` 的常量池里确实有 `KEEPTTL` | 逐版本验证：**1.46.0 有 KEEPTTL；1.44.0 / 1.42.0 没有**（1.39.0 在阿里云镜像上取不到）。→ **Sa-Token 锁 1.44.0**，`sa-token-spring-boot3-starter:1.44.0` 已确认可解析。不用改本机 Redis、也不用自研 `SaTokenDao` |
+| ④ | `npm view react-markdown version` 报 `error writing to the directory: C:\Users\O\AppData\Local\npm-cache\_logs` | npm 缓存目录在工作区外（与 `decisions.md` 环境表里那条 `npm_config_cache` 同源） | `npm view react-markdown version --cache .tmp\npm-cache` → 成功返回 **10.1.0**。三期所有 npm 命令都带 `--cache`（或设 `npm_config_cache`） |
+| ⑤ | 「视觉伴侣」征询（skill 要求的独立一问）**没有得到答复** | 我把该问作为独立消息发出后，用户直接进入了自动轮次，既没接受也没拒绝 | **按未接受处理**：转纯文本 brainstorm，不擅自启动 `.superpowers/brainstorm` 服务（该服务启动方式另有一坑，见环境表） |
+
+### 30.5 过程偏差（如实记录）
+
+- brainstorming 技能要求「**每节**呈现设计、逐节获批」，我改成**一封信内分 10 节（D1–D10）+ 逐节拍板**。理由：这个三期有 5 条工作流、10 个决策点，按「一节一问」会耗掉十几轮往返；分节编号仍保留了「逐节接受或否决」的能力（用户可以只回 `D4 改…`）。**这是我自己做的流程取舍，不是技能许可的默认做法**，写在这里等用户判定。
+- 技能要求 spec 落盘到 `docs/superpowers/specs/`；本项目既有约定是 `docs/design-visual-language.md` / `docs/plan-visual-language.md` 这一对。三期按**项目既有约定**命名 `docs/design-tech-module.md` / `docs/plan-tech-module.md`（技能自己也写了「User preferences for spec location override this default」）。
+
+### 30.6 定稿前待用户拍板的四项
+
+1. **D4** 那 5 篇占位文怎么处理（我建议：灌成**草稿** + 我另写 1 篇真实发布文用于验证详情页）
+2. **D6** 前端新增 8～10 个依赖（react-markdown 系 + CodeMirror 系），破二期「一期只加 1 个依赖」的例
+3. **D7** 视觉纪律破例的范围（只 `/tech` + 详情页，四条：卡片/圆角/阴影/封面头图）+ 正文阅读档位数字（17px / 1.9 / 68ch）
+4. **D5** 后端端口 8080 + context-path `/api` + dev 走 vite proxy（替代 CORS）
+
+### 30.7 依赖版本锁定（本轮实测可解析，写死在计划里免得实现期再猜）
+
+| 侧 | 依赖 | 版本 | 备注 |
+| --- | --- | --- | --- |
+| 后端 | Spring Boot | **3.3.4** | 模板原为 2.7.2；Java **17** |
+| 后端 | MyBatis-Plus | **3.5.7**（`mybatis-plus-spring-boot3-starter`） | 必须用 spring-boot3 专用 starter |
+| 后端 | Sa-Token | **1.44.0** | 1.46.0 有 `KEEPTTL`，本机 Redis 5.0 不支持（见 30.4 ③） |
+| 后端 | knife4j | **4.5.0**（`knife4j-openapi3-jakarta-spring-boot-starter`） | 替代模板的 openapi2（Swagger2 不支持 SB3） |
+| 后端 | Flyway / Gson / spring-security-crypto / ArchUnit | SB 3.3.4 托管 / SB 托管 / SB 托管 / **1.3.0** | 全量 `dependency:resolve` 已 BUILD SUCCESS |
+| 前端 | react-markdown / remark-gfm / rehype-highlight / rehype-slug / highlight.js | **10.1.0 / 4.0.1 / 7.0.2 / 6.0.0 / 11.12.0** | 正文渲染 + 高亮 + TOC 锚点 |
+| 前端 | **`codemirror` 6.0.2** + `@codemirror/lang-markdown` 6.5.2 | — | **修正**：`@codemirror/basic-setup` 已废弃（`npm view` 明确回「In version 6.0, this package has been renamed to just 'codemirror'」），改用 `codemirror` 这个 meta 包导出的 `basicSetup` |
+
+### 30.8 工作区里一处与三期无关的遗留（先记不改）
+
+`frontend/package-lock.json` 处于未提交状态（**mtime 2026-10-01 22:39，早于本会话**），diff 是 42 行 `libc` 字段被删——这是 npm 版本差异导致的规范化，不是手改。
+处置：**暂不动**；等三期建分支时把它单独提交或还原，避免混进三期的功能 diff。
+
+### 30.9 设计文档落盘 + 自查 + 两条新发现
+
+**产出**：[`docs/design-tech-module.md`](design-tech-module.md)（338 行，状态标注「**待用户批准**」）。含 D1–D11 决策、文件级交付物地图、风险与缺口、环境实测证据表、待批准 4 项。
+
+**spec 自查（技能要求的四查：占位符 / 自相矛盾 / 歧义 / 范围）——查出并就地改掉三处我自己的不自洽**：
+
+| # | 不自洽 | 处置 |
+| --- | --- | --- |
+| ① | 待批准表标「4 项」但列了 5 行（D6 拆成「依赖」与「视觉破例」两行） | 合并为一行的 ①②，回到真正的 4 项 |
+| ② | 详情响应里写「+ 相邻篇」，同时又单列 `GET /articles/{slug}/adjacent` 接口 —— **同一件事两个入口** | 定为**内联进详情**，`/adjacent` 本期不实现，并在 §1 记为**偏离 4**（规划 §9.2 有这条契约，要显式说明而不是默默不写） |
+| ③ | 公开列表带 `keyword`、但 §0 又写「不做搜索」 | 公开列表**去掉 keyword**；后台列表保留，且只走**前缀匹配**（§6.6 禁左模糊/全模糊）。`FULLTEXT ngram` 索引本期**只建不用** |
+
+**两条新发现（都是「不改就会返工」的那种，写进了设计）**：
+
+1. **首页加一个区块会踩到天体停靠表**。读代码确认：`useActiveScene()` 是**动态**取 `main section[aria-labelledby]` 的（区块数一变，scene 序号就变），而 `CelestialField.module.css` 的停靠表只有 `[data-scene='0'..'6']` 七档 → 新的第 8 个区块会落到**没有任何规则**的 scene 7。所以「首页加最新文章区块」不是加个组件就完事，必须一起做：补 scene 7 规则 + 重跑停靠探针（#97）+ 重新量矩形确认球不压字（#98）+ 重排 `data-rhythm` 与 reveal 错峰 + 全部视觉断言重跑。
+2. **动态长文本和一期建的静态字体子集正面冲突**（新增决策 D7）。一期那套自托管中文衬线子集是从**静态渲染 DOM** 收的 531 字；而文章正文/标题是后台随时写的 → **必然**命中字符表外的字 → 回落系统宋体 → 同段混款（README 与 #38 早写过这个坑，但那时站上没有动态长文本）。三条路已列（A 文章页专用扩展子集 GB2312 一级 3755 字、独立 family、只在该路由下载 / B 全走系统字体栈 / C 沿用现有小集=不可行），推荐 A。
+
+**同时做了一件事前验证**：把规划 §6.1/6.2/6.3 的建表语句**原样**跑进 MySQL 8.0.36 探针库（`.tmp/probe-sql/ddl-probe.sql`，跑完已 drop 库）——全部建成，`WITH PARSER ngram` 生效，`MATCH(title,summary) AGAINST('分片' IN BOOLEAN MODE)` **命中 1 行**，`DESC` 索引列生效。**规划里那段 DDL 是可用的**，Flyway 不会在第一天就炸。
+
+另外确认：`openspec list --json` / `openspec context --json` 的 root 就是本仓库、`changes: []`，随时可以 `openspec new change phase-3-tech-module`。
+
+### 30.10 设计定稿前的第三批验证：验收工具链 + 查询计划（**改了设计两处**）
+
+**① 视觉验收工具链在当前策略下曾跑不起来**（这是评估集这条验收路径的前提，必须确认）
+
+`node .tmp/tools/audit-contrast.cjs` 报 `browserType.launch: spawn EPERM` —— Edge 是以 `--remote-debugging-pipe`（命名管道）启动的，`workspace-write` 策略禁止。这与 `decisions.md` 环境表里二期的记录同源。
+随后用户把文件策略改为 **`danger-full-access`（审批 `never`）**，同一条命令**跑通**：亮暗各 **220** 处文本、未达标 **0** —— 二期基线没有回退，评估集可用。
+纪律更新：**不要再传 `sandbox_permissions`**（会被自动拒）。已写进环境表。
+
+**② 规划 §6 的查询在 2000 行真实数据量下走不走索引**（`EXPLAIN`，探针库跑完已 drop）
+
+| # | 查询 | 计划 | 结论 |
+| --- | --- | --- | --- |
+| ① | 公开列表（`type`+`status`，按 `publish_time DESC` 分页） | `ref` → `idx_type_status_publish_time`，**无 filesort** | ✅ |
+| ② | 分类筛（`category_id`+`status`） | `ref` → `idx_category_id_status_publish_time` | ✅ |
+| ③ | 相邻篇「下一篇」(`publish_time > ?` 升序取 1) | `index` + **Backward index scan**，`rows=1` | ✅ 反向扫索引 |
+| ④ | 相邻篇「上一篇」(`publish_time < ?` 降序取 1) | `range` + index condition | ✅ |
+| ⑤ | 首页最新 3 篇（`ORDER BY is_top DESC, publish_time DESC`） | `Using filesort` | ⚠️ `is_top` 不在索引 → **接受**（千级数据量代价可忽略），不加索引以免偏离 §6 DDL |
+
+**据此改了设计两处**：
+
+1. **后台 `keyword` 搜索的主路径从 `LIKE 'kw%'` 改成 `MATCH(title,summary) AGAINST('kw*' IN BOOLEAN MODE)`**。实测：`LIKE '探针文章 1%'` 在 `title` 上 **`type=ALL` 扫 1940 行**（无可用索引），而 ngram 全文索引 `type=fulltext` 直接命中。
+2. **补一条回退规则**：`ngram_token_size=2`，所以**单个汉字在全文索引里命中 0** —— 关键词 < 2 字必须回退 `LIKE 'kw%'`，否则用户搜一个字永远搜不到。
+
+两条都写进 `docs/design-tech-module.md`（§1 偏离 5、§2 D5、§2 D3、§6 证据表）。
+
+**翻车（小）**：`mysql -e "source A.sql" -e "source B.sql"` 被客户端把两个 `-e` 拼成一个文件名，报 `Failed to open file '...ddl-probe.sql source ...query-probe.sql', error: 22`。改成**两次独立调用**即可（不是沙箱问题，是我的命令行写法问题）。
+
+**仍未做的验证**（留给 W1 第一件事）：Sa-Token 1.44.0 的 SB3 starter 在 Spring Boot 3.3.4 上**运行时**是否正常（登录 → 写 Redis → 读回）。jar 静态检查只能证明没有 `KEEPTTL`，证明不了 starter 与本机 Redis 5.0 的完整协作 —— 那需要一个最小可运行探针，属于 W1 的第一个任务。
+
+---
+
+## 阶段 31 · 三期 brainstorm 定稿（2026-10-02）
+
+### 31.1 我这一步发的关键原话
+
+> **「全部按推荐批准（D4-A / D6 批准 / D7-A / D5 按此）」**
+
+（这是一次性拍板，没有再逐条回。批准前我一共问了三轮 —— 第一轮 5 个澄清、第二轮设计稿、第三轮把 4 项待批收成一个是/否题。）
+
+### 31.2 AI 关键产出
+
+| 产出 | 路径 | 说明 |
+| --- | --- | --- |
+| 设计定稿 | [`docs/design-tech-module.md`](design-tech-module.md)（344 行） | 状态改为「**已批准定稿（2026-10-02）**」；§5 从「待批准项」改成「**审批结果**」并记下用户原话；§7 第 1 步标记完成 |
+| 留痕 | 本段（阶段 31） | |
+| 决策与环境的落点 | [`docs/decisions.md`](decisions.md) 环境表 +4 行 | 沙箱策略两次变化、Maven/npm 工作区外写入、Redis 5.0 vs Sa-Token |
+
+**批准的内容**：D4=**A**（5 篇占位文灌成草稿 + 我另写 1 篇真实发布文）· D6=**批准**（加 7 个前端依赖，用路由懒加载控代价；视觉纪律**只在 `/tech` 与详情页**破例：卡片/圆角/阴影/封面头图 + 正文 17px/1.9/68ch）· D7=**A**（文章页专用扩展字体子集，独立 family，只在该路由下载）· D5=**按此**（8080 + context-path `/api` + vite proxy）。
+
+### 31.3 被驳回 / 纠偏
+
+本轮**无**。用户在三个连续自动轮次里没有干预我做的验证工作，最后一次到齐时直接全批。
+
+### 31.4 翻车与返工
+
+本轮**无新翻车**。补一句归因：`30.4 ②`（Maven 仓库在工作区外）与 `30.10 ①`（视觉验收工具链 EPERM）**这两条都不是代码问题，是沙箱策略问题**，而且**都已经随策略放开而自动消解** —— 教训是「先把『环境不允许』和『代码有问题』分开，再决定要不要改设计」。这两次我都先去验证、没有直接改方案，事后证明是对的。
+
+### 31.5 流程节点
+
+brainstorm 阶段到此**闭合**（技能要求的九步：探索 → 视觉伴侣征询 → 澄清 → 备选 → 分节呈现 → 写文档 → 自查 → 用户复核 → 转 writing-plans 中的前八步已完成）。
+下一步：`writing-plans` 产出 `docs/plan-tech-module.md` → **计划评审**（用户第二次卡口）。
