@@ -1,16 +1,17 @@
-import { articleData, type ArticleVO } from '@/data/articles'
+import { useQuery } from '@tanstack/react-query'
+
+import { fetchArticles } from '@/api/articles'
+import type { ArticleListQuery } from '@/api/types'
 
 /**
- * 「技术分享」列表的唯一读取入口。
+ * 「技术分享」列表的唯一读取入口（三期：从 mock 常量换成真接口）。
  *
- * 后端 `/api/v1/articles`（规划 §9.2）就绪后，把这里换成：
- *
- *   export function useArticles() {
- *     return useQuery({ queryKey: ['articles'], queryFn: fetchArticles })
- *   }
- *
- * 组件侧不需要任何改动 —— 与 `useProfile()` 同一套策略。
+ * 组件侧零改动的承诺兑现了 —— 当初把数据放在常量里，就是为了这一刻换实现而不动组件。
+ * 接口挂了就是错误态：**不做假数据降级**（Agent.md：依赖缺失应表现为失败）。
  */
-export function useArticles(): ArticleVO[] {
-  return articleData
+export function useArticles(query: ArticleListQuery = {}) {
+  return useQuery({
+    queryKey: ['articles', query],
+    queryFn: () => fetchArticles(query),
+  })
 }
