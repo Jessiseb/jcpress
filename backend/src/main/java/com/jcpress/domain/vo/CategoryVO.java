@@ -9,5 +9,6 @@ public class CategoryVO {
     private String name;
     private String slug;
     private String description;
-    private Long articleCount;
+    /** 已发布计数；用 `int` 而不是 `Long`，理由见 TagVO.articleCount */
+    private int articleCount;
 }

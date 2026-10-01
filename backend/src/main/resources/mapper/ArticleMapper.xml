@@ -64,15 +64,11 @@
         <if test="query.categoryId != null">
             AND a.category_id = #{query.categoryId}
         </if>
-        <if test="query.keyword != null and query.keyword != ''">
-            <choose>
-                <when test="query.keyword.length() &gt;= 2">
-                    AND MATCH(a.title, a.summary) AGAINST(CONCAT(#{query.keyword}, '*') IN BOOLEAN MODE)
-                </when>
-                <otherwise>
-                    AND a.title LIKE CONCAT(#{query.keyword}, '%')
-                </otherwise>
-            </choose>
+        <if test="query.fullTextExpression != null">
+            AND MATCH(a.title, a.summary) AGAINST(#{query.fullTextExpression} IN BOOLEAN MODE)
+        </if>
+        <if test="query.fullTextExpression == null and query.prefixExpression != null">
+            AND a.title LIKE #{query.prefixExpression}
         </if>
         ORDER BY a.gmt_modified DESC
     </select>

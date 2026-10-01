@@ -34,7 +34,7 @@ public class FileStorageServiceImpl implements FileStorageService {
 
         UploadFileVO vo = new UploadFileVO();
         vo.setUrl(stored.getUrl());
-        vo.setSize(stored.getSize());
+        vo.setSize((int) stored.getSize());
         return vo;
     }
 }

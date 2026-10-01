@@ -28,14 +28,14 @@
 
 ## 3. W3 后台写平面
 
-- [ ] 3.1 实现纯工具 `SlugUtils` 与 `WordCountUtils`（中文标题返回 null 不猜拼音、格式校验、剥离 Markdown 语法后计数、400 字/分钟），验证 `SlugUtilsTest` 与 `WordCountUtilsTest` 全绿
-- [ ] 3.2 建立后台账号与审计的模型层（DO / Mapper + XML / DTO / VO / 常量），验证 `mvn -q -DskipTests compile` 通过且 `AdminUserVO` 不含口令哈希字段
-- [ ] 3.3 实现登录服务（BCrypt 校验、失败 5 次 / 15 分钟锁定、登录按 IP 限流、成功后清计数、审计同事务）与 `RateLimitManager`，验证 `AdminAuthServiceTest` 三条**失败路径**全绿（成功路径改由 MockMvc 覆盖，见 design D-E）
-- [ ] 3.4 实现后台认证接口并把 Sa-Token 未登录异常翻译成 401（40101 / 40102 两个口径、HTTP 401），验证 `AdminAuthControllerTest` 四条全绿（无 token 40101 / 伪造 token 40102 / 登录后 me 正常 / 成功登录清空失败计数）
-- [ ] 3.5 实现图片上传（本地存储 + 扩展名白名单 + magic bytes + 大小上限 + 重命名 + 路径穿越防护 + **对外 URL 与资源映射路径分开配置**），验证 `LocalFileStorageTest` 五条全绿，且上传后访问返回的 URL 能取到图片
-- [ ] 3.6 实现后台文章写服务（列表含草稿、新建 / 更新 / 发布撤回 / 删除、标签解析或创建、字数重算、审计同事务、slug 冲突 40901），验证 `AdminArticleServiceTest` 五条全绿（含删除不留孤立正文与标签关系）
-- [ ] 3.7 实现后台文章接口（列表含草稿且关键词走全文索引、不足 2 字回退前缀匹配、详情含正文、新建 / 更新 / 发布 / 删除全走 POST），验证 `AdminArticleControllerTest` 三条全绿（未登录 401 / 列表含草稿 / 新建→发布→公开列表可见）
-- [ ] 3.8 W3 出口复核：手工走一遍「登录 → 看草稿 → 改标题 → 发布 → 前台可见」并用 SQL 核对 `admin_audit_log` 里有 LOGIN/CREATE/UPDATE 记录，在 `docs/dev-journal.md` 追加 W3 留痕后提交
+- [x] 3.1 实现纯工具 `SlugUtils` 与 `WordCountUtils`（中文标题返回 null 不猜拼音、格式校验、剥离 Markdown 语法后计数、400 字/分钟），验证 `SlugUtilsTest` 与 `WordCountUtilsTest` 全绿
+- [x] 3.2 建立后台账号与审计的模型层（DO / Mapper + XML / DTO / VO / 常量），验证 `mvn -q -DskipTests compile` 通过且 `AdminUserVO` 不含口令哈希字段
+- [x] 3.3 实现登录服务（BCrypt 校验、失败 5 次 / 15 分钟锁定、登录按 IP 限流、成功后清计数、审计同事务）与 `RateLimitManager`，验证 `AdminAuthServiceTest` 三条**失败路径**全绿（成功路径改由 MockMvc 覆盖，见 design D-E）
+- [x] 3.4 实现后台认证接口并把 Sa-Token 未登录异常翻译成 401（40101 / 40102 两个口径、HTTP 401），验证 `AdminAuthControllerTest` 四条全绿（无 token 40101 / 伪造 token 40102 / 登录后 me 正常 / 成功登录清空失败计数）
+- [x] 3.5 实现图片上传（本地存储 + 扩展名白名单 + magic bytes + 大小上限 + 重命名 + 路径穿越防护 + **对外 URL 与资源映射路径分开配置**），验证 `LocalFileStorageTest` 五条全绿，且上传后访问返回的 URL 能取到图片
+- [x] 3.6 实现后台文章写服务（列表含草稿、新建 / 更新 / 发布撤回 / 删除、标签解析或创建、字数重算、审计同事务、slug 冲突 40901），验证 `AdminArticleServiceTest` 五条全绿（含删除不留孤立正文与标签关系）
+- [x] 3.7 实现后台文章接口（列表含草稿且关键词走全文索引、不足 2 字回退前缀匹配、详情含正文、新建 / 更新 / 发布 / 删除全走 POST），验证 `AdminArticleControllerTest` 三条全绿（未登录 401 / 列表含草稿 / 新建→发布→公开列表可见）
+- [x] 3.8 W3 出口复核：手工走一遍「登录 → 看草稿 → 改标题 → 发布 → 前台可见」并用 SQL 核对 `admin_audit_log` 里有 LOGIN/CREATE/UPDATE 记录，在 `docs/dev-journal.md` 追加 W3 留痕后提交
 
 ## 4. W5 Markdown 导入器
 

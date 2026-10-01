@@ -24,4 +24,22 @@ public class AdminArticleQuery extends PageQuery {
      * 长度不足 2 个字符时回退标题前缀匹配 —— `ngram_token_size=2`，单字在全文索引里命中 0。
      */
     private String keyword;
+
+    /**
+     * 全文检索表达式（`kw*`）；关键词不足 2 字符时为 null，让 SQL 走回退分支。
+     *
+     * **为什么在 Java 侧拼好而不是在 SQL 里 `CONCAT(#{keyword}, '*')`**：
+     * MyBatis-Plus 的分页插件会用 JSqlParser 解析 SQL 来生成 count 语句，
+     * 而它解析不了 `AGAINST(CONCAT(...))` —— 实测直接抛
+     * `ParseException: Encountered unexpected token: "CONCAT"`。
+     * 顺带的好处：这个"长度 ≥ 2 才走全文索引"的规则变成了可单测的纯逻辑。
+     */
+    public String getFullTextExpression() {
+        return keyword == null || keyword.length() < 2 ? null : keyword + "*";
+    }
+
+    /** 前缀匹配表达式（`kw%`，只用于单字回退） */
+    public String getPrefixExpression() {
+        return keyword == null || keyword.isEmpty() ? null : keyword + "%";
+    }
 }

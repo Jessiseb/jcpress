@@ -19,7 +19,7 @@ public final class TaxonomyConverter {
         vo.setName(ref.getName());
         vo.setSlug(ref.getSlug());
         vo.setDescription(ref.getDescription());
-        vo.setArticleCount(ref.getArticleCount() == null ? 0L : ref.getArticleCount());
+        vo.setArticleCount(ref.getArticleCount() == null ? 0 : ref.getArticleCount().intValue());
         return vo;
     }
 
@@ -32,7 +32,7 @@ public final class TaxonomyConverter {
         vo.setId(ref.getId());
         vo.setName(ref.getName());
         vo.setSlug(ref.getSlug());
-        vo.setArticleCount(ref.getArticleCount() == null ? 0L : ref.getArticleCount());
+        vo.setArticleCount(ref.getArticleCount() == null ? 0 : ref.getArticleCount().intValue());
         return vo;
     }
 
