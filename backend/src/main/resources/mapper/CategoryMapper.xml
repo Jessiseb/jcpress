@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jcpress.repository.CategoryMapper">
+
+    <!-- 计数条件必须写在 ON 里而不是 WHERE：写在 WHERE 会把「一篇已发布文章都没有」的分类
+         整体过滤掉，而分类总览恰恰需要它们（计数为 0） -->
+    <select id="listWithPublishedCount" resultType="com.jcpress.domain.projection.CategoryWithCountRef">
+        SELECT c.id, c.name, c.slug, c.description, COUNT(a.id) AS article_count
+        FROM category c
+        LEFT JOIN article a ON a.category_id = c.id AND a.status = 1
+        WHERE c.scope = #{scope}
+        GROUP BY c.id, c.name, c.slug, c.description
+        ORDER BY c.id ASC
+    </select>
+
+    <select id="getByScopeAndSlug" resultType="com.jcpress.domain.dataobject.CategoryDO">
+        SELECT id, scope, parent_id, name, slug, description, sort, gmt_create, gmt_modified
+        FROM category
+        WHERE scope = #{scope} AND slug = #{slug}
+        LIMIT 1
+    </select>
+</mapper>

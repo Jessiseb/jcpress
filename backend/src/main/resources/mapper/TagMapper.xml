@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jcpress.repository.TagMapper">
+
+    <!-- 同 CategoryMapper：status 条件进 ON，保证没有已发布文章的标签也以计数 0 出现 -->
+    <select id="listWithPublishedCount" resultType="com.jcpress.domain.projection.TagWithCountRef">
+        SELECT t.id, t.name, t.slug, COUNT(a.id) AS article_count
+        FROM tag t
+        LEFT JOIN article_tag at ON at.tag_id = t.id
+        LEFT JOIN article a ON a.id = at.article_id AND a.status = 1
+        GROUP BY t.id, t.name, t.slug
+        ORDER BY article_count DESC, t.id ASC
+    </select>
+
+    <select id="getBySlug" resultType="com.jcpress.domain.dataobject.TagDO">
+        SELECT id, name, slug, gmt_create, gmt_modified
+        FROM tag
+        WHERE slug = #{slug}
+        LIMIT 1
+    </select>
+</mapper>
