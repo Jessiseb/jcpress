@@ -25,6 +25,6 @@ public class HealthController {
     @GetMapping
     @Operation(summary = "探活（含 DB 与 Redis）")
     public Result<Map<String, Object>> health() {
-        return Result.success(healthService.check());
+        return Result.success(healthService.getHealth());
     }
 }

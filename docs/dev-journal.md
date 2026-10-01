@@ -1688,3 +1688,34 @@ brainstorm 阶段到此**闭合**（技能要求的九步：探索 → 视觉伴
 **另一条环境向的坑（值得晋级为纪律）**：`git commit -m "…"` 的消息里含**中文引号**时，PowerShell 会把参数截断，git 报 `pathspec '异常处理器答了个' did not match` —— 看起来像 git 出错，实际是 shell 引号。**以后提交信息一律走 `git commit -F <文件>`**。
 
 **归因**：①②③ 是同一类问题的三种表现 —— **"我以为是产品代码错了，其实是测试环境没搭对"**。三次我都先去读真实堆栈（surefire 报告 / 原始日志），没有凭现象改产品代码，这一步是对的。
+
+### 34.6 Task 1.7 / 1.8 / 1.9：规约卡口 + 真启动冒烟 + W1 收口
+
+**Task 1.7（ArchUnit 13 条 + 源码扫描 3 条）——两处真发现，第二处是"假绿"**
+
+| # | 发现 | 为什么危险 | 处置 |
+| --- | --- | --- | --- |
+| ① | **`..web..` 会匹配 `org.springframework.web`** —— ArchUnit 的 `..` 是"任意层级里出现该段"，不是"本项目的包"。第一版因此报出 **15 条假违规**：把「`GlobalExceptionHandler` 带了 `@RestControllerAdvice`」算成"common 层依赖了业务 web 包" | 假报还只是噪音；**更危险的形态是反过来** —— `..repository..` 会命中 `org.springframework.data.repository`，规则看起来在跑，实际什么也没守 | 所有包模式**锚定到 `com.jcpress.`** 前缀 |
+| ② | **`Pattern.compile("^import\\s+lombok\\…")` 少了 `MULTILINE`** → `^` 只匹配整个输入的开头，等于**每个文件只扫了第一行**。Lombok 白名单检查因此永远绿 | 一个"永远绿"的检查比没有检查更糟：它给人已经守住了的错觉 | 加 `Pattern.MULTILINE`，并把这段教训写进该常量的注释 |
+
+**②是怎么被发现的：我做了一次反向验证** —— 故意塞一个违规探针类（`@Builder` + `@Autowired` 字段 + `@PutMapping` + 方法级裸 `@RequestMapping` + 无动词前缀的 service 方法），跑卡口看它会不会红。结果 `ArchitectureTest` **四条规则全红**（说明它真的在拦），而 `SourceConventionTest` **依然 3/3 通过** —— 假绿当场暴露。
+
+> **新增一条纪律：卡口必须做反向验证。"能通过"不等于"能拦住"。**
+> 这条以后对每一个新建的判据都适用（前端的行为断言同理），已写进 `decisions.md`。
+
+修好后再跑反向验证：5 类违规**全部被抓住**；删掉探针后回到 **29/29 全绿**（13 ArchUnit + 3 源码扫描 + 13 既有用例）。
+
+**Task 1.8（真启动冒烟）**
+
+```
+$ mvn spring-boot:run -Dspring-boot.run.profiles=dev
+Invoke-RestMethod http://127.0.0.1:8080/api/health
+→ {"code":0,"message":"ok","data":{"db":"UP","redis":"UP"},"traceId":"bfea636f"}
+```
+
+启动日志同时证明三件事：Tomcat 起在 8080 且 context path 为 `/api`；Flyway 把 **dev 库 `jcpress` 也迁到 v1**（`Successfully applied 1 migration`）；Sa-Token 1.44.0 banner 正常。dev 库实测 7 张表 + `flyway_schema_history`（version 1 / success 1）。
+唯一警告 `No MyBatis mapper was found in '[com.jcpress.repository]'` 是预期的（W2 才加 Mapper）。
+
+**Task 1.9（W1 出口复核）**：`mvn -q -DskipTests compile` exit 0 · `mvn test` **29/29** · 冒烟三条全绿。**W1 收口。**
+
+一处顺带的自我纠偏：`HealthService.check()` 这个名字**过不了自己的命名卡口**（动词前缀白名单里没有 check），改名 `getHealth()` —— 卡口是判据不是建议，所以改的是代码而不是规则。

@@ -26,7 +26,7 @@ class HealthControllerTest {
 
     @Test
     void healthIsPublicAndReturnsUnifiedBody() throws Exception {
-        given(healthService.check()).willReturn(Map.of("db", "UP", "redis", "UP"));
+        given(healthService.getHealth()).willReturn(Map.of("db", "UP", "redis", "UP"));
 
         mockMvc.perform(get("/health"))
                 .andExpect(status().isOk())

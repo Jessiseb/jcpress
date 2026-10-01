@@ -19,7 +19,7 @@ public class HealthServiceImpl implements HealthService {
     private final StringRedisTemplate redisTemplate;
 
     @Override
-    public Map<String, Object> check() {
+    public Map<String, Object> getHealth() {
         Map<String, Object> status = new LinkedHashMap<>();
         status.put("db", probeDb());
         status.put("redis", probeRedis());
