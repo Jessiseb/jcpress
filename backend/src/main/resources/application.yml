@@ -1,0 +1,65 @@
+# jcpress 后端公共配置
+# 分层：application.yml（公共） -> application-{dev,test,prod,importer}.yml（环境）
+spring:
+  application:
+    name: jcpress-backend
+  profiles:
+    active: dev
+  servlet:
+    multipart:
+      # 与 jcpress.upload.max-bytes 保持一致（5MB），比它略大留出 multipart 封装开销
+      max-file-size: 6MB
+      max-request-size: 7MB
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+server:
+  port: 8080
+  # 路由前缀：Controller 只写 /v1/...，对外就是 /api/v1/...
+  servlet:
+    context-path: /api
+
+mybatis-plus:
+  configuration:
+    # DO 用 camelCase 字段映射 snake_case 列
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: classpath*:mapper/**/*.xml
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto
+      # 注意：这里**故意不配置** logic-delete-field —— 本项目物理删除（规划 §6.6）。
+      # 模板的 application.yml 里配了 isDelete，照抄会让每条查询都拼上 is_delete=0 而直接报错。
+  type-aliases-package: com.jcpress.domain
+
+sa-token:
+  token-name: jcpress-token
+  timeout: 604800
+  active-timeout: 1800
+  is-concurrent: true
+  token-style: uuid
+  is-log: false
+
+jcpress:
+  upload:
+    dir: ./uploads
+    # resource-path 是 addResourceHandlers 注册用的、相对 context-path 的路径
+    resource-path: /uploads
+    # public-prefix 是写进 Markdown 与库里的对外可访问 URL（含 context-path）
+    # 两者写成同一个值 → 正文里的图片地址会 404
+    public-prefix: /api/uploads
+    max-bytes: 5242880
+
+knife4j:
+  enable: true
+  openapi:
+    title: jcpress 接口文档
+    version: 1.0
+    group:
+      default:
+        api-rule: package
+        api-rule-resources:
+          - com.jcpress.web
