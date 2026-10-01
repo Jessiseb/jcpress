@@ -1595,3 +1595,49 @@ brainstorm 阶段到此**闭合**（技能要求的九步：探索 → 视觉伴
 
 `openspec new change phase-3-tech-module` → 按 spec-driven schema 产出 proposal / specs 增量 / design / tasks 四件 → 然后 W1 开工。
 **W1 Task 5 的第一件事是 Sa-Token 1.44.0 在本机 Redis 5.0.14 上的运行时探针** —— 这是全期唯一还没被验证过的高风险假设（jar 静态检查只能证明没有 `KEEPTTL`）。
+
+---
+
+## 阶段 33 · 三期 OpenSpec propose（2026-10-02）
+
+### 33.1 我这一步发的关键原话
+
+本阶段**没有新指令**。用户在上一步已经把「计划通过，开始实施」一次说完，propose 属于这句话覆盖范围内的既定动作。
+
+### 33.2 AI 关键产出
+
+**变更目录**：`openspec/changes/phase-3-tech-module/`，4 件产物齐全，`openspec validate --strict` **✓ 通过**。
+
+| 产物 | 行数 | 内容 |
+| --- | --- | --- |
+| `proposal.md` | 49 | Why / What Changes / Capabilities（4 新 + 3 改）/ Impact（含删除项与依赖清单） |
+| `design.md` | 119 | Context / Goals-NonGoals / **D-A…D-G 七条实现级决策** / 风险表 / Migration Plan / Open Questions（5 条） |
+| `tasks.md` | 64 | 6 组 / **33 个可勾任务**，每条自带验证方式；测试与文档**分散在各组内**，不收尾集中 |
+| `specs/` 7 份 | 550 | 新增 4 个能力（`tech-article-detail` / `tech-article-admin` / `admin-auth` / `markdown-importer`）+ 修改 3 个既有能力（`tech-article-list` / `homepage` / `visual-language`） |
+
+**能力拆分依据**：既有 spec 的粒度是"一个能力一份"，所以没有新建 `tech-article`（会与 `tech-article-list` 近似重复），而是**读路径与写路径分开**（`tech-article-detail` / `tech-article-admin`），认证独立成 `admin-auth`（将来项目笔记、分类管理都要用它）。
+
+### 33.3 被驳回 / 纠偏（**这一轮逮到两处设计冲突，都是靠读既有 spec 发现的**）
+
+| # | 发现 | 处置 |
+| --- | --- | --- |
+| 1 | **首页新区块原设计是"卡片"** —— 但 `openspec/specs/homepage/spec.md` 有一条硬要求：「首页 SHALL 只对**关键数字 / 项目经历 / 技术栈**三类区块使用面板容器…其余区块 SHALL 保持通栏，**SHALL NOT 使用面板底色或投影**」。卡片 = 面板底色 + 圆角 + 投影 → 直接违规；而且它也**违反我自己批准的破例范围**（D6③ 明确写了破例只在 `/tech` 与详情页） | 首页区块改为**通栏行式列表**（标题 + 日期 · 阅读时长），并把这处修正同时回写 `docs/design-tech-module.md`（D6③）与 `docs/plan-tech-module-w4-frontend.md`（Task 6 Step 1 加了显式禁令） |
+| 2 | `tech-article-list` 里那条「**无详情页时不给死链**」的要求在本期**必须删除**（详情页已经有了，留着会把列表锁死在不可点） | 用 `## REMOVED Requirements` + **Reason + Migration** 显式删掉，并新增「卡片可点进详情」要求反向接管 |
+
+### 33.4 翻车与返工
+
+**① `openspec validate` 一次就拦下我两处 MODIFIED 写法错误**（这正是它该拦的）：
+
+| 错误 | 校验器原话 | 处置 |
+| --- | --- | --- |
+| `homepage` 的「区块顺序」MODIFIED 块里把原场景**改了名** | "omits scenario(s) the current spec still has: 经历排在能力之前…a MODIFIED requirement replaces the whole block, so archive refuses to drop them" | 恢复原场景名，内容更新 |
+| `tech-article-list` 的 MODIFIED 用了**新标题**「每条条目展示为卡片」 | "MODIFIED failed for header … not found" | 改回原标题「每条条目展示四项信息」，卡片内容写进该需求体内 |
+
+**归因**：MODIFIED 的语义是"**整块替换**"，所以标题必须逐字沿用、原场景不得丢。我按"重写"的心智模型去写，就会丢历史。这条已记进脑子 —— 下次写 delta 先 `openspec show` 取原文整块再改。
+
+**② 另一处小返工**：`openspec validate --change` 不是有效参数（是 `--changes`）。报错里给的建议是对的，照做即可。
+
+### 33.5 流程节点
+
+到此四件产物齐全，`openspec status` 报 **"All planning artifacts complete!"**。
+下一步：按 `tasks.md` 的 6 组 33 项开工，第一件是 **W1 Task 1.1**（建 `backend/` 骨架）。

@@ -1184,12 +1184,19 @@ const AdminArticleEditPage = lazy(() => import('@/pages/admin/AdminArticleEditPa
 - Modify: `frontend/src/components/visual/CelestialField.module.css`（补 `[data-scene='7']`）
 - Create: `.tmp/tools/probe-docking.cjs`
 
-- [ ] **Step 1: 写 `LatestArticles`**（复用 `useLatestArticles(3)`，样式沿用卡片但更紧凑；**不引 ArticleCard**，因为首页不做头版通栏）
+- [ ] **Step 1: 写 `LatestArticles`**（复用 `useLatestArticles(3)`）
+
+> ⛔ **不要用卡片。** 写 W4 时读 `openspec/specs/homepage/spec.md` 才发现：`homepage` 有一条硬要求 ——
+> 「首页 SHALL 只对**关键数字 / 项目经历 / 技术栈**三类区块使用面板容器（玻璃底色 + 圆角 + 边框）；
+> 其余区块 SHALL 保持通栏，SHALL NOT 使用面板底色或投影」。
+> 首页新区块若做成卡片，就同时违反这条 spec 与我自己批准的破例范围（**破例只在 `/tech` 与详情页**）。
+> 所以首页这一块走**通栏紧凑列表**：每行 = 标题（左）+ 日期 · 阅读时长（右），行间用间距而非色块，
+> 整体沿用首页既有的排版层级与 `--ds-font-display`/`--ds-font-sans`，**不引 ArticleCard**。
 
 **三条硬要求，漏了会静默失效**：
 1. 区块根节点**必须**带 `aria-labelledby`（`<section aria-labelledby="latest-articles-title">`）—— `useActiveScene` 的选择器就是 `main section[aria-labelledby]`，没有它这个区块**不会被算成一个 scene**，区块数仍是 7，后面所有停靠分析都建立在错误前提上。
 2. 根节点带 `data-block="latest-articles"` —— `audit-behavior.cjs` 的三期断言靠它定位（Task 9 #9）。
-3. 卡片必须是 `<Link to={\`/tech/${slug}\`}>`；**加载失败显示"没取回来"而不是空态**（错误不许伪装成没内容）。
+3. 三行都必须是 `<Link to={\`/tech/${slug}\`}>`；**加载失败显示"没取回来"而不是空态**（错误不许伪装成没内容）。
 
 - [ ] **Step 2: 插进 `HomePage`**（位置：`ProjectShowcase` 之后、`SkillMatrix` 之前）
 
