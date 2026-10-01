@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jcpress.repository.AdminUserMapper">
+
+    <!-- 显式列清单（手册禁止 SELECT *）。password_hash 只在这一条里出现：
+         登录校验需要它，其余任何查询都不要把它带出来。 -->
+    <select id="getByUsername" resultType="com.jcpress.domain.dataobject.AdminUserDO">
+        SELECT id, username, password_hash, nickname, role, status,
+               last_login_time, last_login_ip, gmt_create, gmt_modified
+        FROM admin_user
+        WHERE username = #{username}
+        LIMIT 1
+    </select>
+
+    <update id="updateLastLogin">
+        UPDATE admin_user
+        SET last_login_time = #{loginTime}, last_login_ip = #{loginIp}
+        WHERE id = #{id}
+    </update>
+</mapper>
