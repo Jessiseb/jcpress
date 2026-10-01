@@ -1256,6 +1256,27 @@ class ArchitectureTest {
             noMethods().should().beAnnotatedWith(PutMapping.class)
                     .orShould().beAnnotatedWith(PatchMapping.class)
                     .orShould().beAnnotatedWith(DeleteMapping.class);
+
+    /**
+     * 裸 @RequestMapping 的兜住口 —— 只查**方法级**：
+     * 类级的 @RequestMapping("/v1/articles") 只提供路径前缀，是标准写法，必须放过；
+     * 方法级的 @RequestMapping 不带 method 等于对 PUT/DELETE 全开放，必须禁。
+     * （这一条**不能用文本正则**做：正则分不清类级与方法级，会把标准写法一起误伤。）
+     */
+    @ArchTest
+    static final ArchRule methodLevelRequestMappingMustDeclareMethod =
+            methods().that().areAnnotatedWith(org.springframework.web.bind.annotation.RequestMapping.class)
+                    .should(new ArchCondition<>("声明 method 属性（否则等于对所有 HTTP 方法开放）") {
+                        @Override
+                        public void check(JavaMethod method, ConditionEvents events) {
+                            org.springframework.web.bind.annotation.RequestMapping mapping =
+                                    method.getAnnotationOfType(org.springframework.web.bind.annotation.RequestMapping.class);
+                            if (mapping.method().length == 0) {
+                                events.add(SimpleConditionEvent.violated(method,
+                                        method.getFullName() + " 的 @RequestMapping 未声明 method"));
+                            }
+                        }
+                    });
 }
 ```
 
@@ -1315,16 +1336,8 @@ class SourceConventionTest {
         }
     }
 
-    @Test
-    void noBareRequestMappingWithoutMethod() throws IOException {
-        Pattern bare = Pattern.compile("@RequestMapping\\s*\\(\\s*(\"[^\"]*\"\\s*)?\\)");
-        for (Path file : javaFiles()) {
-            String source = Files.readString(file, StandardCharsets.UTF_8);
-            assertThat(bare.matcher(source).find())
-                    .as("%s 出现了不带 method 的裸 @RequestMapping（对所有 HTTP 方法开放）", file)
-                    .isFalse();
-        }
-    }
+    // 「裸 @RequestMapping」不在这里查 —— 正则分不清类级与方法级，会把 @RequestMapping("/v1/articles")
+    // 这种标准写法误伤。它由 ArchitectureTest.methodLevelRequestMappingMustDeclareMethod（只查方法级）负责。
 
     @Test
     void noQueryWrapperImport() throws IOException {

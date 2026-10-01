@@ -92,7 +92,7 @@
 | 9 | **Service/DAO 方法命名前缀** | `..service..` 与 `..repository..` 的公开方法名须以 `get/list/count/save/insert/remove/delete/update` 开头（构造器、`Object` 方法除外） |
 | 10 | **禁 `QueryWrapper`** | `..service..` 与 `..service.impl..` 不得依赖 `com.baomidou.mybatisplus.core.conditions.query.QueryWrapper`（含 `LambdaQueryWrapper`） |
 | 11 | **只用 GET/POST** | 无 `@PutMapping` / `@PatchMapping` / `@DeleteMapping` |
-| 12 | GET/POST 的两个 ArchUnit 盲区 | 文本扫描：`RequestMethod.(PUT\|PATCH\|DELETE)` 命中数为 0；裸 `@RequestMapping`（不带 `method`）命中数为 0 |
+| 12 | GET/POST 的两个 ArchUnit 盲区 | ① 文本扫描：`RequestMethod.(PUT\|PATCH\|DELETE)` 命中数为 0；② **裸 `@RequestMapping` 用 ArchUnit 查、且只查方法级**（`methodLevelRequestMappingMustDeclareMethod`）—— 写计划时发现原方案「用文本正则查裸 @RequestMapping」是错的：正则分不清类级与方法级，会把 `@RequestMapping("/v1/articles")` 这种标准路径前缀写法一起误伤；方法级不带 `method` 才是「对所有 HTTP 方法开放」的真风险 |
 
 规则 7–12 是本期的**新增卡口**，前 6 条规划里已写但从未实现。
 
