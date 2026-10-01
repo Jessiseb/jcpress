@@ -170,6 +170,9 @@
 | 98 | **装饰层的遮挡不属于对比度审计的覆盖面** | 上面那次「球压字」`audit-contrast` 是**全绿**的（亮暗各 220 处、0 未达标）—— 因为审计量的是文字与其**底色**的对比度，不量「一个 0.24 不透明度的装饰层叠在文字下面」。所以这类问题只由 scene 0 的「首屏让位」断言 + 肉眼截图把关。**处置**：把「改版式后重跑停靠探针」写进流程（见 #97），并在 `CelestialField.module.css` 的 scene 6 注释里留下实测矩形，下一次改这一节的人能直接看到数 |
 
 
+| 99 | **后端写接口的 HTTP 方法：只用 `GET` / `POST`，禁用 `PUT` / `PATCH` / `DELETE`** | 用户把后端编码约定写进了仓库根目录的 `Agent.md`，其中一条是「禁用标准 RESTful，统一使用 GET/POST」。这与 `docs/项目前期规划.md`（README 标为 **「唯一源」**，含 API 契约）**正面冲突**：该文档 §9.3 用了 `PUT /admin/articles/{id}` 与 `DELETE /admin/articles/{id}`，前后台对照表也写着 `GET/POST/PUT/DELETE`。**用户裁定以 `Agent.md` 为准**。**处置**（改规划文档 5 处）：① §9.1 通用约定新增方法规约；② `PUT /articles/{id}` → `POST /articles/{id}`；③ `DELETE /articles/{id}` → **`POST /articles/{id}/delete`**（状态迁移用**路径后缀**表达，与同一张表里已有的 `/view`、`/publish` 同一种风格）；④ 前后台对照表方法列 → `只允许 GET` / `只允许 GET`/`POST`；⑤ 顺带修掉一处**既有自相矛盾** —— 安全用例原写「公开接口不存在任何写方法（`POST/PUT/DELETE` 应返回 404）」，但 §9.2 里就有公开的 `POST /articles/{slug}/view`。**注意**：`admin_audit_log.action` 的枚举注释里仍有 `DELETE` —— 那是**操作名**不是 HTTP 方法，不改 |
+| 100 | **同一个契约写在两份文档里，本身就是缺陷** | #99 那次冲突不是「谁写错了」，而是**结构问题**：`docs/项目前期规划.md` 被声明为 API 契约的「唯一源」，而后端编码约定又被写进了 `Agent.md`。两份文档都描述同一件事，就一定会漂 —— 而且这次是我**顺手核对**才发现的，不是任何判据抓到的。**处置**：在规划文档 §9.1 的方法规约里注明「规则源：`Agent.md`」，把方向固定下来（约定在 `Agent.md`，契约在规划文档，后者引用前者）。**遗留**：`Agent.md` 里那几条后端规则（分层依赖、构造器注入、Lombok 白名单、命名前缀、禁 QueryWrapper）目前**没有任何东西守** —— 而规划文档自己在 §11.5 就写了「**用 ArchUnit 把架构规则变成测试（CI 违规即失败，避免"文档写了但没人守"）**」。这几条恰好都是 ArchUnit / Checkstyle 能守的类型；后端尚未动工，是落成可执行判据最便宜的时机（M1 工程骨架里一并做）。**本次已落地其中一条**：HTTP 方法规约写成了 ArchUnit 规则 `onlyGetAndPostMappings`（`noMethods().should().beAnnotatedWith(PutMapping/PatchMapping/DeleteMapping)`）＋ CI 文本扫描兜住两个 ArchUnit 查不到的绕过口（`@RequestMapping(method = RequestMethod.PUT)` 与不带 `method` 的裸 `@RequestMapping`）。其余四条（分层依赖方向已在 §11.5、构造器注入、Lombok 白名单、命名前缀、禁 QueryWrapper）仍未落判据 |
+
 ## 环境注意事项（Windows + WorkBuddy 沙箱）
 
 | 坑 | 现象 | 绕过方式 |
