@@ -117,7 +117,7 @@ export const profileData: ProfileAggregateVO = {
     location: '广州',
     email: '2750685367@qq.com',
     githubUrl: 'https://gitee.com/c-nomad',
-    blogUrl: null,
+    blogUrl: 'https://www.yuque.com/u42163082/chengshenbj',
     wechatQrUrl: null,
     resumePdfUrl: '/resume.pdf',
   },
@@ -334,11 +334,13 @@ export const profileData: ProfileAggregateVO = {
   ],
 
   contacts: [
-    { label: '邮箱', value: '2750685367@qq.com', href: 'mailto:2750685367@qq.com' },
+    // 手机号做主入口：`tel:` 在移动端直接进拨号盘，比 `mailto:` 少一次切换。
+    // 展示用 3-4-4 分组（大字号下更好读），href 里必须是不带空格的完整号码，且带 +86 国家码。
+    { label: '手机', value: '178 1921 2602', href: 'tel:+8617819212602' },
     { label: '微信', value: 'XIH1222', href: null, copyable: true },
     { label: 'Gitee', value: 'gitee.com/c-nomad', href: 'https://gitee.com/c-nomad' },
-    { label: 'CSDN', value: 'C 游牧人 · 17 篇 / 访问 1w+', href: null },
-    { label: '个人知识库', value: '成神笔记', href: null },
+    { label: 'CSDN', value: 'C 游牧人 · 17 篇 / 访问 1w+', href: 'https://blog.csdn.net/2301_79737596?spm=1000.2115.3001.5343' },
+    { label: '个人知识库', value: '语雀 · 成神笔记', href: 'https://www.yuque.com/u42163082/chengshenbj' },
   ],
 
   stats: [

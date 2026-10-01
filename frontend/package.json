@@ -12,10 +12,12 @@
     "fonts:chars": "node scripts/collect-charset.cjs",
     "fonts:chars:display": "node scripts/collect-display-charset.cjs",
     "fonts:build": "node scripts/build-font-subset.cjs",
-    "fonts:build:display": "node scripts/build-font-subset.cjs --weight=700 --chars=.tmp/fonts/chars-display.txt --collect=collect-display-charset.cjs"
+    "fonts:build:display": "node scripts/build-font-subset.cjs --weight=700 --chars=.tmp/fonts/chars-display.txt --collect=collect-display-charset.cjs",
+    "textures:moon": "node scripts/gen-moon-texture.cjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.7",
+    "lucide-react": "^1.49.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0"

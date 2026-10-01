@@ -46,74 +46,136 @@
   color: var(--ds-c-text-subtle);
 }
 
-/* 奖项（r2）：按年份分组的「年份轴」
+/* 奖项（r3）：逐条时间线
    --------------------------------------------------------------------------
    r1 是「年份等宽小字 + 奖项名 + 等级」三段行 —— 年份被压成注脚。
-   r2 让**年份成为组头**：展示衬线、字号明显大于奖项名，纵向对齐成一列，形成时间轴。
-   分组而不是逐行重复的原因：本期五项奖项年份全是 2025，逐行重复既冗长，
-   又把「2025 是丰收年」这个真正有信息量的事实埋掉了。
+   r2 让年份成为组头（展示衬线、字号大于奖项名）—— 但五项全是 2025，
+   压成一个组后反而看不出「一共拿了几个」。
+   r3 按参照改成逐条节点：左列右对齐放元数据（年份加粗 / 等级灰色小字），
+   中列是竖轴与空心圆点，右列放奖项名。
    等级从等宽改回无衬线：内容是中文，等宽栈没有 CJK 字形（decisions #41）。 */
-.awards {
+.timeline {
+  --stamp-w: 8.5rem;
+  --node-w: 3rem;
+  --node-x: calc(var(--stamp-w) + var(--node-w) / 2);
+  --row-gap: var(--ds-space-6);
+  /* 圆点几何：0.22rem 顶偏移 + 0.68rem 直径 + 两侧各 2px 描边 → 圆心距行顶的距离 */
+  --dot-top: 0.22rem;
+  --dot-size: 0.68rem;
+  --dot-center: calc(var(--dot-top) + var(--dot-size) / 2 + 2px);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
   margin-top: var(--ds-space-5);
+  padding-block: var(--ds-space-3) var(--ds-space-4);
   border-top: 1px solid var(--ds-c-hairline);
 }
 
-.yearGroup {
+.award {
+  position: relative;
   display: grid;
-  grid-template-columns: 5.5rem minmax(0, 1fr);
-  gap: var(--ds-space-4);
+  grid-template-columns: var(--stamp-w) var(--node-w) minmax(0, 1fr);
   align-items: start;
-  padding-block: var(--ds-space-4);
-  border-bottom: 1px solid var(--ds-c-hairline);
 }
 
-.year {
-  font-family: var(--ds-font-display);
-  font-size: 1.625rem;
-  font-weight: var(--ds-fw-display-strong);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  letter-spacing: -0.01em;
-  color: var(--ds-c-text);
+/* 竖轴画在**每一行**上，而不是整条 timeline 上。
+   原因：行高逐行不同（长奖项名会折行），画在容器上就没法让线正好停在第一个/最后一个圆点。
+   每行上下各向外延伸半个行距，把行间隙也补上，看上去仍是一条连续的轴。 */
+.award::before {
+  position: absolute;
+  top: calc(var(--row-gap) / -2);
+  bottom: calc(var(--row-gap) / -2);
+  left: var(--node-x);
+  width: 1px;
+  background: var(--ds-c-hairline);
+  content: '';
 }
 
-.yearAwards {
+/* 首行从第一个圆点起，末行到最后一个圆点止 —— 轴不冒头、不拖尾 */
+.award:first-child::before {
+  top: var(--dot-center);
+}
+
+.award:last-child::before {
+  bottom: auto;
+  height: calc(var(--row-gap) / 2 + var(--dot-center));
+}
+
+.stamp {
   display: flex;
   flex-direction: column;
-  gap: var(--ds-space-2);
+  gap: 0.3rem;
+  padding-right: var(--ds-space-3);
+  text-align: right;
 }
 
-.award {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: baseline;
-  gap: var(--ds-space-4);
-}
-
-.awardName {
-  font-size: 0.9375rem;
+.awardYear {
+  font-size: 1.0625rem;
+  font-weight: var(--ds-fw-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
   color: var(--ds-c-text);
 }
 
 .awardLevel {
   font-size: 0.8125rem;
-  letter-spacing: 0.02em;
+  line-height: 1.5;
   color: var(--ds-c-text-subtle);
 }
 
+/* 圆点：轴线在 --node-x，节点列中心与之重合，所以 `left: 50%` 就落在轴上。
+   底色用页面底而不是透明 —— 透明会让竖轴从圆点中间穿过去。 */
+.node {
+  position: relative;
+  height: 1.15rem;
+}
+
+.node::before {
+  position: absolute;
+  top: var(--dot-top);
+  left: 50%;
+  width: var(--dot-size);
+  height: var(--dot-size);
+  border: 2px solid var(--ds-c-text);
+  border-radius: 50%;
+  background: var(--ds-c-bg);
+  transform: translateX(-50%);
+  content: '';
+}
+
+.awardName {
+  max-width: var(--ds-measure-prose);
+  font-size: 1.1875rem;
+  font-weight: var(--ds-fw-semibold);
+  line-height: 1.45;
+  text-wrap: balance;
+  color: var(--ds-c-text);
+}
+
 @media (max-width: 719px) {
-  .yearGroup {
-    grid-template-columns: 4rem minmax(0, 1fr);
-    gap: var(--ds-space-2) var(--ds-space-3);
+  .timeline {
+    /* 元数据列不能跟着缩太窄：等级最长是「华南赛区三等奖」7 个字，
+       4.75rem（76px）装不下会折成「华南赛区三 / 等奖」—— 右对齐之后比折行本身更难看。
+       6.5rem 减 0.5rem 内边距 = 96px，7 × 12px = 84px，一行放得下。 */
+    --stamp-w: 6.5rem;
+    --node-w: 1.75rem;
+    --row-gap: var(--ds-space-5);
   }
 
-  .year {
-    font-size: 1.25rem;
+  .stamp {
+    padding-right: 0.5rem;
   }
 
-  /* 窄屏奖项名与等级上下排，避免长奖项名被挤成多行 */
-  .award {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2px;
+  .awardYear {
+    font-size: 0.9375rem;
+  }
+
+  .awardLevel {
+    font-size: 0.75rem;
+  }
+
+  .awardName {
+    font-size: 1.0625rem;
   }
 }

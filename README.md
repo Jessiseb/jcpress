@@ -2,7 +2,8 @@
 
 > 个人网站 —— 展示个人经历与技术栈，沉淀技术分享与项目笔记。
 > 当前状态：**一期前端已完结**（首页 / 频道外壳 / 视觉语言，见 `docs/dev-journal.md` 阶段 1–14）；
-> 二期视觉修订进行中（`openspec/changes/phase-2-visual/`）。后端与部署尚未开始。
+> **二期视觉修订已完结并归档**（三轮：`phase-2-visual` → `phase-2-r2` → `phase-2-r3`，
+> 见 `openspec/changes/archive/2026-10-01-phase-2-r3/`）。后端与部署尚未开始。
 
 ## 技术栈
 
@@ -56,9 +57,10 @@ cd frontend && npm run dev
 
 # 1) 类型检查与单测
 cd frontend && npx tsc --noEmit
-cd frontend && node node_modules/vitest/vitest.mjs run      # 25/25
+cd frontend && node node_modules/vitest/vitest.mjs run      # 26/26
 
-# 2) 浏览器行为断言（47 项：结构、渐变护栏、触摸目标、入场、流线层、滚动联动、排版与面板）
+# 2) 浏览器行为断言（71 项：结构、渐变护栏、触摸目标、入场、流线层、滚动联动、
+#    排版与面板、天体布景层与分节停靠、贴图登记、技术栈与联系方式）
 node .tmp/tools/audit-behavior.cjs
 
 # 3) 对比度审计（亮暗各约 240 处文本，未达标必须为 0）

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>jcpress 联系我排版候选（第二轮 · 无背景块）</title>
+<style>
+:root{
+  --accent:#0756ab; --text:#17181c; --mute:rgb(23 24 28 / 88%); --subtle:rgb(23 24 28 / 74%);
+  --hair:rgb(23 24 28 / 12%); --bg:#fff;
+  --atm1:rgb(9 111 220 / 6%); --atm2:rgb(92 7 171 / 4%);
+}
+[data-theme='dark']{
+  --accent:#4d9bff; --text:rgb(240 241 250 / 94%); --mute:rgb(240 241 250 / 72%); --subtle:rgb(240 241 250 / 58%);
+  --hair:rgb(240 241 250 / 14%); --bg:#08090c;
+  --atm1:rgb(35 136 246 / 10%); --atm2:rgb(144 35 246 / 7%);
+}
+*{box-sizing:border-box}
+body{margin:0;padding:28px 24px 60px;background:#eef0f3;color:#242429;font:14px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+h1{font:700 22px/1.3 Georgia,"Songti SC",serif;margin:0 0 6px}
+.lead{color:#5c5f68;max-width:960px;margin:0 0 8px}
+.card{background:#fff;border:1px solid #dfe2e8;border-radius:14px;padding:18px 20px;margin-bottom:22px;max-width:1360px}
+.card h2{font:700 17px/1.4 Georgia,"Songti SC",serif;margin:0 0 4px}
+.card h2 span{font:400 12px/1 -apple-system,sans-serif;background:#eef1f5;border-radius:999px;padding:3px 10px;color:#4b5563;vertical-align:3px;margin-left:8px}
+.why{font-size:13px;color:#5c5f68;margin:0 0 14px;max-width:1080px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pane{border:1px solid #dfe2e8;border-radius:12px;padding:20px;background:var(--bg);
+      background-image:radial-gradient(60% 50% at 12% 0%,var(--atm1),transparent 70%),radial-gradient(50% 45% at 92% 8%,var(--atm2),transparent 72%)}
+.pane .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--subtle);margin-bottom:16px}
+.body{width:100%;max-width:828px}
+.sect-h{font:700 30px/1.2 Georgia,"Songti SC",serif;color:var(--text);margin:0 0 6px}
+.sect-lead{font-size:14px;color:var(--mute);margin:0 0 22px}
+.phone{font-family:Georgia,"Songti SC",serif;font-weight:700;letter-spacing:-.01em;line-height:1.15;color:var(--text);text-decoration:none}
+.k{color:var(--subtle)}
+a.v{color:var(--text);text-decoration:none}
+
+/* ============ A 连排签退（一整行，用 · 分隔）============ */
+.A .phone{font-size:40px;display:block;margin-bottom:16px}
+.A .strip{font-size:14.5px;line-height:2;color:var(--text)}
+.A .strip .sep{color:var(--subtle);padding:0 .5em}
+
+/* ============ B 无栏清单（标签内联在值前面，不设列宽）============ */
+.B .phone{font-size:40px;display:block;margin-bottom:8px}
+.B .lines{margin-top:22px;display:flex;flex-direction:column;gap:2px}
+.B .line{font-size:15px;line-height:1.9;color:var(--text)}
+.B .line .k{font-size:12.5px;margin-right:.7em;letter-spacing:.02em}
+
+/* ============ C 号码左置 + 入口右列（两栏，但入口不排成行）============ */
+.C .split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:start;margin-top:6px}
+.C .phone{font-size:38px;display:block}
+.C .note{margin-top:10px;font-size:13px;color:var(--subtle)}
+.C .lines{display:flex;flex-direction:column;gap:2px;padding-top:6px}
+.C .line{font-size:14.5px;line-height:1.95;color:var(--text)}
+.C .line .k{font-size:12.5px;margin-right:.7em}
+
+/* ============ D 号码最大 + 入口两列（无框无线的两列）============ */
+.D .phone{font-size:52px;display:block;margin-bottom:26px;letter-spacing:-.02em}
+.D .two{columns:2;column-gap:40px}
+.D .line{display:block;font-size:14.5px;line-height:2.1;color:var(--text);break-inside:avoid}
+.D .line .k{font-size:12.5px;margin-right:.6em}
+footer{color:#7b7e87;font-size:13px;max-width:1080px}
+</style>
+</head>
+<body>
+<h1>联系我排版候选 · 第二轮</h1>
+<p class="lead">按你的要求：<b>没有任何方块背景</b>。这一轮四个候选都不用底色块、不用描边框，
+连发丝线也基本撤掉了 —— 改的是<b>对齐方式本身</b>（「端正」的真正来源）。
+手机号仍是主入口，字号 ≥ 次级的 2 倍，仍是 <code>tel:</code>。</p>
+
+<div class="card">
+  <h2>A · 连排签退<span>一整行</span></h2>
+  <p class="why">号码大字，下面跟着**一整行**联系方式，用 <code>·</code> 分隔，自然换行。
+     没有任何列、任何线 —— 像一封信末尾的落款。最松，也最短。</p>
+  <div class="pair">
+    <div class="pane"><div class="lbl">light</div><div class="body A" data-c="A"></div></div>
+    <div class="pane" data-theme="dark"><div class="lbl">dark</div><div class="body A" data-c="A"></div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>B · 无栏清单<span>标签内联</span></h2>
+  <p class="why">号码大字，下面四行，每行的**标签就写在值前面**（小一号、浅一档），
+     <b>不设固定列宽</b> —— 所以值不强制左对齐在同一条竖线上。这是它与「端正」那一版最本质的区别：
+     它是一段段文字，不是一张表的四行。</p>
+  <div class="pair">
+    <div class="pane"><div class="lbl">light</div><div class="body B" data-c="B"></div></div>
+    <div class="pane" data-theme="dark"><div class="lbl">dark</div><div class="body B" data-c="B"></div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>C · 号码左置 · 入口右列<span>用上左边的空白</span></h2>
+  <p class="why">号码占左半边（那是原本空着的地方），四个入口在右半边堆成一列。
+     两栏之间没有任何线 —— 靠 40px 的空隙分开。横向用满了，也仍然没有方块。</p>
+  <div class="pair">
+    <div class="pane"><div class="lbl">light</div><div class="body C" data-c="C"></div></div>
+    <div class="pane" data-theme="dark"><div class="lbl">dark</div><div class="body C" data-c="C"></div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>D · 号码最大 · 入口两列<span>号码当签名</span></h2>
+  <p class="why">号码放大到 52px —— 它是这一节的签名，是整页最后一眼看到的东西。
+     四个入口在下面分成两列（CSS 多列，自然流动，不是网格），无框无线。</p>
+  <div class="pair">
+    <div class="pane"><div class="lbl">light</div><div class="body D" data-c="D"></div></div>
+    <div class="pane" data-theme="dark"><div class="lbl">dark</div><div class="body D" data-c="D"></div></div>
+  </div>
+</div>
+
+<footer>预览文件：<code>design-system/contact-layout-options.html</code>。数据与令牌取自线上，未入构建产物。</footer>
+
+<script>
+const PHONE = '178 1921 2602'
+const REST = [
+  ['微信', 'XIH1222'],
+  ['Gitee', 'gitee.com/c-nomad'],
+  ['CSDN', 'C 游牧人 · 17 篇 / 访问 1w+'],
+  ['个人知识库', '语雀 · 成神笔记'],
+]
+const head = '<h3 class="sect-h">联系我</h3><p class="sect-lead">欢迎通过下面的方式联系我。</p>'
+const line = ([k, v]) => `<span class="line"><span class="k">${k}</span><a class="v" href="#">${v}</a></span>`
+
+const R = {
+  A: () => `${head}<a class="phone" href="#">${PHONE}</a>
+    <p class="strip">${REST.map(([k, v], i) => `${i ? '<span class="sep">·</span>' : ''}<span class="k">${k}</span> <a class="v" href="#">${v}</a>`).join('')}</p>`,
+  B: () => `${head}<a class="phone" href="#">${PHONE}</a>
+    <p class="note">周一至周五 · 广州</p>
+    <div class="lines">${REST.map(line).join('')}</div>`,
+  C: () => `${head}<div class="split">
+      <div><a class="phone" href="#">${PHONE}</a><p class="note">周一至周五 · 广州</p></div>
+      <div class="lines">${REST.map(line).join('')}</div>
+    </div>`,
+  D: () => `${head}<a class="phone" href="#">${PHONE}</a>
+    <div class="two">${REST.map(line).join('')}</div>`,
+}
+document.querySelectorAll('[data-c]').forEach((host) => { host.innerHTML = R[host.dataset.c]() })
+</script>
+</body>
+</html>

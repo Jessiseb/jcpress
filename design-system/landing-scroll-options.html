@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<title>jcpress 全屏分节结构（参照落地页组件）</title>
+<style>
+/* 令牌抄自 frontend/src/styles/theme.jcpress.css —— 改主题时这里要同步 */
+:root{
+  --accent:#0756ab; --accent-bg:#096fdc; --soft:rgb(7 86 171 / 8%);
+  --text:#17181c; --mute:rgb(23 24 28 / 88%); --subtle:rgb(23 24 28 / 62%);
+  --hair:rgb(23 24 28 / 12%); --bg:#fff; --bg-alt:#f6f6f7;
+  --atm1:rgb(9 111 220 / 6%); --atm2:rgb(92 7 171 / 4%);
+  --panel:rgb(255 255 255 / 62%); --panel-b:rgb(20 22 26 / 10%);
+}
+[data-theme='dark']{
+  --accent:#4d9bff; --accent-bg:#096fdc; --soft:rgb(77 155 255 / 12%);
+  --text:rgb(240 241 250 / 94%); --mute:rgb(240 241 250 / 72%); --subtle:rgb(240 241 250 / 58%);
+  --hair:rgb(240 241 250 / 14%); --bg:#08090c; --bg-alt:#05060a;
+  --atm1:rgb(35 136 246 / 10%); --atm2:rgb(144 35 246 / 7%);
+  --panel:rgb(16 18 24 / 58%); --panel-b:rgb(255 255 255 / 12%);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-snap-type:y proximity}
+body{margin:0;background:var(--bg);color:var(--text);
+     font:16px/1.75 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+     background-image:radial-gradient(60% 50% at 12% 0%,var(--atm1),transparent 70%),
+                      radial-gradient(50% 45% at 92% 8%,var(--atm2),transparent 72%)}
+.serif{font-family:Georgia,"Songti SC","Noto Serif SC",serif}
+
+/* 顶部进度条：注意 —— 线上首页**已经有**一条（ScrollProgress），这里是为了还原参照组件 */
+.progress{position:fixed;top:0;left:0;right:0;height:2px;z-index:60;pointer-events:none}
+.progress i{display:block;height:100%;background:var(--accent);transform-origin:left center;transform:scaleX(0)}
+
+/* 主题切换（只是预览用） */
+.toggle{position:fixed;top:14px;right:18px;z-index:70;border:1px solid var(--hair);background:var(--panel);
+        backdrop-filter:blur(10px);color:var(--text);border-radius:999px;padding:7px 14px;font-size:13px;cursor:pointer}
+
+/* 右侧圆点导航（参照组件的核心结构） */
+.dots{position:fixed;right:26px;top:50%;transform:translateY(-50%);z-index:50;display:flex;flex-direction:column;gap:20px}
+.dots .rail{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--hair);transform:translateX(-50%);z-index:-1}
+.dot{position:relative;width:12px;height:12px;border-radius:50%;border:2px solid var(--subtle);background:transparent;cursor:pointer;padding:0;transition:.3s}
+.dot[aria-current='true']{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 5px var(--soft)}
+.dot span{position:absolute;right:22px;top:50%;transform:translateY(-50%);white-space:nowrap;
+          font-size:13px;padding:4px 10px;border-radius:8px;border:1px solid var(--panel-b);
+          background:var(--panel);backdrop-filter:blur(10px);opacity:0;transition:.25s;pointer-events:none}
+.dot[aria-current='true'] span{opacity:1}
+
+section{min-height:100svh;scroll-snap-align:center;display:grid;align-content:center;
+        padding:96px 88px 96px 64px;gap:18px;border-bottom:1px solid var(--hair)}
+.kicker{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--subtle);margin:0}
+h2{font-size:44px;margin:0;line-height:1.15;letter-spacing:-.01em}
+.lead{max-width:34rem;color:var(--mute);margin:0}
+.metrics{display:flex;flex-wrap:wrap;gap:14px;margin-top:6px}
+.metric{border:1px solid var(--panel-b);background:var(--panel);backdrop-filter:blur(10px);
+        border-radius:14px;padding:16px 20px;min-width:190px}
+.metric b{display:block;font-size:30px;font-family:Georgia,"Songti SC",serif;font-weight:700}
+.metric small{color:var(--subtle);font-size:13px}
+.rows{display:grid;gap:10px;margin-top:6px}
+.row{border-top:1px solid var(--hair);padding-top:10px;display:flex;justify-content:space-between;gap:20px;font-size:15px}
+.row i{color:var(--subtle);font-style:normal;font-size:13px}
+.note{max-width:60rem;font-size:13.5px;color:var(--subtle);border-left:3px solid var(--accent-bg);
+      padding:10px 14px;background:var(--panel);border-radius:0 8px 8px 0}
+.warn{border-left-color:#c2410c}
+</style>
+</head>
+<body>
+<div class="progress"><i id="bar"></i></div>
+<button class="toggle" id="tg">切换暗色</button>
+
+<nav class="dots" id="dots" aria-label="章节导航"><span class="rail"></span></nav>
+
+<section id="s1">
+  <p class="kicker">广州 · AI 应用开发</p>
+  <h2 class="serif">庄家希<span style="display:block;font-size:.42em;font-weight:400;color:var(--mute)">AI 应用开发工程师</span></h2>
+  <p class="lead serif">用 <em>Agent</em> 和 <em>Java</em> 把重复劳动自动化</p>
+  <p class="note">这是**满屏分节**的形态：每一节都占满一屏（100svh），滚动时右侧圆点跟着亮。
+     背衬（流线布景层 + 首屏的地球／月球）保持现状不变，这里只还原**结构与导航**。</p>
+</section>
+
+<section id="s2">
+  <p class="kicker">01 · 拿得出手的数字</p>
+  <h2>四个来自真实生产环境的量化结果</h2>
+  <div class="metrics">
+    <div class="metric"><b>85%</b><small>接口响应下降 · 用友</small></div>
+    <div class="metric"><b>65→90%</b><small>知识库检索准确率</small></div>
+    <div class="metric"><b>1200→50ms</b><small>慢查询耗时 · 粤建三和</small></div>
+    <div class="metric"><b>100%</b><small>异常订单自动修复率</small></div>
+  </div>
+</section>
+
+<section id="s3">
+  <p class="kicker">02 · 实习经历</p>
+  <h2>三段企业实习</h2>
+  <div class="rows">
+    <div class="row"><span>广州视源电子科技（CVTE）· AI 应用开发实习生</span><i>2025.04 - 至今</i></div>
+    <div class="row"><span>广东用友网络 · Java 开发实习生</span><i>2025.07 - 2025.10</i></div>
+    <div class="row"><span>广东粤建三和软件 · Java 开发实习生</span><i>2024.07 - 2024.09</i></div>
+  </div>
+  <p class="note warn">实习经历这一节现在是一条「左图 + 右文」的特写卡片（含切换）。塞进 100svh 之后，
+     卡片高度（844px）在 900px 视口里几乎占满，切换条与卡片底部会被挤出屏幕。</p>
+</section>
+
+<section id="s4">
+  <p class="kicker">03 · 项目经历</p>
+  <h2>两个自研项目</h2>
+  <div class="rows">
+    <div class="row"><span>AIWorker 智能办公系统 · 开发负责人</span><i>已上线</i></div>
+    <div class="row"><span>Pulse 定时任务平台 · 后端开发负责人</span><i>已上线</i></div>
+  </div>
+</section>
+
+<section id="s5">
+  <p class="kicker">04 · 技术栈</p>
+  <h2>按方向整理</h2>
+  <div class="rows">
+    <div class="row"><span>语言 · Java / Golang / TypeScript / SQL</span><i>熟悉</i></div>
+    <div class="row"><span>后端框架 · Spring Boot / MyBatis / Spring AI</span><i>熟悉</i></div>
+    <div class="row"><span>AI · Agent · RAG / Function Calling / ReAct</span><i>熟悉</i></div>
+    <div class="row"><span>数据与中间件 · MySQL / Redis / Nacos</span><i>熟悉</i></div>
+  </div>
+</section>
+
+<section id="s6">
+  <p class="kicker">05 · 教育与荣誉</p>
+  <h2>广东白云学院 · 软件工程</h2>
+  <p class="lead">2023.09 - 2027.06 · 专业排名前 3</p>
+  <div class="rows">
+    <div class="row"><span>中国大学生计算机设计大赛</span><i>国家级二等奖 · 2025</i></div>
+    <div class="row"><span>大学生创新创业训练计划</span><i>国家级立项 · 2025</i></div>
+    <div class="row"><span>中国国际大学生创新大赛</span><i>铜奖 · 2025</i></div>
+    <div class="row"><span>网络技术挑战赛</span><i>华南赛区三等奖 · 2025</i></div>
+    <div class="row"><span>海峡两岸暨港澳地区大学生计算机创新作品赛</span><i>广东省优秀奖 · 2025</i></div>
+  </div>
+</section>
+
+<section id="s7">
+  <p class="kicker">06 · 联系我</p>
+  <h2 class="serif" style="font-size:clamp(28px,4vw,52px)">2750685367@qq.com</h2>
+  <div class="rows">
+    <div class="row"><span>微信</span><i>XIH1222</i></div>
+    <div class="row"><span>Gitee</span><i>gitee.com/c-nomad</i></div>
+    <div class="row"><span>CSDN</span><i>C 游牧人 · 17 篇 / 访问 1w+</i></div>
+    <div class="row"><span>个人知识库</span><i>语雀 · 成神笔记</i></div>
+  </div>
+</section>
+
+<script>
+const SECTIONS = [
+  ['s1','关于我'],['s2','数字'],['s3','实习'],['s4','项目'],
+  ['s5','技术栈'],['s6','教育'],['s7','联系'],
+]
+const dots = document.getElementById('dots')
+SECTIONS.forEach(([id, label]) => {
+  const b = document.createElement('button')
+  b.className = 'dot'
+  b.setAttribute('aria-current', 'false')
+  b.setAttribute('aria-label', '回到「' + label + '」')
+  b.innerHTML = '<span>' + label + '</span>'
+  b.onclick = () => document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'center' })
+  b.dataset.target = id
+  dots.appendChild(b)
+})
+const btns = Array.from(dots.querySelectorAll('.dot'))
+
+// 进度条 + 当前节高亮
+const bar = document.getElementById('bar')
+const io = new IntersectionObserver((es) => {
+  es.forEach((e) => {
+    if (!e.isIntersecting) return
+    btns.forEach((b) => b.setAttribute('aria-current', String(b.dataset.target === e.target.id)))
+  })
+}, { rootMargin: '-45% 0px -45% 0px' })
+SECTIONS.forEach(([id]) => io.observe(document.getElementById(id)))
+
+addEventListener('scroll', () => {
+  const max = document.documentElement.scrollHeight - innerHeight
+  bar.style.transform = 'scaleX(' + Math.min(Math.max(scrollY / max, 0), 1) + ')'
+}, { passive: true })
+
+document.getElementById('tg').onclick = (e) => {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark'
+  document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark')
+  e.target.textContent = dark ? '切换暗色' : '切换亮色'
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+/* 首屏天体（二期 r3）：亮色地球 / 暗色月球，两张自托管的等距圆柱贴图 + 圆形裁剪窗口。
+   手法取自参照组件（ScrollGlobe 的 Globe），但贴图自托管、球体明暗改成可缩放的径向渐变。
+   几何与光的两套取值理由见 theme.jcpress.css 的 --ds-body-* 一节。 */
+
+/* 全屏固定层。与流线布景层同层（z-index: -1）—— 它现在是**整站的装饰层**，
+   不再只属于首屏：滚动时球在视口里换位，那是参照组件的核心效果。 */
+.field {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* 横向摆幅：桌面 35vw（球落在正文两侧的空白里），窄屏收到 0（居中，只做纵向漂移）。
+     用一个变量而不是给每个场景写两套坐标 —— 见下面的 --side / --dx。 */
+  --dx: 0vw;
+}
+
+@media (min-width: 1100px) {
+  .field {
+    /* 35vw 是「贴着视口右缘」的量，但首屏那一段必须**让开正文**：
+       正文最宽的一块是 --ds-measure-prose（36rem = 576px，居中），所以球心至少要离中线
+       `正文半宽 + 球半径 + 一点余量`。两个条件取 max —— 只写 35vw 的话，1100 视口上
+       正文占比更大，球会压上去（实测差 −8px）。 */
+    --dx: max(35vw, calc(var(--ds-measure-prose) / 2 + var(--ds-body-size) / 2 + var(--ds-space-4)));
+  }
+}
+
+/* ---- 分节停靠（参照组件的 positions 配置）----
+   --side 决定球在正文左边还是右边，--by 是纵向位置，--bs 是缩放，--bo 是不透明度。
+   只有首屏是全尺寸全不透明（它是「画面里的一个物体」）；进入内容区之后压到 0.16–0.3 ——
+   本站的区块比参照组件那 4 屏密得多（实习经历一节就有 1263px），球不收剂量就会跟正文抢。
+   位置用 vw/vh 而不是容器相对值：这样位移能整条塞进 translate，走合成器；
+   `left/top` 的过渡会每帧触发布局。 */
+.field[data-scene='0'] {
+  --side: 1;
+  --by: 42vh;
+  --bs: 1;
+  --bo: 1;
+}
+
+.field[data-scene='1'] {
+  --side: -1;
+  --by: 46vh;
+  --bs: 0.8;
+  --bo: 0.22;
+}
+
+.field[data-scene='2'] {
+  --side: 1;
+  --by: 30vh;
+  --bs: 0.7;
+  --bo: 0.18;
+}
+
+.field[data-scene='3'] {
+  --side: -1;
+  --by: 52vh;
+  --bs: 0.75;
+  --bo: 0.2;
+}
+
+.field[data-scene='4'] {
+  --side: 1;
+  --by: 62vh;
+  --bs: 0.65;
+  --bo: 0.16;
+}
+
+.field[data-scene='5'] {
+  --side: -1;
+  --by: 40vh;
+  --bs: 0.7;
+  --bo: 0.18;
+}
+
+/* 最后一节（联系我）原本停在**正中** —— 那时正文只占右半，中间是空的。
+   联系我改成「号码左置 · 入口右列」之后，正文第一次**横跨整个正文栏**（368 → 1196），
+   正中不再是空地。实测（1280×844，区块滚到视口中央）三块的矩形是：
+     标题 84..1196 × 332..393 ｜ 导语 84..344 × 417..447 ｜ 正文 368..1196 × 417..597
+     页脚 0..1280 × 693..926
+   左侧唯一空出来的是 **y 447–693**（导语以下、页脚以上，246px）。
+   球（0.7 档 = 179px）落在这一段的中线：476..655，上下各留约 29px。 */
+.field[data-scene='6'] {
+  --side: -1;
+  --by: 67vh;
+  --bs: 0.7;
+  --bo: 0.24;
+}
+
+/* 两颗天体的容器。共用定位与停靠，只有「显示哪一颗」和各自的贴图不同。
+   `translate` 承载位置（vw/vh，视口相对），`scale` / `opacity` 各自独立 ——
+   三者都是合成器属性，所以「滑动」不会每帧触发布局或重绘。
+   注意 translate 的百分比是相对**元素自身**的：`calc(50vw - 50%)` 让元素中心落在 50vw。 */
+.earth,
+.moon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--ds-body-size);
+  aspect-ratio: 1;
+  translate: calc(50vw + var(--side, 0) * var(--dx) - 50%) calc(var(--by, 42vh) - 50%);
+  scale: var(--bs, 1);
+  opacity: var(--bo, 1);
+  transition:
+    translate 1400ms cubic-bezier(0.23, 1, 0.32, 1),
+    scale 1400ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 900ms ease-out;
+}
+
+/* 默认（无 data-theme 或 light）是地球，只有显式 dark 才换月球 ——
+   这样无 JS / 预渲染产物里也永远有一颗天体，不会出现空首屏。 */
+.moon {
+  display: none;
+}
+
+:global([data-theme='dark']) .earth {
+  display: none;
+}
+
+:global([data-theme='dark']) .moon {
+  display: block;
+}
+
+/* 圆形裁剪窗口。overflow:hidden + 50% 圆角 = 参照组件那个「碗」 */
+.sphere {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  /* 外发光 + 1px 轮廓：让球从底色里「浮」出来。放在 .sphere 上而不是 .shade 上 ——
+     .shade 在这个 overflow: hidden 的圆里，outset 阴影会被裁掉。 */
+  box-shadow: 0 0 0 1px var(--ds-body-ring), 0 0 0.08em var(--ds-body-halo);
+}
+
+/* 贴图带：两张同样的图并排，平移到 -50%（正好一张的宽度）就无缝接回起点。
+   `width: max-content` 让带子的宽度等于内容宽度 —— 这样 -50% 才是「一张图」而不是「一个窗口」。 */
+.strip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  height: 100%;
+  width: max-content;
+  animation: celestialSpin var(--ds-body-spin, 90s) linear infinite;
+}
+
+@keyframes celestialSpin {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* 贴图本体：高度撑满，宽度按等距圆柱的固有比例自动。
+   地球 500×313（≈1.6:1）、月球 1024×512（2:1）—— 两张都左右无缝。 */
+.texture {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: none;
+  flex: 0 0 auto;
+}
+
+/* 球体明暗：照抄参照组件那串 box-shadow，但 px → em（基数是球体直径，见下面的 font-size）。
+   偏移量因此随尺寸等比缩放，而不是只在 250px 球上成立。
+
+   ⚠️ 为什么单独一层、而不是画在 .sphere 上：box-shadow 的 **inset 部分画在内容之下**，
+   .sphere 里的贴图会把它整块盖住。参照组件能用是因为它用的是 `background-image`
+   （背景画在内阴影之下）。这里保留「两张贴图 + transform 平移」的写法（走合成器，比
+   background-position 每帧重绘更省），所以把阴影放到贴图**上面**这一层。
+   outset 那一条必须留在 .sphere 上 —— 这一层在 overflow: hidden 里面，外发光会被裁掉。 */
+.shade {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  /* em 的基数 = 球体直径：1em 偏移 = 一个直径（参照组件在 250px 球上用的正是 250px 偏移） */
+  font-size: var(--ds-body-size);
+  box-shadow:
+    -0.02em 0 0.032em var(--ds-body-limb) inset,
+    0.06em 0.008em 0.1em var(--ds-body-ao-strong) inset,
+    -0.096em -0.008em 0.136em var(--ds-body-limb-soft) inset,
+    1em 0 0.176em var(--ds-body-ao-far) inset,
+    0.6em 0 0.152em var(--ds-body-ao-mid) inset;
+}
+
+/* 星点层。**不能**放进 .sphere 里 —— 那里有 overflow: hidden 的圆形裁剪，
+   参照组件正是因此让 7 颗星全部落空（实测 0/7 可见）。这里挂在球体的方盒上，
+   星落在内切圆之外的角落，所以既可见、又不会越出布局盒把文档撑宽。 */
+.stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.star {
+  position: absolute;
+  width: calc(var(--ds-body-size) * 0.016);
+  height: calc(var(--ds-body-size) * 0.016);
+  border-radius: 50%;
+  background: var(--ds-body-star);
+  /* 每颗星**只有一条动画**（闪烁），与球体那一条（自转）互不叠加 ——
+     二期的硬约束是「同一元素不得叠两条动画」，见 docs/decisions.md #51 */
+  animation: celestialTwinkle 3s ease-in-out infinite;
+}
+
+@keyframes celestialTwinkle {
+  0%,
+  100% {
+    opacity: 0.12;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ---- 窄屏 ----
+   横向摆幅由 --dx 收到 0（见文件开头），球因此恒在视口中线上，只做纵向漂移；
+   再统一压一档不透明度 —— 窄屏上正文占满整宽，球是垫在字后面的水印，不能抢读。 */
+@media (max-width: 1099px) {
+  .earth,
+  .moon {
+    opacity: calc(var(--bo, 1) * 0.72);
+  }
+}
+
+/* 「减少动态效果」下撤销滑动与自转：球仍在，只是不再随滚动换位。
+   （全局的 reduced-motion 规则已经把 animation-duration 压到 0.001ms，
+   这里再显式停掉，避免一个周期被压成瞬间闪动。） */
+@media (prefers-reduced-motion: reduce) {
+  .earth,
+  .moon {
+    transition: none;
+  }
+
+  .strip,
+  .star {
+    animation: none;
+  }
+
+  /* 静止态下星要保持看得见（与「环标记与聚光仍可见」同一条降级纪律） */
+  .star {
+    opacity: 0.5;
+  }
+}

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
@@ -29,12 +29,35 @@ describe('HomePage', () => {
     expect(within(h1).getByText('AI 应用开发工程师')).toBeInTheDocument()
   })
 
-  it('三个实习经历都出现在页面上', () => {
+  it('三段实习经历都在切换条里，且当前一段的正文可见', () => {
     renderHome()
 
-    expect(screen.getByText(/广州视源电子科技股份有限公司/)).toBeInTheDocument()
-    expect(screen.getByText(/广东用友网络有限公司/)).toBeInTheDocument()
-    expect(screen.getByText(/广东粤建三和软件有限公司/)).toBeInTheDocument()
+    // r3 起实习经历是「一次只展开一段」的切换器，三段全名挂在 tab 的可访问名上
+    const tabs = screen.getAllByRole('tab')
+    expect(tabs).toHaveLength(3)
+
+    const names = ['广州视源电子科技股份有限公司', '广东用友网络有限公司', '广东粤建三和软件有限公司']
+    names.forEach((name) => {
+      expect(screen.getByRole('tab', { name: new RegExp(name) })).toBeInTheDocument()
+    })
+
+    // 默认展开第一段：它的公司全名同时出现在正文标题里
+    // （h3 里带简称后缀「（CVTE）」，所以用正则而不是精确名）
+    const section = sectionOf('实习经历')
+    expect(
+      within(section).getByRole('heading', { level: 3, name: new RegExp(names[0]) }),
+    ).toBeInTheDocument()
+  })
+
+  it('点击切换条能换到另一段实习经历', () => {
+    renderHome()
+
+    const target = screen.getByRole('tab', { name: /广东用友网络有限公司/ })
+    fireEvent.click(target)
+
+    expect(target).toHaveAttribute('aria-selected', 'true')
+    const section = sectionOf('实习经历')
+    expect(within(section).getByRole('heading', { level: 3, name: '广东用友网络有限公司' })).toBeInTheDocument()
   })
 
   it('四个关键数字都有标签与出处', () => {

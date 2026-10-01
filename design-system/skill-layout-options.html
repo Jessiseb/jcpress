@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<title>jcpress 技术栈排版候选（第二轮）</title>
+<style>
+:root{
+  --accent:#0756ab; --text:#17181c; --mute:rgb(23 24 28 / 88%); --subtle:rgb(23 24 28 / 74%);
+  --hair:rgb(23 24 28 / 12%); --bg:#fff; --atm1:rgb(9 111 220 / 6%); --atm2:rgb(92 7 171 / 4%);
+  --c1:#2f6fd0; --c2:#7a5af0; --c3:#0f9bd7; --c4:#c2410c; --c5:#b91c8a; --c6:#5b6472;
+  --panel:rgb(255 255 255 / 62%); --panel-b:rgb(20 22 26 / 10%);
+}
+[data-theme='dark']{
+  --accent:#4d9bff; --text:rgb(240 241 250 / 94%); --mute:rgb(240 241 250 / 72%); --subtle:rgb(240 241 250 / 58%);
+  --hair:rgb(240 241 250 / 14%); --bg:#08090c; --atm1:rgb(35 136 246 / 10%); --atm2:rgb(144 35 246 / 7%);
+  --c1:#6ea8ff; --c2:#a78bfa; --c3:#4cc9f0; --c4:#fb923c; --c5:#f472b6; --c6:#94a3b8;
+  --panel:rgb(16 18 24 / 58%); --panel-b:rgb(255 255 255 / 12%);
+}
+*{box-sizing:border-box}
+body{margin:0;padding:28px 24px 60px;background:#eef0f3;color:#242429;font:14px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+h1{font:700 22px/1.3 Georgia,"Songti SC",serif;margin:0 0 6px}
+.lead{color:#5c5f68;max-width:940px;margin:0 0 8px}
+.card{background:#fff;border:1px solid #dfe2e8;border-radius:14px;padding:18px 20px;margin-bottom:22px;max-width:1360px}
+.card h2{font:700 17px/1.4 Georgia,"Songti SC",serif;margin:0 0 4px}
+.card h2 span{font:400 12px/1 -apple-system,sans-serif;background:#eef1f5;border-radius:999px;padding:3px 10px;color:#4b5563;vertical-align:3px;margin-left:8px}
+.why{font-size:13px;color:#5c5f68;margin:0 0 14px;max-width:1060px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pane{border:1px solid #dfe2e8;border-radius:12px;padding:18px 20px;background:var(--bg);
+      background-image:radial-gradient(60% 50% at 12% 0%,var(--atm1),transparent 70%),radial-gradient(50% 45% at 92% 8%,var(--atm2),transparent 72%)}
+.pane .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--subtle);margin-bottom:14px}
+.body{width:100%;max-width:828px}
+.sect-h{font:700 30px/1.2 Georgia,"Songti SC",serif;color:var(--text);margin:0 0 6px}
+.sect-lead{font-size:14px;color:var(--mute);margin:0 0 18px}
+
+/* ================= ① 深度矩阵 ================= */
+.m{border-top:1px solid var(--hair)}
+.m .head{display:grid;grid-template-columns:8.5rem repeat(3,minmax(0,1fr));gap:16px;padding:10px 0 8px;border-bottom:1px solid var(--hair)}
+.m .head b{font-size:12.5px;font-weight:600;letter-spacing:.06em;color:var(--text)}
+.m .row{display:grid;grid-template-columns:8.5rem repeat(3,minmax(0,1fr));gap:16px;padding:13px 0;border-bottom:1px solid var(--hair);align-items:start}
+.m .cat{font-family:Georgia,"Songti SC",serif;font-weight:700;font-size:16px;color:var(--text);line-height:1.9;padding-top:1px}
+.m .cell{font-size:14.5px;line-height:1.9;color:var(--text);display:flex;flex-wrap:wrap;gap:2px 12px}
+.m .cell span{white-space:nowrap}
+.m .cell[data-lv='3']{color:var(--mute)}
+.m .cell[data-lv='2']{color:var(--subtle)}
+.m .empty{color:color-mix(in srgb,var(--text) 22%,transparent)}
+
+/* ================= ② 紧凑芯片 + 分类色 ================= */
+.t .row{display:grid;grid-template-columns:8.5rem minmax(0,1fr);gap:16px;align-items:start;padding:12px 0;border-top:1px solid var(--hair)}
+.t .cat{display:flex;align-items:center;gap:7px;font-family:Georgia,"Songti SC",serif;font-weight:700;font-size:16px;color:var(--text);line-height:1.4;padding-top:3px}
+.t .cat i{width:7px;height:7px;border-radius:50%;flex:0 0 auto;background:var(--hue)}
+.t .items{display:flex;flex-wrap:wrap;gap:6px}
+.t .item{display:inline-flex;padding:2px 9px;border-radius:999px;font-size:12.5px;line-height:1.7;
+         border:1px solid color-mix(in srgb,var(--hue) 26%,transparent);
+         background:color-mix(in srgb,var(--hue) 9%,transparent);color:var(--text)}
+.t .item[data-lv='3']{background:transparent;border-color:color-mix(in srgb,var(--text) 14%,transparent);color:var(--mute)}
+.t .item[data-lv='2']{background:transparent;border-color:color-mix(in srgb,var(--text) 8%,transparent);color:var(--subtle)}
+.t .row[data-c='1']{--hue:var(--c1)} .t .row[data-c='2']{--hue:var(--c2)} .t .row[data-c='3']{--hue:var(--c3)}
+.t .row[data-c='4']{--hue:var(--c4)} .t .row[data-c='5']{--hue:var(--c5)} .t .row[data-c='6']{--hue:var(--c6)}
+
+/* ================= ③ 矩阵 + 分类色 ================= */
+.mc .head{display:grid;grid-template-columns:9.5rem repeat(3,minmax(0,1fr));gap:16px;padding:10px 0 8px;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}
+.mc .head b{font-size:12.5px;font-weight:600;letter-spacing:.06em;color:var(--text)}
+.mc .row{display:grid;grid-template-columns:9.5rem repeat(3,minmax(0,1fr));gap:16px;padding:13px 0;border-bottom:1px solid var(--hair);align-items:start}
+.mc .cat{display:flex;align-items:baseline;gap:7px;font-family:Georgia,"Songti SC",serif;font-weight:700;font-size:16px;color:var(--text);line-height:1.9;padding-top:1px}
+.mc .cat i{width:7px;height:7px;border-radius:50%;flex:0 0 auto;background:var(--hue)}
+.mc .cell{font-size:14.5px;line-height:1.9;color:var(--text);display:flex;flex-wrap:wrap;gap:2px 12px}
+.mc .cell span{white-space:nowrap}
+.mc .cell[data-lv='3']{color:var(--mute)}
+.mc .cell[data-lv='2']{color:var(--subtle)}
+.mc .empty{color:color-mix(in srgb,var(--text) 22%,transparent)}
+.mc .row[data-c='1']{--hue:var(--c1)} .mc .row[data-c='2']{--hue:var(--c2)} .mc .row[data-c='3']{--hue:var(--c3)}
+.mc .row[data-c='4']{--hue:var(--c4)} .mc .row[data-c='5']{--hue:var(--c5)} .mc .row[data-c='6']{--hue:var(--c6)}
+
+/* ================= ④ 玻璃面板 + 分类色胶囊 ================= */
+.panel{border:1px solid var(--panel-b);border-radius:16px;background:var(--panel);
+       -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+       box-shadow:0 18px 44px color-mix(in srgb,var(--text) 8%,transparent);padding:20px 22px}
+.panel .phead{display:flex;align-items:center;gap:9px;margin:0 0 16px;padding-bottom:12px;border-bottom:1px solid var(--hair)}
+.panel .phead b{font-family:Georgia,"Songti SC",serif;font-size:16px;color:var(--text);font-weight:700}
+.panel .phead em{font-style:normal;font-size:12px;color:var(--subtle);margin-left:auto}
+.pg{display:flex;flex-direction:column}
+.prow{display:grid;grid-template-columns:8.5rem minmax(0,1fr);gap:14px;align-items:start;padding:10px 0}
+.prow+.prow{border-top:1px solid var(--hair)}
+.pcat{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:var(--text);padding-top:3px}
+.pcat i{width:7px;height:7px;border-radius:50%;flex:0 0 auto;background:var(--hue)}
+.pitems{display:flex;flex-wrap:wrap;gap:5px}
+.pitem{display:inline-flex;align-items:center;padding:2px 9px;border-radius:999px;font-size:12.5px;line-height:1.7;
+       border:1px solid color-mix(in srgb,var(--hue) 30%,transparent);
+       background:color-mix(in srgb,var(--hue) 12%,transparent);color:var(--text)}
+.pitem[data-lv='3']{background:color-mix(in srgb,var(--hue) 6%,transparent);border-color:color-mix(in srgb,var(--hue) 20%,transparent);color:var(--mute)}
+.pitem[data-lv='2']{background:transparent;border-color:color-mix(in srgb,var(--text) 12%,transparent);color:var(--subtle)}
+.prow[data-c='1']{--hue:var(--c1)} .prow[data-c='2']{--hue:var(--c2)} .prow[data-c='3']{--hue:var(--c3)}
+.prow[data-c='4']{--hue:var(--c4)} .prow[data-c='5']{--hue:var(--c5)} .prow[data-c='6']{--hue:var(--c6)}
+footer{color:#7b7e87;font-size:13px;max-width:1060px}
+</style>
+</head>
+<body>
+<h1>技术栈排版候选 · 第二轮</h1>
+<p class="lead">前四个候选（大胶囊 / 紧凑胶囊 / 对齐网格 / 组名在上）你都否了。这一轮换两个**根本不同的方向**，
+不用「芯片云」这条思路：<b>把档位从「标签」变成「列」</b>（结构），或者<b>把分类从「文字」变成「颜色」</b>。
+同样用你真实的数据与令牌，正文区按线上实际的 828px。</p>
+
+<div class="card">
+  <h2>① 深度矩阵<span>档位变成列</span></h2>
+  <p class="why">行 = 六个方向，列 = 熟悉 / 掌握 / 了解。<b>档位不再是贴在每项后面的小字，而是它所在的列</b> ——
+     于是「Java 熟悉、Golang 了解」这件事从「读一个词」变成「看它站在哪一列」。顺带得到一个以前读不出来的信息：
+     前端那一行**整行都在「掌握」列**，一眼就知道我不是前端方向的人。空单元格留白，本身就是信息。</p>
+  <div class="pair">
+    <div class="pane"><div class="lbl">light</div><div class="body m" data-body="m"></div></div>
+    <div class="pane" data-theme="dark"><div class="lbl">dark</div><div class="body m" data-body="m"></div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>② 紧凑芯片 · 每个方向一个色<span>分类变成颜色</span></h2>
+  <p class="why">保留「方向左栏 + 右侧标签云」，但给**六个方向各一个色相**：组的颜色由组名旁那枚圆点定，
+     组内的芯片吃同一个色相（深浅只由档位决定）。颜色在这里是**语义**（哪一项属于哪个方向），不是装饰 ——
+     参照组件里我没取的就是这个「彩色圆点」，它确实有用。没有绿色的色相。</p>
+  <div class="pair">
+    <div class="pane"><div class="lbl">light</div><div class="body t" data-body="t"></div></div>
+    <div class="pane" data-theme="dark"><div class="lbl">dark</div><div class="body t" data-body="t"></div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>③ 深度矩阵 + 分类色<span>两个方向合体</span></h2>
+  <p class="why">①的结构，加上②的分类色点（只有组名旁边一枚小圆点，单元格本身保持文字色）——
+     结构给出档位，颜色给出方向，两者都不靠额外文字。</p>
+  <div class="pair">
+    <div class="pane"><div class="lbl">light</div><div class="body mc" data-body="mc"></div></div>
+    <div class="pane" data-theme="dark"><div class="lbl">dark</div><div class="body mc" data-body="mc"></div></div>
+  </div>
+</div>
+
+
+<div class="card">
+  <h2>④ 玻璃面板 + 分类色胶囊<span>放开面板限制</span></h2>
+  <p class="why">这就是参照组件的路子，按本站令牌重做：<b>一层玻璃面板</b>把这一节收成一个「设计过的组件」，
+     组内胶囊带分类色、深浅由档位决定。两处必须一起放开：① spec 现在写着「面板只出现在关键数字与项目经历
+     两类区块」（有断言守着）；② 分类色相进调色板。如果「好看」指的是这个，那就是这两条要改。</p>
+  <div class="pair">
+    <div class="pane"><div class="lbl">light</div><div class="body p" data-body="p"></div></div>
+    <div class="pane" data-theme="dark"><div class="lbl">dark</div><div class="body p" data-body="p"></div></div>
+  </div>
+</div>
+
+<footer>预览文件：<code>design-system/skill-layout-options.html</code>。数据与令牌都取自线上，未入构建产物。</footer>
+
+<script>
+const DATA = [
+  ['语言', [['Java',4],['Golang（Gin / GORM）',2],['TypeScript',3],['SQL',4]]],
+  ['后端框架', [['Spring Boot',4],['Spring Cloud Alibaba',3],['MyBatis',4],['Spring AI',4],['LangChain4J',3]]],
+  ['AI · Agent', [['RAG / 混合检索',4],['Function Calling',4],['Harness Engineering',4],['AgentScope',3],['Dify Workflow',3],['ReAct',4]]],
+  ['数据与中间件', [['MySQL',4],['Redis',4],['Oracle',3],['Nacos',3],['消息队列',3]]],
+  ['前端', [['React',3],['TypeScript',3],['Tailwind CSS',3],['Ant Design',3]]],
+  ['计算机基础', [['并发 / 线程池 / JVM',4],['计算机网络（TCP / HTTP）',4],['操作系统 / I-O 多路复用',3],['数据结构与算法',4]]],
+]
+const tier = (lv) => (lv >= 4 ? 4 : lv)
+const LV = [[4,'熟悉'],[3,'掌握'],[2,'了解']]
+
+function matrix(kind) {
+  const head = `<div class="head"><div></div>${LV.map(([, n]) => `<b>${n}</b>`).join('')}</div>`
+  const rows = DATA.map(([cat, items], i) => {
+    const cells = LV.map(([lv]) => {
+      const list = items.filter(([, l]) => tier(l) === lv).map(([n]) => `<span>${n}</span>`)
+      return `<div class="cell" data-lv="${lv}">${list.length ? list.join('') : '<span class="empty">—</span>'}</div>`
+    }).join('')
+    return `<div class="row" data-c="${i + 1}"><div class="cat">${kind === 'mc' ? '<i></i>' : ''}${cat}</div>${cells}</div>`
+  }).join('')
+  return `${head}${rows}`
+}
+
+function panel() {
+  const rows = DATA.map(([cat, items], i) => `
+    <div class="prow" data-c="${i + 1}">
+      <div class="pcat"><i></i>${cat}</div>
+      <div class="pitems">${items.map(([n, lv]) => `<span class="pitem" data-lv="${tier(lv)}">${n}</span>`).join('')}</div>
+    </div>`).join('')
+  return `<div class="panel"><div class="phead"><b>技术栈</b><em>6 个方向 · 28 项</em></div><div class="pg">${rows}</div></div>`
+}
+
+function tags() {
+  return DATA.map(([cat, items], i) => `
+    <div class="row" data-c="${i + 1}">
+      <div class="cat"><i></i>${cat}</div>
+      <div class="items">${items.map(([n, lv]) => `<span class="item" data-lv="${tier(lv)}">${n}</span>`).join('')}</div>
+    </div>`).join('')
+}
+
+document.querySelectorAll('[data-body]').forEach((host) => {
+  const kind = host.dataset.body
+  if (kind === 'p') {
+    host.innerHTML = `${panel()}`
+    return
+  }
+  const inner = kind === 't' ? `<div class="rows">${tags()}</div>` : matrix(kind)
+  host.innerHTML = `<h3 class="sect-h">技术栈</h3><p class="sect-lead">按方向整理，标注我在实际项目中的使用深度。</p>${inner}`
+})
+</script>
+</body>
+</html>

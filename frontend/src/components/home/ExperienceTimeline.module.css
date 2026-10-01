@@ -1,118 +1,417 @@
-/* 实习经历：左时间栏 + 右正文栏。
-   去掉轴线、圆点、卡片嵌套与时间胶囊 —— 两栏对齐本身就读得出时间先后。
-   每段之间只用一条发丝线，跟技术栈区共用同一套分块语言。 */
+/* 实习经历：整幅「左图 + 右文」特写（区块带 data-full，正文通栏，见 styles/global.css）。
+   顶部是三段式切换条，底部是进度点 + 左右箭头，两处驱动同一个 activeIndex。 */
 
-.list {
-  margin: 0;
-  border-top: 1px solid var(--ds-c-hairline);
-}
-
-.item {
+/* 切换条：三段等宽，撑满卡片宽度 —— 卡片是通栏的，切换条也跟着通栏，左右边缘对齐 */
+.experienceTabs {
   display: grid;
-  grid-template-columns: 10rem minmax(0, 1fr);
-  gap: var(--ds-space-6);
-  padding-block: var(--ds-space-5);
-  border-bottom: 1px solid var(--ds-c-hairline);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: var(--ds-space-6);
 }
 
-.rail {
+.tab {
   display: flex;
-  flex-direction: column;
-  gap: var(--ds-space-1);
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-3);
+  padding: 0.9rem 1.25rem;
+  border: 1px solid transparent;
+  border-radius: 0.85rem;
+  background: transparent;
+  color: var(--ds-c-text-subtle);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 300ms ease,
+    color 300ms ease,
+    border-color 300ms ease,
+    box-shadow 300ms ease;
 }
 
-.period {
-  font-size: var(--ds-fs-sm);
-  font-weight: var(--ds-fw-medium);
+.tab span {
+  overflow: hidden;
+  font-size: 1rem;
+  font-weight: var(--ds-fw-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab small {
+  flex: 0 0 auto;
+  font-size: var(--ds-fs-xs);
   font-variant-numeric: tabular-nums;
+}
+
+.tab:hover,
+.tabActive {
+  border-color: var(--ds-c-hairline);
+  background: var(--ds-c-bg-elv);
   color: var(--ds-c-text);
 }
 
-.meta {
+.tabActive {
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--ds-c-text) 6%, transparent);
+}
+
+.switcher {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  min-height: 30rem;
+  margin-top: var(--ds-space-4);
+  overflow: hidden;
+  border: 1px solid var(--ds-c-hairline);
+  border-radius: 1.75rem;
+  background: var(--ds-c-bg-elv);
+  /* 投影收窄：1095×844 的大元素上，60px 模糊半径的阴影在移动端要额外栅格化一层，
+     而观感差别很小（原来是想做「浮起来」的层次，实际靠边框已经够了）。 */
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--ds-c-text) 7%, transparent);
+}
+
+/* 左栏：公司图片铺满，底部压一块**不透明**实底承载公司标识与编号。
+   实底不是装饰：图片上的文字对比度不可测也不可信（见 TSX 里的注释），
+   落到实底上之后 白字/#0b1418 ≈ 19:1、编号(#fff 62%) ≈ 7:1，都是真达标。 */
+.visual {
+  position: relative;
+  display: flex;
+  min-height: 30rem;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  background: #0b1418; /* 图没加载出来时的兜底底色，避免闪一块白 */
+  color: white;
+}
+
+.visualPhoto {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 给照片降亮度的功能性遮罩。用**实色**而不是渐变：渐变宿主是登记制
+   （audit-behavior「渐变只出现在流线 / 面板 / 环装置 / 姓名 / 顶栏遮罩 / 聚光宿主上」），
+   这里没资格占一个名额。 */
+.visualShade {
+  position: absolute;
+  inset: 0;
+  background: rgb(8 18 24 / 34%);
+}
+
+.plate {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-6) var(--ds-space-7);
+  background: #0b1418;
+}
+
+/* 装饰环：只留一圈描边，不再叠两层大 spread 的 box-shadow（外扩 5rem 的阴影
+   在 4× 降速的移动端上是纯负担，肉眼几乎看不出差别）。 */
+.visualGlow {
+  position: absolute;
+  top: 10%;
+  right: -22%;
+  width: 80%;
+  aspect-ratio: 1;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.28;
+}
+
+.visualMark {
+  font-family: var(--ds-font-display);
+  font-size: clamp(3.25rem, 6vw, 6rem);
+  font-weight: var(--ds-fw-display);
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+}
+
+.visualCaption {
   font-size: var(--ds-fs-xs);
-  color: var(--ds-c-text-subtle);
+  font-weight: var(--ds-fw-semibold);
+  letter-spacing: 0.16em;
+  color: rgb(255 255 255 / 66%);
+}
+
+/* 三家的品牌色只用于左栏装饰环与切换时的色感，不影响正文对比度 */
+.cvte {
+  color: #7fd8d0;
+}
+.yonyou {
+  color: #c9a6e0;
+}
+.yuejian {
+  color: #e6b98a;
 }
 
 .body {
   display: flex;
+  min-width: 0;
   flex-direction: column;
-  gap: var(--ds-space-2);
+  gap: var(--ds-space-3);
+  padding: clamp(2rem, 3.2vw, 3.25rem);
+  background: var(--ds-c-bg-elv);
+}
+
+.companyHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ds-space-4);
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: var(--ds-space-2);
+  color: var(--ds-c-accent);
+  font-size: var(--ds-fs-xs);
+  font-weight: var(--ds-fw-semibold);
+  letter-spacing: 0.12em;
 }
 
 .company {
   font-family: var(--ds-font-display);
-  font-size: calc(var(--ds-fs-h3) + 2px);
+  font-size: clamp(1.5rem, 2.4vw, 2.25rem);
   font-weight: var(--ds-fw-display);
+  line-height: 1.2;
+  text-wrap: balance;
 }
 
 .position {
-  font-size: var(--ds-fs-sm);
+  margin-top: 0.5rem;
   color: var(--ds-c-text-mute);
+  font-size: 1.05rem;
+}
+
+.roleIcon {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--ds-c-accent) 12%, transparent);
+  color: var(--ds-c-accent);
+}
+
+.metaBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-4);
+  padding-block: var(--ds-space-2);
+  border-block: 1px solid var(--ds-c-hairline);
+}
+
+.periodRow,
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.periodRow {
+  color: var(--ds-c-text);
+}
+
+.metaRow {
+  color: var(--ds-c-text-subtle);
+}
+
+.periodRow svg {
+  color: var(--ds-c-accent);
+}
+
+.period {
+  font-size: 0.9375rem;
+  font-weight: var(--ds-fw-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.meta {
+  font-size: 0.9375rem;
 }
 
 .project {
-  max-width: var(--ds-measure-prose);
-  font-size: var(--ds-fs-sm);
+  max-width: none;
   color: var(--ds-c-text-mute);
+  font-size: 1.05rem;
+  line-height: 1.7;
 }
 
 .projectName {
-  margin-right: var(--ds-space-2);
-  font-weight: var(--ds-fw-semibold);
+  display: block;
+  margin-bottom: 0.3rem;
   color: var(--ds-c-text);
+  font-weight: var(--ds-fw-semibold);
 }
 
 .highlights {
   display: flex;
   flex-direction: column;
-  gap: var(--ds-space-2);
-  margin-top: var(--ds-space-1);
+  gap: 0.65rem;
+  margin: 0;
 }
 
-/* 项目符号：一条**看得见**的短横线（就是 Markdown 列表的 `-`），刻意不用彩色圆点。
-   r2 之前是 8×1px 的发丝线：1px 高在 1 倍屏上几乎不可见，于是条目读起来像普通段落，
-   用户实测反馈「内容列点的 - 没有以 markdown 的形式展示出来」。
-   现在加粗到 2px、加长到 0.6em、颜色提到正文级（与项目经历展开面板同一套规则，两处必须一致）。 */
+/* 项目符号：一条**看得见**的短横线（就是 Markdown 的 `-`），刻意不用彩色圆点。
+   r2 之前是 8×1px 的发丝线：1px 高在 1 倍屏上几乎不可见，于是条目读起来像普通段落。
+   颜色用**正文级**而不是 accent —— 用户的反馈是「内容列点的 - 没有以 markdown 的形式展示出来」；
+   与项目经历展开面板共用同一套规则，两处必须一致。 */
 .highlight {
   position: relative;
-  max-width: var(--ds-measure-prose);
-  padding-left: 1.1rem;
-  font-size: var(--ds-fs-sm);
-  line-height: 1.75;
+  max-width: none;
+  padding-left: 1.25rem;
   color: var(--ds-c-text-mute);
+  font-size: 1.05rem;
+  line-height: 1.65;
 }
 
 .highlight::before {
-  content: '';
   position: absolute;
-  top: 0.72em;
+  top: 0.75em;
   left: 0;
-  width: 0.6em;
+  width: 0.65rem;
   height: 2px;
-  border-radius: 1px;
+  border-radius: 2px;
   background: var(--ds-c-text-mute);
+  content: '';
 }
 
 .tech {
-  margin-top: var(--ds-space-1);
-  font-size: var(--ds-fs-xs);
+  margin-top: auto;
+  padding-top: var(--ds-space-3);
   color: var(--ds-c-text-subtle);
+  font-size: 0.875rem;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-4);
+  padding-top: var(--ds-space-2);
+}
+
+.dots,
+.arrows {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+/* 进度点：可见的是一条短横条，但**命中区是 44×44**（规划 §2.8 的触摸目标硬约束）。
+   做法是按钮撑到 44px、条用 ::before 画在中间 —— 直接把按钮压成 4px 高的话，
+   audit-behavior 的「交互元素触摸目标 ≥44px」会亮红（用户实测也点不中）。 */
+.dot {
+  position: relative;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dot::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 0.25rem;
+  border-radius: 99px;
+  background: var(--ds-c-hairline);
+  transform: translateY(-50%);
+  transition:
+    background 300ms ease,
+    height 300ms ease;
+  content: '';
+}
+
+.dot:hover::before {
+  background: var(--ds-c-text-subtle);
+}
+
+.dotActive::before {
+  height: 0.375rem;
+  background: var(--ds-c-accent);
+}
+
+.arrow {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border: 1px solid var(--ds-c-hairline);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ds-c-text);
+  cursor: pointer;
+  transition:
+    transform 250ms ease,
+    background 250ms ease,
+    color 250ms ease;
+}
+
+.arrow:hover {
+  transform: translateY(-2px);
+  background: var(--ds-c-accent);
+  color: var(--ds-c-accent-text);
+}
+
+@media (max-width: 899px) {
+  .switcher {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .visual {
+    min-height: 14rem;
+  }
+
+  .plate {
+    padding: var(--ds-space-5);
+  }
+
+  .visualMark {
+    font-size: 3rem;
+  }
+
+  .body {
+    padding: var(--ds-space-5);
+  }
 }
 
 @media (max-width: 719px) {
-  .item {
+  .experienceTabs {
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--ds-space-2);
-    padding-block: var(--ds-space-4);
+    gap: 0.35rem;
+    margin-top: var(--ds-space-5);
   }
 
-  /* 窄屏把时间与地点压成一行，避免左栏独占一块留白 */
-  .rail {
-    flex-direction: row;
-    gap: var(--ds-space-3);
+  .tab {
+    padding: 0.75rem 1rem;
+  }
+
+  .switcher {
+    margin-top: var(--ds-space-3);
+    border-radius: 1.25rem;
   }
 
   .company {
-    font-size: 1.1rem;
+    font-size: 1.4rem;
+  }
+
+  .position,
+  .project,
+  .highlight {
+    font-size: 1rem;
+  }
+
+  .arrow {
+    width: 2.75rem;
+    height: 2.75rem;
   }
 }

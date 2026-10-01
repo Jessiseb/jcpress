@@ -1,14 +1,19 @@
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
 
 import TopNav from '@/components/layout/TopNav'
 import Footer from '@/components/layout/Footer'
 import ScrollProgress from '@/components/layout/ScrollProgress'
 import FlowField from '@/components/visual/FlowField'
+import CelestialField from '@/components/visual/CelestialField'
 import HomePage from '@/pages/home/HomePage'
 import ChannelPlaceholder from '@/pages/ChannelPlaceholder'
 import TechListPage from '@/pages/tech/TechListPage'
 
 export default function App() {
+  // 天体只在首页挂载：它的「分节停靠」位置是按首页那 7 个区块配的，
+  // 挂到 /tech 之类的页面上会变成一颗没有停靠点的球压在列表上。
+  const onHome = useLocation().pathname === '/'
+
   return (
     <>
       {/* 滚动进度指示（二期）：全站唯一的滚动监听在这里（useScrollProgress），
@@ -18,6 +23,10 @@ export default function App() {
           它不参与路由，因此切页时不会重挂载、动画相位不重置 —— 观感上「背景一直在流动」。
           首屏不再是单独一层：流线在首屏最显眼，向下滚动时作为背景延续。 */}
       <FlowField />
+      {/* 首屏天体（二期 r3）：亮色是地球、暗色是月球。
+          与流线层同层（全屏固定、z-index:-1），滚动时按当前区块滑到对应位置 ——
+          停靠表在 CelestialField.module.css 的 [data-scene] 里。 */}
+      {onHome && <CelestialField />}
       <TopNav />
       <main id="main">
         <Routes>

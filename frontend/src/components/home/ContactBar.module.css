@@ -1,20 +1,38 @@
-/* 联系我（r2 重做）：一个主角 + 次级入口
+/* 联系我（r3）：号码左置 · 入口右列
    --------------------------------------------------------------------------
-   r1 是「标签列 + 值列」的两栏定义列表 —— 五个入口权重完全相同，没有主次。
-   r2 让**邮箱成为唯一主角**（展示衬线大字号、`mailto:` 可直接发信），
-   其余入口降为次级条目排在下方。「联系我」这件事本身就该是一个动作，不是一张表。 */
+   r1 是「标签列 + 值列」的两栏定义列表 —— 五个入口权重完全相同。
+   r2 让邮箱（现在是手机号）成为唯一主角，其余降为次级条目。
+   用户随后反馈「太端正」—— 端正的来源不是配色，是**处处对齐**：
+   四个次级入口全部左对齐在同一列、等高 44px、每条下面压一条发丝线。
+   完全一致的列宽与行高，读起来就是一张表单。
 
-/* 主入口：邮箱。字号明显大于次级条目（断言口径）。 */
+   r3 撤掉全部发丝线，并把标签改成**内联写在值前面**（不设固定列宽）——
+   各行的值因此不再对齐在同一条竖线上，整块从「表的四行」变回「四行字」。
+   号码移到左半边：那是原本空着的地方，横向终于用满。
+   全程没有任何方块背景（用户明确要求「不要有背景是方块的」）。
+
+   注意：这一节仍然必须保持通栏（spec 的「面板只出现在三类区块」有断言守着），
+   所以这里的 .split 只是栅格，没有底色、没有边框、没有投影。 */
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--ds-space-6);
+  align-items: start;
+}
+
+/* 主入口：手机号。字号明显大于次级条目（断言口径：≥ 次级的 2 倍） */
 .primary {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  /* 触摸目标：大字号本身已接近 44px，这里显式兜住 */
+  min-height: 44px;
   font-family: var(--ds-font-display);
-  font-size: 2rem;
+  font-size: 2.375rem;
   font-weight: var(--ds-fw-display-strong);
   letter-spacing: -0.01em;
-  line-height: 1.2;
+  line-height: 1.15;
   color: var(--ds-c-text);
-  /* 触摸目标：大字号本身已远超 44px，这里只保证是块级可点区域 */
-  padding-block: var(--ds-space-1);
   transition: color var(--ds-t-color);
 }
 
@@ -22,40 +40,40 @@
   color: var(--ds-c-accent);
 }
 
-/* 次级入口：一条条窄行，右侧是值 */
+/* 入口列：没有发丝线，分组完全靠行高 */
 .list {
-  margin: var(--ds-space-5) 0 0;
-  border-top: 1px solid var(--ds-c-hairline);
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 8rem minmax(0, 1fr);
-  gap: var(--ds-space-4);
-  align-items: center;
-  padding-block: var(--ds-space-1);
-  border-bottom: 1px solid var(--ds-c-hairline);
-}
-
-.label {
-  font-size: var(--ds-fs-sm);
-  color: var(--ds-c-text-subtle);
-}
-
-/* 固定 44px 高：让所有行等高，同时把复制按钮的可点区域顶到触摸目标下限 */
-.valueCell {
   display: flex;
-  align-items: center;
-  min-height: 44px;
+  flex-direction: column;
   margin: 0;
 }
 
-/* 值与按钮都撑到 44px 高：整行等高，同时把可点区域顶到触摸目标下限 */
+/* 每行 ≥44px 高（触摸目标下限）。标签在值**前面**、宽度随内容 —— 这是与 r2 的关键差别：
+   r2 的标签占固定 8rem 一列，值因此被推到同一条竖线上，那正是「表」的观感来源。 */
+.line {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 0.7em;
+}
+
+.label {
+  flex: 0 0 auto;
+  font-size: 0.78125rem;
+  letter-spacing: 0.02em;
+  color: var(--ds-c-text-subtle);
+}
+
+.valueCell {
+  margin: 0;
+  min-width: 0;
+}
+
+/* 值与按钮都顶到 44px：与所在行等高，同时保住触摸目标 */
 .value {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  font-size: var(--ds-fs-sm);
+  font-size: 0.90625rem;
   color: var(--ds-c-text);
 }
 
@@ -65,7 +83,7 @@
   gap: var(--ds-space-3);
 }
 
-/* hover / focus 才提示「这点得动」：复制提示平时不描边，避免每行都挂一个强调色下划线 */
+/* hover / focus 才提示「这点得动」 */
 .copyHint {
   font-size: var(--ds-fs-xs);
   color: var(--ds-c-text-subtle);
@@ -77,9 +95,14 @@
   color: var(--ds-c-accent);
 }
 
+/* 窄屏：两栏塌成一栏 —— 号码在前，入口紧随其后 */
 @media (max-width: 719px) {
-  .row {
-    grid-template-columns: 5.5rem minmax(0, 1fr);
-    gap: var(--ds-space-3);
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ds-space-4);
+  }
+
+  .primary {
+    font-size: 2rem;
   }
 }

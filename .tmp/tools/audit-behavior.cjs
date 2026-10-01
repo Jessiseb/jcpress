@@ -49,6 +49,9 @@ const check = (name, pass, detail) => {
       companies: ['广州视源电子科技股份有限公司', '广东用友网络有限公司', '广东粤建三和软件有限公司'].map((c) =>
         document.body.innerText.includes(c),
       ),
+      // 实习经历 r3 起是切换器：三段的全名挂在 tab 的可访问名（aria-label）上，
+      // 正文里一次只展开一段 —— 所以「三段都在」要查 tab，不能只查 innerText。
+      companyTabs: qa('[role="tab"]').map((el) => el.getAttribute('aria-label') || el.textContent.trim()),
       highlightLabels: ['接口响应下降', '知识库检索准确率', '慢查询耗时', '异常订单自动修复率'].map((l) =>
         document.body.innerText.includes(l),
       ),
@@ -101,7 +104,15 @@ const check = (name, pass, detail) => {
     dom.h1Count === 1 && dom.h1Text.startsWith('庄家希') && dom.hasHeadline,
     `h1="${dom.h1Text}"`,
   )
-  check('三个实习经历都出现在页面上', dom.companies.every(Boolean))
+  check(
+    '三个实习经历都在切换条里（一次展开一段）',
+    dom.companyTabs.length === 3 &&
+      ['广州视源电子科技股份有限公司', '广东用友网络有限公司', '广东粤建三和软件有限公司'].every((c) =>
+        dom.companyTabs.some((l) => l.includes(c)),
+      ) &&
+      dom.companies[0],
+    `tab=${dom.companyTabs.length} 条；正文展开的是第 1 段=${dom.companies[0]}`,
+  )
   check('四个关键数字都有标签', dom.highlightLabels.every(Boolean))
   check('简历下载入口指向 /resume.pdf', dom.resumeHref === '/resume.pdf', `href=${dom.resumeHref}`)
   check('全页只有一个 h1', dom.h1Count === 1, `h1=${dom.h1Count}`)
@@ -137,9 +148,16 @@ const check = (name, pass, detail) => {
   })
   await page.evaluate(async () => {
     document.documentElement.style.scrollBehavior = 'auto'
-    for (let y = 0; y < document.body.scrollHeight; y += 300) {
+    // 每一步都让出**两帧**再继续。
+    // 原来的 `setTimeout(80)` 版本在无头 Chromium 里会被合并：连续 scrollTo 落在同一帧上，
+    // IntersectionObserver 只在「更新渲染」时采样一次交点，于是一整段区块从「没进视口」
+    // 直接跳到「已经滚过去」，reveal 永远不触发 —— 报出来的是「31/41 未触发」，
+    // 而真实滚轮（每次都重新采样）是 41/41。断言要测的是产品，不是定时器合并。
+    const step = 200
+    const max = document.documentElement.scrollHeight - innerHeight
+    for (let y = 0; y <= max; y += step) {
       window.scrollTo(0, y)
-      await new Promise((r) => setTimeout(r, 80))
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 40))))
     }
     window.scrollTo(0, 0)
     await new Promise((r) => setTimeout(r, 600))
@@ -430,14 +448,63 @@ const check = (name, pass, detail) => {
     `1280→${flow ? flow.paths : '?'} 768→${paths768} 390→${paths390}`,
   )
 
-  // 图案零请求（流线是内联 SVG，不得引入任何图片文件）
-  const imageRequests = await page.evaluate(() =>
-    performance
+  // ---- 图片纪律（三期 r3 重写）----
+  // ⚠️ 第一版是「按资源 URL 的后缀名筛图片」：
+  //     `.filter((n) => /\.(png|jpe?g|webp|gif|svg|avif)(\?|#|$)/i.test(n))`
+  //    它漏掉了**不带扩展名**的图片请求 —— 实习经历那几张 Unsplash 图是
+  //    `images.unsplash.com/photo-…?auto=format&fit=crop&w=560…`，没有后缀，
+  //    于是页面上明明加载了三张远程照片，断言却一直报「无」。这是**假绿**（#53 的同类问题）。
+  //    改法有两步：① 判据换成 `initiatorType`（浏览器自己标的资源类型），
+  //    ② 把「图案层」与「内容图」分成两条断言 —— 前者必须为 0，后者必须**显式登记**。
+  const imageReqs = await page.evaluate(() => {
+    const isImage = (e) =>
+      e.initiatorType === 'img' || /\.(png|jpe?g|webp|gif|avif|svg)(\?|#|$)/i.test(e.name)
+    return performance
       .getEntriesByType('resource')
-      .map((e) => e.name)
-      .filter((n) => /\.(png|jpe?g|webp|gif|svg|avif)(\?|#|$)/i.test(n)),
+      .filter(isImage)
+      .map((e) => `${e.initiatorType}:${e.name.replace(/^https?:\/\/[^/]+/, '')}`)
+  })
+  const patternImages = await page.evaluate(() => {
+    const layers = Array.from(document.querySelectorAll('[data-flow], [data-celestial], [data-ring]'))
+    return {
+      layers: layers.length,
+      imageTags: document.querySelectorAll('[data-flow] image, [data-celestial] image, [data-ring] image')
+        .length,
+      urlBackgrounds: layers
+        .map((el) => getComputedStyle(el).backgroundImage)
+        .filter((b) => /url\(/.test(b)),
+    }
+  })
+  check(
+    '图案层零图片：流线 / 天体 / 环装置只许内联 SVG（无 <image>、无 url() 背景）',
+    patternImages.imageTags === 0 && patternImages.urlBackgrounds.length === 0,
+    `${patternImages.layers} 个图案层；<image>=${patternImages.imageTags}；url() 背景=${patternImages.urlBackgrounds.join(' | ') || '无'}`,
   )
-  check('图案零图片请求', imageRequests.length === 0, imageRequests.join(', ') || '无')
+  // 非图案层的图片必须挂在登记过的宿主上（data-photo）。这条不是为了美观，
+  // 是为了让「远程图欠债」**出现在断言输出里**而不是藏在审计盲区（见 docs/decisions.md #64）。
+  const photos = await page.evaluate(() => {
+    const imgs = Array.from(document.querySelectorAll('img'))
+    return {
+      total: imgs.length,
+      unregistered: imgs
+        .filter((el) => !el.closest('[data-photo]') && !el.closest('[data-celestial]'))
+        .map((el) => el.currentSrc || el.src),
+      // 天体贴图必须**同源自托管**：以 `/` 开头的站内路径。
+      // 这是「图案层零图片」被放开之后补上的新护栏 —— 放开的是「可以用贴图」，
+      // 不是「可以引用任何地方的图」。
+      remoteTextures: imgs
+        .filter((el) => el.closest('[data-celestial]'))
+        .map((el) => el.getAttribute('src') || '')
+        .filter((src) => !src.startsWith('/')),
+      photoCount: imgs.filter((el) => el.closest('[data-photo]')).length,
+      textureCount: imgs.filter((el) => el.closest('[data-celestial]')).length,
+    }
+  })
+  check(
+    '图片全部登记：内容图挂 data-photo、天体贴图挂 data-celestial 且必须自托管',
+    photos.unregistered.length === 0 && photos.remoteTextures.length === 0,
+    `${photos.total} 张（内容图 ${photos.photoCount} / 天体贴图 ${photos.textureCount}）；请求 ${imageReqs.length} 条${photos.unregistered.length ? `；未登记 ${photos.unregistered.join(', ')}` : ''}${photos.remoteTextures.length ? `；远程贴图 ${photos.remoteTextures.join(', ')}` : ''}${photos.photoCount ? '；内容图是远程占位图（欠债，见 decisions #64）' : ''}`,
+  )
 
   // 每条流线的 `d` 都必须真的有效（非法值会被浏览器静默丢掉，长度归零）
   const brokenPaths = await page.evaluate(() => {
@@ -503,6 +570,269 @@ const check = (name, pass, detail) => {
     JSON.stringify(ringA) === JSON.stringify(ringB) && ringA.every((s) => s.endsWith('|none')),
     `${ringA.join(' / ')}${JSON.stringify(ringA) === JSON.stringify(ringB) ? '（1.2s 后不变）' : '（发生了变化！）'}`,
   )
+
+  // ---- 首屏天体（三期 r3）：亮色地球 / 暗色月球 ----
+  // 它用的是自己的 data-celestial 标记，不冒充环标记层 —— 因此上面那条
+  // 「首屏不再有环」的断言仍然只数 [data-ring]，不会被它顶掉。
+  //
+  // 实现是「自托管等距圆柱贴图 + 圆形裁剪窗口 + 水平循环平移」（参照组件 ScrollGlobe 的手法）。
+  // 因此这里断言的是**贴图与窗口**，不是 SVG 几何 —— 第一版做成描边球时的
+  // 「由圆构成 / 无 <image>」那两条已经不适用，一并改写。
+  const readBody = () =>
+    page.evaluate(() => {
+      const g = document.querySelector('[data-celestial]')
+      if (!g) return null
+      const cs = getComputedStyle(g)
+      const hero = g.closest('section[aria-labelledby="hero-title"]')
+      const read = (sel) => {
+        const box = g.querySelector(sel)
+        if (!box) return null
+        const sphere = box.firstElementChild
+        const strip = sphere ? sphere.firstElementChild : null
+        const shade = sphere ? sphere.lastElementChild : null
+        const imgs = Array.from(box.querySelectorAll('img'))
+        const r = box.getBoundingClientRect()
+        return {
+          display: getComputedStyle(box).display,
+          size: Math.round(r.width),
+          right: Math.round(r.right),
+          bottom: Math.round(r.bottom),
+          textures: imgs.map((el) => el.getAttribute('src')),
+          // 两张首尾相接的贴图：宽高比必须一致，才能靠 translateX(-50%) 无缝接回
+          ratioOk: imgs.length === 2 && imgs.every((el) => el.naturalWidth > 0),
+          stripAnim: strip ? getComputedStyle(strip).animationName : null,
+          stripWidth: strip ? Math.round(strip.getBoundingClientRect().width) : 0,
+          // 二期的硬约束是「**同一元素**不得叠两条动画」（#51：叠了就 21 FPS / 掉帧 97%），
+          // 不是「每颗球只能有一条动画」—— 球体一共 1 条自转 + 7 条星点闪烁，分属 8 个元素。
+          animCounts: Array.from(box.querySelectorAll('*'))
+            .map((el) => {
+              const cs = getComputedStyle(el)
+              const n = (cs.animationName || 'none')
+                .split(',')
+                .filter((x) => x && x.trim() !== 'none').length
+              return { cls: (el.getAttribute('class') || el.tagName).slice(0, 22), n, names: cs.animationName, prop: cs.animationDuration }
+            })
+            .filter((x) => x.n > 0),
+          starCount: box.querySelectorAll('[class*="star"]:not([class*="stars"])').length,
+          starOutsideClip: Array.from(box.querySelectorAll('[class*="star"]:not([class*="stars"])')).filter(
+            (el) => !el.closest('[class*="sphere"]'),
+          ).length,
+          starsOutsideCircle: (() => {
+            const sp = box.querySelector('[class*="sphere"]')
+            if (!sp) return -1
+            const sb = sp.getBoundingClientRect()
+            const cx = sb.left + sb.width / 2
+            const cy = sb.top + sb.height / 2
+            return Array.from(box.querySelectorAll('[class*="star"]:not([class*="stars"])')).filter((el) => {
+              const b = el.getBoundingClientRect()
+              return Math.hypot(b.left + b.width / 2 - cx, b.top + b.height / 2 - cy) > sb.width / 2
+            }).length
+          })(),
+          // 球体明暗是照抄参照组件那串 box-shadow（5 条 inset + 缩放用的 font-size），
+          // 不是径向渐变 —— 断言跟着实现走，不跟着第一版的写法走。
+          shadeInsets: shade
+            ? (getComputedStyle(shade).boxShadow.match(/inset/g) || []).length
+            : 0,
+          shadeFont: shade ? getComputedStyle(shade).fontSize : null,
+          sphereOuter: (() => {
+            const sp = box.querySelector('[class*="sphere"]')
+            return sp ? (getComputedStyle(sp).boxShadow.match(/inset/g) || []).length : -1
+          })(),
+          borderRadius: sphere ? getComputedStyle(sphere).borderRadius : null,
+          overflow: sphere ? getComputedStyle(sphere).overflow : null,
+        }
+      }
+      return {
+        theme: document.documentElement.getAttribute('data-theme'),
+        earth: read('[class*="earth"]'),
+        moon: read('[class*="moon"]'),
+        scene: g.getAttribute('data-scene'),
+        position: cs.position,
+        ariaHidden: g.getAttribute('aria-hidden'),
+        pointerEvents: cs.pointerEvents,
+        zIndex: cs.zIndex,
+        reveals: g.querySelectorAll('[data-reveal]').length,
+        // 未缩放的直径（--ds-body-size）。停靠时球会被 scale 缩放，
+        // 所以不能再拿 getBoundingClientRect().width 去比 font-size（第一版就是那么写的）。
+        // ⚠️ 不能直接 parseFloat 读令牌值：它是 `clamp(9rem, 20vw, 16rem)`，parseFloat 得 NaN。
+        // 用一个探针元素的真实宽度把 clamp 解出来。
+        baseSize: (() => {
+          const probe = document.createElement('div')
+          probe.style.cssText =
+            'position:absolute;visibility:hidden;pointer-events:none;width:var(--ds-body-size)'
+          document.body.appendChild(probe)
+          const w = probe.getBoundingClientRect().width
+          probe.remove()
+          return w
+        })(),
+      }
+    })
+
+  const bodyLight = await readBody()
+  check(
+    '天体：整站固定装饰层（fixed / aria-hidden / 不吃指针 / z-index 沉底 / 不参与入场编排）',
+    !!bodyLight &&
+      bodyLight.position === 'fixed' &&
+      bodyLight.ariaHidden === 'true' &&
+      bodyLight.pointerEvents === 'none' &&
+      bodyLight.zIndex === '-1' &&
+      bodyLight.reveals === 0,
+    bodyLight
+      ? `position=${bodyLight.position} aria-hidden=${bodyLight.ariaHidden} pe=${bodyLight.pointerEvents} z=${bodyLight.zIndex} data-reveal=${bodyLight.reveals}`
+      : 'missing',
+  )
+  check(
+    '天体是「圆形窗口 + 两张首尾相接的自托管贴图 + 参照组件那串 box-shadow 的球体明暗」',
+    !!bodyLight &&
+      bodyLight.earth.textures.length === 2 &&
+      bodyLight.earth.textures.every((t) => t && t.startsWith('/textures/')) &&
+      bodyLight.earth.ratioOk &&
+      bodyLight.earth.borderRadius === '50%' &&
+      bodyLight.earth.overflow === 'hidden' &&
+      // 5 条 inset（照抄参照组件的五条内阴影）；外发光那一条留在 .sphere 上（这里是 0 条 inset）
+      bodyLight.earth.shadeInsets === 5 &&
+      bodyLight.earth.sphereOuter === 0 &&
+      // font-size = **未缩放**的球体直径 ⇒ em 偏移等比缩放，而不是只在 250px 球上成立。
+      // （停靠时球会被 scale 缩放，所以不能拿 rect 宽去比 —— 第一版这么写，加滑动之后当场亮红）
+      Math.abs(parseFloat(bodyLight.earth.shadeFont) - bodyLight.baseSize) < 1,
+    bodyLight
+      ? `贴图 ×${bodyLight.earth.textures.length} / 圆角 ${bodyLight.earth.borderRadius} / 内阴影 ${bodyLight.earth.shadeInsets} 条 / em 基数 ${bodyLight.earth.shadeFont} = 未缩放直径 ${bodyLight.baseSize}px`
+      : 'missing',
+  )
+  check(
+    '天体动画：球体 1 条自转（transform）+ 7 颗星各 1 条闪烁（opacity），没有任何元素叠两条',
+    !!bodyLight &&
+      /celestialSpin/.test(bodyLight.earth.stripAnim || '') &&
+      bodyLight.earth.stripWidth > bodyLight.earth.size &&
+      bodyLight.earth.animCounts.every((a) => a.n === 1) &&
+      bodyLight.earth.animCounts.length === 8 &&
+      /celestialTwinkle/.test(bodyLight.earth.animCounts[1]?.names || ''),
+    bodyLight
+      ? `共 ${bodyLight.earth.animCounts.length} 个元素带动画（最多 ${Math.max(...bodyLight.earth.animCounts.map((a) => a.n))} 条/元素）；自转 ${bodyLight.earth.stripAnim}；星点 ${bodyLight.earth.starCount} 颗`
+      : 'missing',
+  )
+  check(
+    '星点在圆形裁剪之外（不可被裁掉），且都在球体圆周之外',
+    !!bodyLight &&
+      bodyLight.earth.starCount === 7 &&
+      bodyLight.earth.starOutsideClip === 7 &&
+      bodyLight.earth.starsOutsideCircle === 7,
+    bodyLight
+      ? `星 ${bodyLight.earth.starCount} 颗 / 在裁剪区外 ${bodyLight.earth.starOutsideClip} / 在圆周外 ${bodyLight.earth.starsOutsideCircle}`
+      : 'missing',
+  )
+
+  // 亮暗是**两颗不同的天体**（用户的原话：「白天状态可以是地球，夜间就月球」）——
+  // 所以断言的几何/贴图**必须不同**，可见性**必须互补**。
+  await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'))
+  await page.waitForTimeout(250)
+  const bodyDark = await readBody()
+  await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'))
+  await page.waitForTimeout(250)
+
+  check(
+    '亮暗是两颗天体：亮色只显示地球、暗色只显示月球，贴图与自转周期都不同',
+    !!bodyLight &&
+      !!bodyDark &&
+      bodyLight.earth.display !== 'none' &&
+      bodyLight.moon.display === 'none' &&
+      bodyDark.earth.display === 'none' &&
+      bodyDark.moon.display !== 'none' &&
+      bodyLight.earth.textures[0] !== bodyDark.moon.textures[0],
+    bodyLight && bodyDark
+      ? `亮色：地球 ${bodyLight.earth.display}(${bodyLight.earth.textures[0]}) / 月球 ${bodyLight.moon.display}；暗色：地球 ${bodyDark.earth.display} / 月球 ${bodyDark.moon.display}(${bodyDark.moon.textures[0]})`
+      : 'missing',
+  )
+  // ⚠️ 必须在**多个宽度**上量，不能只量 1280。第一版只在 1280 量过一次就报绿，
+  // 而 960–1150 这一段球是**压在正文上**的（1100 实测差 −10px、960 差 −80px）。
+  // 现在每次量之前都先回到顶部（首屏 = scene 0，球是全尺寸停在右侧的那个场景）。
+  const clearance = []
+  for (const w of [1440, 1280, 1100]) {
+    await page.setViewportSize({ width: w, height: 900 })
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+    await page.waitForTimeout(700)
+    clearance.push(
+      await page.evaluate(() => {
+        const hero = document.querySelector('section[aria-labelledby="hero-title"]')
+        const shown = Array.from(document.querySelector('[data-celestial]').children).find(
+          (d) => getComputedStyle(d).display !== 'none',
+        )
+        let textRight = 0
+        for (const el of hero.querySelectorAll('p, h1, div')) {
+          if (el.closest('[data-celestial]')) continue
+          const b = el.getBoundingClientRect()
+          if (b.width && b.right > textRight) textRight = b.right
+        }
+        const bb = shown.getBoundingClientRect()
+        return {
+          vw: innerWidth,
+          gap: Math.round(bb.left - textRight),
+          size: Math.round(bb.width),
+          overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        }
+      }),
+    )
+  }
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+  await page.waitForTimeout(700)
+  check(
+    '首屏（scene 0）天体在桌面各宽度下都落在正文右侧的空白里，且不横向溢出',
+    clearance.every((c) => c.gap > 0 && c.overflow === 0),
+    clearance.map((c) => `${c.vw}px: 球 ${c.size}px / 间距 ${c.gap}px / 溢出 ${c.overflow}px`).join(' · '),
+  )
+
+  // ---- 分节停靠（三期 r3）----
+  // 参照组件的核心效果：滚动时球**在视口里换位**（translate3d(vw,vh) + scale + opacity，
+  // 由 1400ms 的 CSS transition 负责「滑」）。我第一版漏掉了这一段，只做了「固定右侧 + 视差」，
+  // 用户的原话是「他们都没有滑动效果呢」。两条判据：
+  //   ① 真的在换位（位置/尺寸/不透明度都随区块变，首屏是最大最实的那个）；
+  //   ② 每个停靠点都在视口内（换位不能把球甩出屏幕、也不能撑出横向溢出）。
+  const stops = []
+  const sceneCount = await page.evaluate(
+    () => document.querySelectorAll('main section[aria-labelledby]').length,
+  )
+  for (let i = 0; i < sceneCount; i++) {
+    await page.evaluate((idx) => {
+      document
+        .querySelectorAll('main section[aria-labelledby]')
+        [idx].scrollIntoView({ behavior: 'instant', block: 'center' })
+    }, i)
+    await page.waitForTimeout(1700) // 等 1400ms 的滑动收敛
+    stops.push(
+      await page.evaluate(() => {
+        const f = document.querySelector('[data-celestial]')
+        const shown = Array.from(f.children).find((d) => getComputedStyle(d).display !== 'none')
+        const b = shown.getBoundingClientRect()
+        return {
+          scene: f.getAttribute('data-scene'),
+          cx: Math.round(b.left + b.width / 2),
+          cy: Math.round(b.top + b.height / 2),
+          size: Math.round(b.width),
+          opacity: Number(getComputedStyle(shown).opacity),
+          inside:
+            b.left >= -1 && b.right <= innerWidth + 1 && b.top >= -1 && b.bottom <= innerHeight + 1,
+          overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        }
+      }),
+    )
+  }
+  const distinctCenters = new Set(stops.map((s) => `${s.cx},${s.cy}`)).size
+  check(
+    '分节停靠：滚动时天体真的换位（位置 / 尺寸 / 不透明度都随区块变）',
+    distinctCenters >= 5 && new Set(stops.map((s) => s.size)).size >= 3 && stops[0].opacity === 1,
+    stops.map((s) => `${s.scene}:(${s.cx},${s.cy})/${s.size}px/${s.opacity}`).join(' '),
+  )
+  check(
+    '分节停靠：每个停靠点都在视口内，且全程不横向溢出',
+    stops.every((s) => s.inside && s.overflow === 0),
+    stops.every((s) => s.inside)
+      ? `${stops.length} 个停靠点全部在视口内，最大溢出 ${Math.max(...stops.map((s) => s.overflow))}px`
+      : `越界的停靠点：${stops.filter((s) => !s.inside).map((s) => s.scene).join(', ')}`,
+  )
+  // 回到顶部，后面的断言接着按「首屏」的状态跑
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+  await page.waitForTimeout(700)
 
   // ---- 滚动联动（二期）：进度指示 + 装饰层视差 ----
   // ⚠️ 采样面必须是**全页所有带 transform 的元素**，不能只取前 8 个：
@@ -661,14 +991,17 @@ const check = (name, pass, detail) => {
         leadWidth: lead ? Math.round(rect(lead).width) : null,
         bodyLeft: Math.round(rect(body).left),
         bodyWidth: Math.round(rect(body).width),
+        // 「整幅特写」区块（data-full）：左图 + 右文的两栏特写，正文通栏到第 1 列。
+        // 它**故意**没有「导语左栏 + 正文右移」的错位 —— 见 styles/global.css 的注释。
+        full: s.hasAttribute('data-full'),
       })
     }
     return out
   })
   check(
     '不对称栅格：正文起点明显右移于标题（可见错位）',
-    grid.length >= 6 && grid.every((g) => g.bodyLeft - g.titleLeft >= 40),
-    grid.map((g) => `${g.name} 标题${g.titleLeft} → 正文${g.bodyLeft}`).join(' / '),
+    grid.length >= 6 && grid.every((g) => g.full || g.bodyLeft - g.titleLeft >= 40),
+    grid.map((g) => `${g.name} 标题${g.titleLeft} → 正文${g.bodyLeft}${g.full ? '(特写·豁免)' : ''}`).join(' / '),
   )
   check(
     '导语栏宽**明显**小于正文栏宽（不只是小 1px）',
@@ -678,6 +1011,14 @@ const check = (name, pass, detail) => {
 
   const panels = await page.evaluate(() => {
     const hosts = Array.from(document.querySelectorAll('[data-glass]'))
+    const surfacing = (el) => {
+      const cs = getComputedStyle(el)
+      const issues = []
+      if (cs.backgroundColor !== 'rgba(0, 0, 0, 0)') issues.push(`底色=${cs.backgroundColor}`)
+      if (cs.backgroundImage !== 'none') issues.push(`背景图=${cs.backgroundImage.slice(0, 24)}`)
+      if (cs.boxShadow !== 'none') issues.push(`投影=${cs.boxShadow.slice(0, 24)}`)
+      return issues.length ? `${el.tagName}:${issues.join(',')}` : null
+    }
     return {
       count: hosts.length,
       where: hosts.map((el) =>
@@ -685,32 +1026,40 @@ const check = (name, pass, detail) => {
       ),
       // 非面板区块：查**每一个**正文直接子元素的底色 / 背景图 / 投影三项
       // （评审指出第一版只看首个子元素的 backgroundColor，既漏了 box-shadow 也漏了后续子元素）
+      // data-full 的「整幅特写」不在这条里 —— 它单独有下面那条更严的断言（只许一块面）。
       others: Array.from(document.querySelectorAll('main .section'))
-        .filter((s) => !s.querySelector('[data-glass]'))
+        .filter((s) => !s.querySelector('[data-glass]') && !s.hasAttribute('data-full'))
         .map((s) => {
           const bodies = Array.from(
             s.querySelectorAll(':scope > *:not(.sectionTitle):not(.sectionLead)'),
           )
           return {
             name: (s.querySelector('h2')?.textContent || '').trim().slice(0, 8),
-            bad: bodies
-              .map((el) => {
-                const cs = getComputedStyle(el)
-                const issues = []
-                if (cs.backgroundColor !== 'rgba(0, 0, 0, 0)') issues.push(`底色=${cs.backgroundColor}`)
-                if (cs.backgroundImage !== 'none') issues.push(`背景图=${cs.backgroundImage.slice(0, 24)}`)
-                if (cs.boxShadow !== 'none') issues.push(`投影=${cs.boxShadow.slice(0, 24)}`)
-                return issues.length ? `${el.tagName}:${issues.join(',')}` : null
-              })
-              .filter(Boolean),
+            bad: bodies.map(surfacing).filter(Boolean),
             checked: bodies.length,
           }
         }),
+      // 整幅特写：允许**一块**面带底色 / 投影（左图右文的那张卡），多一块就是「每个区块都包卡片」的复发
+      feature: Array.from(document.querySelectorAll('main .section[data-full]')).map((s) => {
+        const bodies = Array.from(
+          s.querySelectorAll(':scope > *:not(.sectionTitle):not(.sectionLead)'),
+        )
+        return {
+          name: (s.querySelector('h2')?.textContent || '').trim().slice(0, 8),
+          total: bodies.length,
+          surfaced: bodies.filter((el) => surfacing(el)).length,
+          // 正文必须真的通栏到第 1 列（与标题左边缘对齐）
+          flushLeft: bodies.every(
+            (el) => Math.abs(el.getBoundingClientRect().left - s.querySelector('h2').getBoundingClientRect().left) < 40,
+          ),
+        }
+      }),
     }
   })
   check(
-    '面板只出现在「关键数字」与「项目经历」两类区块',
-    panels.count === 2 && panels.where.every((w) => w.includes('数字') || w.includes('项目')),
+    '面板只出现在「关键数字」「项目经历」「技术栈」三类区块',
+    panels.count === 3 &&
+      panels.where.every((w) => w.includes('数字') || w.includes('项目') || w.includes('技术栈')),
     `共 ${panels.count}：${panels.where.join(' / ')}`,
   )
   check(
@@ -719,6 +1068,14 @@ const check = (name, pass, detail) => {
     panels.others
       .map((o) => `${o.name}（查 ${o.checked} 个子元素）${o.bad.length ? '：' + o.bad.join('；') : ''}`)
       .join(' / '),
+  )
+  check(
+    '整幅特写（data-full）只许一块面，且正文真的通栏到第 1 列',
+    panels.feature.length === 1 &&
+      panels.feature.every((f) => f.total === 2 && f.surfaced === 1 && f.flushLeft),
+    panels.feature
+      .map((f) => `${f.name} 正文${f.total} 块 / 带面${f.surfaced} 块 / 左边缘对齐=${f.flushLeft}`)
+      .join(' / ') || 'missing',
   )
 
   // 面板 + 栅格把列宽收窄之后，长数值（如「1200ms → 50ms」）会**文字溢出**到邻格 ——
@@ -767,39 +1124,56 @@ const check = (name, pass, detail) => {
       (s.querySelector('h2')?.textContent || '').trim(),
     )
 
-    // 技术栈：组名 vs 技能列
+    // 技术栈（r3：玻璃面板 + 分类色胶囊）
+    // 探针跟着实现走：矩阵那一版用的是真表格，这一版换回「方向行 + 胶囊云」，
+    // 并新增一项 —— 六个方向必须各有各的色相（颜色是这一版的一个维度，不是装饰）。
     const skills = sectionOf('技术栈')
-    const group = skills?.querySelector('[class*="group"]')
-    const groupTitle = group?.querySelector('h3')
-    const items = group?.querySelector('ul')
+    // 用 data-skill-group 而不是 [class*="group"]：后者会同时命中行与行标题（「groupTitle」也含 group），
+    // 6 行会被数成 12 行 —— 第一版就是这么亮红的。
+    const skillGroups = Array.from(skills?.querySelectorAll('[data-skill-group]') || [])
+    const firstGroup = skillGroups[0]
+    const groupTitle = firstGroup?.querySelector('h3')
+    const items = firstGroup?.querySelector('ul')
     const skillProbe =
-      group && groupTitle && items
+      firstGroup && groupTitle && items
         ? {
             titleLeft: groupTitle.offsetLeft,
             itemsLeft: items.offsetLeft,
             titleSize: px(groupTitle, 'fontSize'),
+            // 取胶囊本身，不取胶囊里那个「只给读屏」的档位字（它是 11px，会把判据蒙对）
             itemSize: px(items.querySelector('li span') || items, 'fontSize'),
+            panel: !!skills.querySelector('[data-glass]'),
+            rows: skillGroups.length,
+            chips: skills.querySelectorAll('ul[class*="items"] > li').length,
+            hues: [
+              ...new Set(
+                skillGroups.map((g) => getComputedStyle(g.querySelector('[class*="dot"]')).backgroundColor),
+              ),
+            ],
           }
         : null
 
-    // 获奖：年份轴（按年份分组：年份是组头，奖项在其下）
+    // 获奖（r3）：逐条时间线 —— 左列元数据（年份 / 等级）右对齐，中列轴线圆点，右列奖项名
     const awardsSection = sectionOf('教育与荣誉')
     const awardRows = Array.from(awardsSection?.querySelectorAll('li[data-award]') || [])
-    const yearEls = Array.from(awardsSection?.querySelectorAll('span[data-year]') || [])
-    const nameEls = awardRows.map((li) => li.querySelector('span'))
+    const yearEls = awardRows.map((li) => li.querySelector('[data-year]'))
+    const nameEls = awardRows.map((li) => li.querySelector('[data-award-name]'))
+    const nodeEls = awardRows.map((li) => li.querySelector('[data-award-name]')?.previousElementSibling)
     const awardsProbe = awardRows.length
       ? {
           rows: awardRows.length,
           years: yearEls.length,
           yearLefts: [...new Set(yearEls.map((el) => el.offsetLeft))],
+          nameLefts: [...new Set(nameEls.map((el) => el.offsetLeft))],
+          nodeLefts: [...new Set(nodeEls.map((el) => (el ? el.offsetLeft + el.offsetWidth / 2 : null)))],
           yearSize: px(yearEls[0], 'fontSize'),
           nameSize: px(nameEls[0], 'fontSize'),
         }
       : null
 
-    // 联系：邮箱主角
+    // 联系：能一键联系的那条做主入口（tel: 拨号 / mailto: 发信都算）
     const contact = sectionOf('联系我')
-    const primary = contact?.querySelector('a[href^="mailto:"]')
+    const primary = contact?.querySelector('a[href^="mailto:"], a[href^="tel:"]')
     const secondary = contact?.querySelector('dd a, dd span')
     const contactProbe =
       primary && secondary
@@ -822,7 +1196,8 @@ const check = (name, pass, detail) => {
       }
     }
     const markers = {
-      experience: marker(sectionOf('实习经历')?.querySelector('ol li ul li')),
+      // 实习经历 r3 起是「切换器」结构：article > ul > li，不再是 ol > li > ul > li
+      experience: marker(sectionOf('实习经历')?.querySelector('article ul li')),
       project: marker(sectionOf('项目经历')?.querySelector('[id^="project-panel"] li')),
     }
 
@@ -836,22 +1211,30 @@ const check = (name, pass, detail) => {
     r2Layout.order.join(' → '),
   )
   check(
-    '技术栈：组名在左栏作锚点，且字号大于技能名',
+    '技术栈：玻璃面板里 6 个方向各有色相、行头在左栏作锚点、28 项一项不丢',
     !!r2Layout.skillProbe &&
+      r2Layout.skillProbe.panel &&
+      r2Layout.skillProbe.rows === 6 &&
+      r2Layout.skillProbe.chips === 28 &&
+      r2Layout.skillProbe.hues.length === 6 &&
       r2Layout.skillProbe.itemsLeft - r2Layout.skillProbe.titleLeft >= 80 &&
       r2Layout.skillProbe.titleSize > r2Layout.skillProbe.itemSize,
     r2Layout.skillProbe
-      ? `组名 left=${r2Layout.skillProbe.titleLeft} / 技能列 left=${r2Layout.skillProbe.itemsLeft}；组名 ${r2Layout.skillProbe.titleSize}px > 技能 ${r2Layout.skillProbe.itemSize}px`
+      ? `${r2Layout.skillProbe.rows} 个方向 / ${r2Layout.skillProbe.chips} 项 / ${r2Layout.skillProbe.hues.length} 个色相；行头 left=${r2Layout.skillProbe.titleLeft} → 胶囊列 left=${r2Layout.skillProbe.itemsLeft}；行头 ${r2Layout.skillProbe.titleSize}px > 胶囊 ${r2Layout.skillProbe.itemSize}px；面板=${r2Layout.skillProbe.panel}`
       : 'missing',
   )
   check(
-    '获奖经历：年份成列、字号大于奖项名（年份轴），五项奖项全在',
+    '获奖经历：逐条时间线（左元数据列 / 中轴线圆点 / 右奖项名），五项奖项全在',
     !!r2Layout.awardsProbe &&
       r2Layout.awardsProbe.rows === 5 &&
+      r2Layout.awardsProbe.years === 5 &&
       r2Layout.awardsProbe.yearLefts.length === 1 &&
-      r2Layout.awardsProbe.yearSize > r2Layout.awardsProbe.nameSize,
+      r2Layout.awardsProbe.nameLefts.length === 1 &&
+      r2Layout.awardsProbe.nodeLefts.length === 1 &&
+      r2Layout.awardsProbe.nameLefts[0] > r2Layout.awardsProbe.yearLefts[0] &&
+      r2Layout.awardsProbe.nameSize > r2Layout.awardsProbe.yearSize,
     r2Layout.awardsProbe
-      ? `${r2Layout.awardsProbe.rows} 条奖项 / ${r2Layout.awardsProbe.years} 个年份组；年份对齐列数=${r2Layout.awardsProbe.yearLefts.length}；年份 ${r2Layout.awardsProbe.yearSize}px > 名称 ${r2Layout.awardsProbe.nameSize}px`
+      ? `${r2Layout.awardsProbe.rows} 条奖项 / ${r2Layout.awardsProbe.years} 个年份；年份列=${r2Layout.awardsProbe.yearLefts.length} 名名列=${r2Layout.awardsProbe.nameLefts.length} 轴心=${r2Layout.awardsProbe.nodeLefts.length}；名称 ${r2Layout.awardsProbe.nameSize}px > 年份 ${r2Layout.awardsProbe.yearSize}px`
       : 'missing',
   )
   // 列表符号可见性（用户点名的两处：实习经历 + 项目经历展开面板）
@@ -862,12 +1245,12 @@ const check = (name, pass, detail) => {
     `实习 ${JSON.stringify(r2Layout.markers.experience)} / 项目 ${JSON.stringify(r2Layout.markers.project)}`,
   )
   check(
-    '联系我：邮箱是主入口（字号明显大于次级条目且是 mailto 链接）',
+    '联系我：手机号是主入口（字号明显大于次级条目，且是 tel: 可一键拨号）',
     !!r2Layout.contactProbe &&
-      r2Layout.contactProbe.href?.startsWith('mailto:') &&
+      /^(mailto|tel):/.test(r2Layout.contactProbe.href ?? '') &&
       r2Layout.contactProbe.primarySize >= r2Layout.contactProbe.secondarySize * 2,
     r2Layout.contactProbe
-      ? `邮箱 ${r2Layout.contactProbe.primarySize}px vs 次级 ${r2Layout.contactProbe.secondarySize}px；href=${r2Layout.contactProbe.href}`
+      ? `主入口 ${r2Layout.contactProbe.primarySize}px vs 次级 ${r2Layout.contactProbe.secondarySize}px；href=${r2Layout.contactProbe.href}`
       : 'missing',
   )
 

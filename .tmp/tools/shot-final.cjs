@@ -16,10 +16,14 @@ async function scrollThrough(page) {
     // 页面全局开了 scroll-behavior: smooth，程序化 scrollTo 会变成动画，
     // 快速连续调用只会互相打断、永远走不到底。截图前先关掉。
     document.documentElement.style.scrollBehavior = 'auto'
-    const step = 300
-    for (let y = 0; y < document.body.scrollHeight; y += step) {
+    // 每步让出**两帧**：连续 scrollTo 落在同一帧上时，IntersectionObserver 只在更新渲染时
+    // 采样一次交点，「没进视口 → 已经滚过去」的区块会永远停在隐藏态（截图里就是一张空白）。
+    // audit-behavior.cjs 里同一个坑踩过一次，写在那里更详细。
+    const step = 200
+    const max = document.documentElement.scrollHeight - innerHeight
+    for (let y = 0; y <= max; y += step) {
       window.scrollTo(0, y)
-      await new Promise((r) => setTimeout(r, 90))
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 40))))
     }
     window.scrollTo(0, 0)
     await new Promise((r) => setTimeout(r, 700))

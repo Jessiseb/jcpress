@@ -1,64 +1,163 @@
-/* 技术栈：能力带（r2 重做）
+/* 技术栈：玻璃面板 + 分类色胶囊（r3）
    --------------------------------------------------------------------------
-   r1 是三列「名称 — 右侧等宽标签」的规格表：信息清楚，但没有版式主角，用户反馈「太普通」。
-   r2 改成一条一条的**能力带**：
-     · 组名进固定左栏，用展示衬线 + 700（比技能名明显大一档）—— 它是这一行的版式锚点；
-     · 技能以**流式词组**排右栏（不再逐行两端对齐成表格）；
-     · 档位是紧贴技能名右侧的极小标记（不再是等宽小字：内容是中文，等宽栈没有 CJK 字形，
-       decisions #41 明确禁止）。
-   组与组之间仍是通栏发丝线 —— 一期「对齐即秩序」的分块语言保留。 */
+   五版的过程见组件头部注释。这一版把前四版一直砍掉的两样东西放回来：
+     · 容器 —— 复用全局 `.panel`（玻璃底色 + 描边 + 顶部高光 + 磨砂），
+       与关键数字 / 项目经历同一个类、同一套令牌，所以「面板」在全站仍是同一种东西；
+     · 颜色 —— 六个方向各一个色相。它承担「这一项属于哪个方向」的语义，不是装饰。
+   两个维度走两个通道：**分类给色相，档位给填充深浅**。互不干扰，也互不重复。 */
 
-.grid {
+.panel {
+  /* 面板本身的内边距由全局 .panel 给（--ds-space-4 / --ds-space-5），这里只补纵向节奏 */
+  padding-block: var(--ds-space-5);
+}
+
+/* 图例：把「深浅」的含义写在同屏。两个维度里色相能自明（组名旁边就是那个色），
+   深浅不能 —— 没有图例它就是只对作者可见的编码。 */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ds-space-4);
+  margin-bottom: var(--ds-space-3);
+  font-size: 0.75rem;
+  color: var(--ds-c-text-subtle);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* 图例样片：与胶囊同一套权重规则，但压得更小 */
+.legendItem::before {
+  content: '';
+  width: 1.4rem;
+  height: 0.875rem;
+  border-radius: var(--ds-radius-pill);
+  border: 1px solid transparent;
+}
+
+.rows {
   display: flex;
   flex-direction: column;
 }
 
+/* 一行 = 一个方向。组名左栏，胶囊云右栏（spec 的「组名排在左侧同一列」仍然成立） */
 .group {
   display: grid;
-  grid-template-columns: 13rem minmax(0, 1fr);
-  gap: var(--ds-space-4);
-  align-items: baseline;
-  padding-block: var(--ds-space-4);
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  gap: var(--ds-space-2) var(--ds-space-4);
+  align-items: start;
+  padding-block: var(--ds-space-3);
+}
+
+.group + .group {
   border-top: 1px solid var(--ds-c-hairline);
 }
 
-/* 组名：版式锚点。700 真字重（组名已纳入展示字子集的字符表，见 scripts/collect-display-charset.cjs） */
 .groupTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   font-family: var(--ds-font-display);
-  font-size: 1.375rem;
+  font-size: 1.0625rem;
   font-weight: var(--ds-fw-display-strong);
   letter-spacing: -0.01em;
-  line-height: 1.2;
+  line-height: 1.6;
   color: var(--ds-c-text);
+  /* 与第一行胶囊的光学中线对齐 */
+  padding-top: 0.15rem;
+}
+
+/* 方向标识圆点：色相 = 这一项属于哪个方向。六个色相都不落在状态色上，见 theme.jcpress.css */
+.dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ds-hue-1);
+}
+
+.group[data-hue='1'] { --hue: var(--ds-hue-1); }
+.group[data-hue='2'] { --hue: var(--ds-hue-2); }
+.group[data-hue='3'] { --hue: var(--ds-hue-3); }
+.group[data-hue='4'] { --hue: var(--ds-hue-4); }
+.group[data-hue='5'] { --hue: var(--ds-hue-5); }
+.group[data-hue='6'] { --hue: var(--ds-hue-6); }
+
+.group .dot {
+  background: var(--hue);
 }
 
 .items {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ds-space-2) var(--ds-space-5);
+  gap: 5px;
 }
 
+/* 胶囊：三档共用同一副骨架（圆角 / 内边距 / 字号），只有填充与描边两根旋钮在动。
+   形状一致是刻意的 —— 档位若连形状都变，云就成了三种东西混在一起。 */
 .item {
   display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: var(--ds-radius-pill);
+  border: 1px solid color-mix(in srgb, var(--hue) 30%, transparent);
+  background: color-mix(in srgb, var(--hue) 12%, transparent);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  color: var(--ds-c-text);
+  transition:
+    background-color 200ms var(--ds-ease-out),
+    border-color 200ms var(--ds-ease-out);
 }
 
 .itemName {
-  font-size: 0.9375rem;
-  color: var(--ds-c-text);
+  font-size: inherit;
 }
 
-/* 档位：紧贴名字的极小标记。用正文无衬线（不是等宽）—— 内容是中文 */
-.level {
-  font-size: 0.6875rem;
-  letter-spacing: 0.04em;
+/* 掌握：色相还在，只是更淡 */
+.item[data-tier='outline'] {
+  border-color: color-mix(in srgb, var(--hue) 20%, transparent);
+  background: color-mix(in srgb, var(--hue) 6%, transparent);
+  color: var(--ds-c-text-mute);
+}
+
+/* 了解：不给色相（整站只有一项落在这里，给色相反而把它顶得比「掌握」还显眼） */
+.item[data-tier='plain'] {
+  border-color: color-mix(in srgb, var(--ds-c-text) 12%, transparent);
+  background: transparent;
   color: var(--ds-c-text-subtle);
 }
 
-@media (max-width: 959px) {
-  .group {
-    grid-template-columns: 10rem minmax(0, 1fr);
+/* 图例样片与胶囊的权重一一对应（样片用品牌色，示意「深浅」这根旋钮） */
+.legendItem[data-tier='solid']::before {
+  background: color-mix(in srgb, var(--ds-c-accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ds-c-accent) 30%, transparent);
+}
+
+.legendItem[data-tier='outline']::before {
+  background: color-mix(in srgb, var(--ds-c-accent) 6%, transparent);
+  border-color: color-mix(in srgb, var(--ds-c-accent) 20%, transparent);
+}
+
+.legendItem[data-tier='plain']::before {
+  border-color: color-mix(in srgb, var(--ds-c-text) 12%, transparent);
+}
+
+/* 档位的文字形态：读屏可读、视觉为零（宽高取 0 而不是 1px，见组件里的注释） */
+.screenOnly {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item {
+    transition: none;
   }
 }
 
@@ -66,5 +165,13 @@
   .group {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--ds-space-2);
+  }
+
+  .groupTitle {
+    padding-top: 0;
+  }
+
+  .legend {
+    justify-content: flex-start;
   }
 }

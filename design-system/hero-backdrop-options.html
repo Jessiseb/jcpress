@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>jcpress 首屏背景候选（亮 / 暗各一套）</title>
+<style>
+  /* 令牌直接抄自 frontend/src/styles/theme.jcpress.css，改主题时这里要同步 */
+  :root{
+    --accent:#0756ab; --accent-bg:#096fdc; --accent-soft:rgb(7 86 171 / 10%);
+    --text:#17181c; --text-mute:rgb(23 24 28 / 88%); --text-subtle:rgb(23 24 28 / 74%);
+    --hairline:rgb(23 24 28 / 12%);
+    --bg:#fff; --bg-alt:#f6f6f7;
+    --atm1:rgb(9 111 220 / 6%); --atm2:rgb(92 7 171 / 4%);
+    --line:#0a6fd8;
+  }
+  .dark{
+    --accent:#4d9bff; --accent-bg:#096fdc; --accent-soft:rgb(77 155 255 / 14%);
+    --text:rgb(240 241 250 / 94%); --text-mute:rgb(240 241 250 / 72%); --text-subtle:rgb(240 241 250 / 60%);
+    --hairline:rgb(240 241 250 / 14%);
+    --bg:#08090c; --bg-alt:#05060a;
+    --atm1:rgb(35 136 246 / 10%); --atm2:rgb(144 35 246 / 7%);
+    --line:#4d9bff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:36px 30px 60px;background:#eef0f3;color:#242429;
+       font:15px/1.75 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+  h1{font:700 24px/1.3 Georgia,"Songti SC",serif;margin:0 0 6px}
+  .lead{color:#5c5f68;margin:0 0 8px;max-width:960px}
+  .lead b{color:#242429}
+  .rule{max-width:960px;margin:0 0 26px;padding:12px 16px;border-left:3px solid var(--accent-bg);
+        background:#fff;border-radius:0 8px 8px 0;font-size:13.5px;color:#4a4d56}
+  .rule code{background:#eef1f5;padding:1px 5px;border-radius:4px;font-size:12.5px}
+  .card{background:#fff;border:1px solid #dfe2e8;border-radius:14px;padding:20px 22px;margin-bottom:26px;max-width:1200px}
+  .card h2{font:700 18px/1.4 Georgia,"Songti SC",serif;margin:0 0 4px}
+  .card h2 span{font:400 12px/1 -apple-system,sans-serif;background:#eef1f5;border-radius:999px;
+                padding:3px 10px;color:#4b5563;vertical-align:3px;margin-left:8px}
+  .why{font-size:13.5px;color:#5c5f68;margin:0 0 16px;max-width:960px}
+  .why b{color:#242429}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:1000px){.pair{grid-template-columns:1fr}}
+  .pane{position:relative;height:300px;border-radius:12px;overflow:hidden;border:1px solid #dfe2e8}
+  .pane .tag{position:absolute;top:10px;left:12px;z-index:9;font-size:11px;letter-spacing:.14em;
+             text-transform:uppercase;color:var(--text-subtle)}
+  .stage{position:absolute;inset:0;background:var(--bg);
+         background-image:radial-gradient(60% 50% at 12% 0%,var(--atm1),transparent 70%),
+                          radial-gradient(50% 45% at 92% 8%,var(--atm2),transparent 72%)}
+  .copy{position:absolute;left:36px;top:64px;z-index:6;max-width:52%}
+  .copy .kicker{font-size:12px;letter-spacing:.1em;color:var(--text-subtle);margin:0 0 10px}
+  .copy h3{font:700 34px/1.18 Georgia,"Songti SC",serif;color:var(--text);margin:0 0 8px;
+           letter-spacing:-.01em}
+  .copy p{font-size:13px;color:var(--text-mute);margin:0}
+  .art{position:absolute;inset:0;z-index:2;pointer-events:none}
+  .art svg{width:100%;height:100%;display:block}
+  /* 环阵候选的公共几何 */
+  .stroke{fill:none;stroke:var(--line);vector-effect:non-scaling-stroke}
+  footer{color:#7b7e87;font-size:13px;max-width:960px}
+</style>
+</head>
+<body>
+<h1>首屏背景候选 · 亮暗各一套</h1>
+<p class="lead">四个候选都用<b>纯内联 SVG</b>画（不引入任何图片请求，和现有 <code>FlowField</code> 同一条纪律），
+配色只用你现有的令牌。左边是你现在的亮色（纸上编辑部），右边是暗色（剧场）。</p>
+<div class="rule">
+  <b>先回答「地球好不好看」：照片写实的地球不合适。</b>
+  它是<b>写实贴图</b>，自带一套蓝白黑的色彩，会和你的品牌蓝、两层氛围渐变、以及「全站图案统一走环装置」
+  这条纪律同时打架；在亮色下更是一坨黑影压在白纸上 —— 你的亮色首屏现在<b>没有任何深色块</b>。
+  但<b>球体这个几何形状可以做</b>：把它降级成「只用描边的抽象球」，它就变成了现有环装置的自然延伸。
+</div>
+
+<!-- ============ A 经纬环球 ============ -->
+<div class="card">
+  <h2>甲 · 经纬环球<span>最贴近现有语言</span></h2>
+  <p class="why">把 <code>RingField</code> 的同心环从 2D 升级成 3D：一条轮廓 + 若干条经线/纬线椭圆，全部 1px 描边、无填充、无贴图。
+     亮色下它像一张<b>工程制图</b>；暗色下同一条线自己发光。<b>零新增词汇</b> —— 只是环装置多了一个维度。</p>
+  <div class="pair">
+    <div class="pane">
+      <span class="tag">light · 纸上</span>
+      <div class="stage"></div>
+      <div class="art" data-art="meridian" data-op="light"></div>
+      <div class="copy"><p class="kicker">广州 · AI 应用开发</p><h3>庄家希<br>AI 应用开发工程师</h3><p>用 Agent 和 Java 把重复劳动自动化</p></div>
+    </div>
+    <div class="pane dark">
+      <span class="tag">dark · 剧场</span>
+      <div class="stage"></div>
+      <div class="art" data-art="meridian" data-op="dark"></div>
+      <div class="copy"><p class="kicker">广州 · AI 应用开发</p><h3>庄家希<br>AI 应用开发工程师</h3><p>用 Agent 和 Java 把重复劳动自动化</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ B 点阵球 ============ -->
+<div class="card">
+  <h2>乙 · 点阵球<span>最轻</span></h2>
+  <p class="why">球面按经纬撒点，<b>朝向观者的点更实、背面几乎透明</b>。没有任何曲线，全是小圆点 ——
+     和你的正文无衬线、发丝线是同一族的「排版感」。节点数可随视口分档（和流线层同一套降级策略），
+     亮色下几乎只剩一层淡淡的点雾。</p>
+  <div class="pair">
+    <div class="pane">
+      <span class="tag">light · 纸上</span>
+      <div class="stage"></div>
+      <div class="art" data-art="dots" data-op="light"></div>
+      <div class="copy"><p class="kicker">广州 · AI 应用开发</p><h3>庄家希<br>AI 应用开发工程师</h3><p>用 Agent 和 Java 把重复劳动自动化</p></div>
+    </div>
+    <div class="pane dark">
+      <span class="tag">dark · 剧场</span>
+      <div class="stage"></div>
+      <div class="art" data-art="dots" data-op="dark"></div>
+      <div class="copy"><p class="kicker">广州 · AI 应用开发</p><h3>庄家希<br>AI 应用开发工程师</h3><p>用 Agent 和 Java 把重复劳动自动化</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ C 晨昏线 ============ -->
+<div class="card">
+  <h2>丙 · 晨昏线<span>亮暗差异最大</span></h2>
+  <p class="why">只画一个<b>柔光圆 + 一条 1px 弧</b>，球体本身完全不画 —— 靠明暗交界「读」出球。
+     这个候选把你要的<b>「白天一套、黑夜一套」做成了同一套几何的两种光</b>：亮色是白纸上一道极淡的弧，
+     暗色是剧场里一颗自己发光的球。</p>
+  <div class="pair">
+    <div class="pane">
+      <span class="tag">light · 纸上</span>
+      <div class="stage"></div>
+      <div class="art" data-art="terminator" data-op="light"></div>
+      <div class="copy"><p class="kicker">广州 · AI 应用开发</p><h3>庄家希<br>AI 应用开发工程师</h3><p>用 Agent 和 Java 把重复劳动自动化</p></div>
+    </div>
+    <div class="pane dark">
+      <span class="tag">dark · 剧场</span>
+      <div class="stage"></div>
+      <div class="art" data-art="terminator" data-op="dark"></div>
+      <div class="copy"><p class="kicker">广州 · AI 应用开发</p><h3>庄家希<br>AI 应用开发工程师</h3><p>用 Agent 和 Java 把重复劳动自动化</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ D 环阵 ============ -->
+<div class="card">
+  <h2>丁 · 环阵<span>最保守</span></h2>
+  <p class="why">干脆不做球：三到四个同心椭圆轻微倾斜叠在一起，滚动时缓慢改变倾斜角。
+     这是<b>现有环装置的原地加强</b>，改动量最小、最不可能翻车，但「新意」也最少 ——
+     如果你要的是「首屏让人记住」，甲或丙更有效。</p>
+  <div class="pair">
+    <div class="pane">
+      <span class="tag">light · 纸上</span>
+      <div class="stage"></div>
+      <div class="art" data-art="rings" data-op="light"></div>
+      <div class="copy"><p class="kicker">广州 · AI 应用开发</p><h3>庄家希<br>AI 应用开发工程师</h3><p>用 Agent 和 Java 把重复劳动自动化</p></div>
+    </div>
+    <div class="pane dark">
+      <span class="tag">dark · 剧场</span>
+      <div class="stage"></div>
+      <div class="art" data-art="rings" data-op="dark"></div>
+      <div class="copy"><p class="kicker">广州 · AI 应用开发</p><h3>庄家希<br>AI 应用开发工程师</h3><p>用 Agent 和 Java 把重复劳动自动化</p></div>
+    </div>
+  </div>
+</div>
+
+<footer>预览文件：<code>design-system/hero-backdrop-options.html</code>（与 <code>palette-options.html</code> 同一套做法，不入构建产物）。
+所有几何都是内联 SVG，没有一次图片请求。</footer>
+
+<script>
+const NS = 'http://www.w3.org/2000/svg'
+const el = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e }
+
+/* 球体统一摆在画面右侧偏外，给左侧标题留出净空 */
+const CX = 74, CY = 46, R = 40            // 百分比坐标
+const vw = 100, vh = 100
+
+function svgRoot() {
+  return el('svg', { viewBox: '0 0 100 100', preserveAspectRatio: 'none' })
+}
+
+/* 甲：经纬环球 —— 轮廓 + 经线（竖椭圆，rx 变化）+ 纬线（横椭圆，ry 变化） */
+function meridian(op) {
+  const s = svgRoot()
+  const g = el('g', {
+    transform: `translate(${CX} ${CY})`,
+    stroke: 'var(--line)', fill: 'none', 'stroke-width': 1,
+    'vector-effect': 'non-scaling-stroke', opacity: op === 'light' ? 0.30 : 0.46,
+  })
+  g.appendChild(el('circle', { r: R }))
+  // 经线：rx 从 R 收到 0，视觉上就是球面纵向切片
+  const n = 5
+  for (let i = 1; i <= n; i++) {
+    const rx = R * Math.cos((i / (n + 1)) * Math.PI)
+    g.appendChild(el('ellipse', { rx: Math.abs(rx) < 0.6 ? 0.6 : Math.abs(rx), ry: R }))
+  }
+  // 纬线：ry 从 R 收到 0
+  const m = 4
+  for (let i = 1; i <= m; i++) {
+    const t = i / (m + 1)
+    g.appendChild(el('ellipse', { rx: R * Math.sin(t * Math.PI), ry: R * Math.sin(t * Math.PI) * 0.22, cy: -R * Math.cos(t * Math.PI) }))
+    g.appendChild(el('ellipse', { rx: R * Math.sin(t * Math.PI), ry: R * Math.sin(t * Math.PI) * 0.22, cy: R * Math.cos(t * Math.PI) }))
+  }
+  s.appendChild(g)
+  return s
+}
+
+/* 乙：点阵球 —— 正交感投影，按 z 决定半径与透明度 */
+function dots(op) {
+  const s = svgRoot()
+  const g = el('g', { transform: `translate(${CX} ${CY})`, fill: 'var(--line)' })
+  const LAT = 13, LON = 20
+  for (let i = 1; i < LAT; i++) {
+    const phi = (i / LAT) * Math.PI
+    for (let j = 0; j < LON; j++) {
+      const th = (j / LON) * Math.PI * 2
+      const x = Math.sin(phi) * Math.cos(th), y = Math.cos(phi), z = Math.sin(phi) * Math.sin(th)
+      if (z < 0.05) continue                       // 只画朝向观者的半球
+      const r = 0.16 + 0.20 * z
+      const a = (op === 'light' ? 0.14 : 0.22) + (op === 'light' ? 0.34 : 0.48) * z
+      g.appendChild(el('circle', { cx: x * R, cy: y * R, r, opacity: a.toFixed(3) }))
+    }
+  }
+  // 一圈极淡的轮廓，避免点阵在边缘散掉
+  g.appendChild(el('circle', { r: R, fill: 'none', stroke: 'var(--line)', 'stroke-width': 1,
+    'vector-effect': 'non-scaling-stroke', opacity: op === 'light' ? 0.16 : 0.26 }))
+  s.appendChild(g)
+  return s
+}
+
+/* 丙：晨昏线 —— 一颗柔光球 + 一条明暗交界弧，球面不描边 */
+function terminator(op) {
+  const s = svgRoot()
+  const defs = el('defs')
+  const id = 'glow-' + op
+  const rad = el('radialGradient', { id, cx: '34%', cy: '32%', r: '78%' })
+  if (op === 'light') {
+    rad.appendChild(el('stop', { offset: '0%', 'stop-color': 'var(--line)', 'stop-opacity': '0.20' }))
+    rad.appendChild(el('stop', { offset: '58%', 'stop-color': 'var(--line)', 'stop-opacity': '0.07' }))
+    rad.appendChild(el('stop', { offset: '100%', 'stop-color': 'var(--line)', 'stop-opacity': '0' }))
+  } else {
+    rad.appendChild(el('stop', { offset: '0%', 'stop-color': 'var(--line)', 'stop-opacity': '0.42' }))
+    rad.appendChild(el('stop', { offset: '55%', 'stop-color': 'var(--line)', 'stop-opacity': '0.14' }))
+    rad.appendChild(el('stop', { offset: '100%', 'stop-color': 'var(--line)', 'stop-opacity': '0.02' }))
+  }
+  defs.appendChild(rad)
+  s.appendChild(defs)
+  const g = el('g', { transform: `translate(${CX} ${CY})` })
+  g.appendChild(el('circle', { r: R, fill: `url(#${id})` }))
+  // 明暗交界：一条竖椭圆弧（只取右半），暗示光源在左上
+  g.appendChild(el('ellipse', {
+    rx: R * 0.42, ry: R, fill: 'none', stroke: 'var(--line)', 'stroke-width': 1,
+    'vector-effect': 'non-scaling-stroke', opacity: op === 'light' ? 0.34 : 0.5,
+    'stroke-dasharray': 'none', transform: 'rotate(18)',
+  }))
+  g.appendChild(el('circle', { r: R, fill: 'none', stroke: 'var(--line)', 'stroke-width': 1,
+    'vector-effect': 'non-scaling-stroke', opacity: op === 'light' ? 0.18 : 0.3 }))
+  s.appendChild(g)
+  return s
+}
+
+/* 丁：环阵 —— 现有环装置的原地加强 */
+function rings(op) {
+  const s = svgRoot()
+  const g = el('g', { transform: `translate(${CX} ${CY})`, fill: 'none', stroke: 'var(--line)',
+    'stroke-width': 1, 'vector-effect': 'non-scaling-stroke' })
+  const spec = [
+    { rx: R * 1.06, ry: R * 0.30, rot: -14, a: 0.34 },
+    { rx: R * 0.86, ry: R * 0.24, rot: 8, a: 0.26 },
+    { rx: R * 0.64, ry: R * 0.18, rot: -22, a: 0.20 },
+    { rx: R * 0.44, ry: R * 0.12, rot: 16, a: 0.14 },
+  ]
+  spec.forEach((r) => {
+    g.appendChild(el('ellipse', { rx: r.rx, ry: r.ry, transform: `rotate(${r.rot})`,
+      opacity: (op === 'light' ? r.a : r.a + 0.16).toFixed(2) }))
+  })
+  s.appendChild(g)
+  return s
+}
+
+const builders = { meridian, dots, terminator, rings }
+document.querySelectorAll('.art').forEach((host) => {
+  host.appendChild(builders[host.dataset.art](host.dataset.op))
+})
+</script>
+</body>
+</html>
