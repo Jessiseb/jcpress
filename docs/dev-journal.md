@@ -1641,3 +1641,50 @@ brainstorm 阶段到此**闭合**（技能要求的九步：探索 → 视觉伴
 
 到此四件产物齐全，`openspec status` 报 **"All planning artifacts complete!"**。
 下一步：按 `tasks.md` 的 6 组 33 项开工，第一件是 **W1 Task 1.1**（建 `backend/` 骨架）。
+
+---
+
+## 阶段 34 · W1 后端骨架（tasks 1.1–1.6、1.8）· 2026-10-02
+
+### 34.1 我这一步发的关键原话
+
+**无新指令**。用户上一条「计划通过，开始实施」覆盖本阶段全部动作。
+
+### 34.2 AI 关键产出
+
+| 项 | 内容 |
+| --- | --- |
+| 工程 | `backend/`（SB 3.3.4 / Java 17 / 21 个依赖，已删掉模板的 ES/COS/微信/Excel/session/knife4j-openapi2） |
+| 统一契约 | `Result` / `PageResult` / `ErrorCodeEnum`（**每个码自带 HTTP 状态**）/ `BusinessException` / `ThrowUtils` / `GlobalExceptionHandler`（含 `NotLoginException` → 401 口径）/ `TraceIdFilter` |
+| JSON | `GsonConfig.buildGson()` + 三个适配器（Long 字符串化 / LocalDateTime / LocalDate）；转换器插第 0 位，Jackson 留在 classpath |
+| 数据层 | `MyBatisPlusConfig`（**故意不配 logic-delete**）、`V1__init_schema.sql`（§6 的 7 张表，含 ngram 全文索引）、`application-{dev,test}.yml` |
+| 鉴权 | `SaTokenConfigure`（只守 `/v1/admin/**`，登录放行） |
+| 冒烟入口 | `HealthService` + `HealthController`（`/api/health`，DB 与 Redis 探活） |
+| **测试** | **13/13 全绿**（`PageQueryTest` 3 / `GsonContractTest` 3 / `FlywayMigrationTest` 3 / `SaTokenRedisTest` 1 / `HealthControllerTest` 1 / `ResultContractTest` 2） |
+
+**验证命令与实测**：`mvn -q -DskipTests compile` exit 0；`mvn test` → `Tests run: 13, Failures: 0, Errors: 0`；Flyway 日志 `Migrating schema jcpress_test to version "1 - init schema"`。
+
+### 34.3 ★ 全期最大的高风险假设已退役
+
+`SaTokenRedisTest` **通过** —— Sa-Token **1.44.0** + Spring Boot 3.3.4 + **本机 Redis 5.0.14** 的整条链路真实可用：登录签发 token → 写进 Redis（键前缀 `jcpress-token`）→ 按 token 反查登录主体 → **续期**（1.46.0 正是死在这一步的 `SET ... KEEPTTL` 上）→ 登出后同 token 返回 **401 + 40102**。
+
+设计里为它准备的备选方案（自研 `SaTokenDao`）**不需要了**。这条结论回写进 `openspec/changes/phase-3-tech-module/design.md` 的风险表。
+
+### 34.4 被驳回 / 纠偏
+
+本轮**无用户纠偏**。我自己改了计划两处：
+
+1. **`RedisConfig` 不建了**：计划里要注册一个 `StringRedisTemplate` Bean，但 Spring Boot 已经自动配置好了（`@ConditionalOnMissingBean`），再定义一个只是重复。少一个类。
+2. **`NotLoginException` 的 401 映射提前到 W1**（原计划在 W3 Task 4）：它与"统一响应体"是同一个关注点，而且 `SaTokenRedisTest` 的最后一步需要一个正确的 401 才能绿。提前做掉比留一个红测试好。
+
+### 34.5 翻车与返工（三条，都是真金）
+
+| # | 现象 | 归因 | 处置 |
+| --- | --- | --- | --- |
+| ① | 契约测试期望 404，实得 **500** | 探针控制器写成**测试类的静态嵌套类**，`@WebMvcTest(controllers = ...)` 不会把它注册成处理器 → 请求落到静态资源兜底 → `NoResourceFoundException` → 被当成"未预期异常"。**表现极像"异常映射写错了"** | 改成顶层 fixture `web/support/ExceptionProbeController.java`，并在类注释里写明原因 |
+| ② | 加了 `SaTokenConfigure` 之后，**所有切片测试一起变 500**（连不归它管的 `/health` 也是） | `@WebMvcTest` 只加载 Web 相关自动配置，**不含 Sa-Token 的自动配置** → `SaTokenContext` 未初始化 → `SaInterceptor.preHandle` 里第一件事 `SaRouter.match()` → `SaHolder.getRequest()` → `SaTokenContextException` | 新增元注解 `@WebSliceTest`（= `@WebMvcTest` + 排除 `SaTokenConfigure`），注释里写明"需要验鉴权链路的测试必须用 `@SpringBootTest + @AutoConfigureMockMvc`，不要用切片" |
+| ③ | `SaTokenRedisTest` 报 `No value at JSON path "$.data.tokenName"` | 探针控制器返回**裸 Map**，没有套统一响应体 —— 测试按契约断言 `$.data.*`，自然取不到 | 探针改为返回 `Result<Map<String,Object>>` |
+
+**另一条环境向的坑（值得晋级为纪律）**：`git commit -m "…"` 的消息里含**中文引号**时，PowerShell 会把参数截断，git 报 `pathspec '异常处理器答了个' did not match` —— 看起来像 git 出错，实际是 shell 引号。**以后提交信息一律走 `git commit -F <文件>`**。
+
+**归因**：①②③ 是同一类问题的三种表现 —— **"我以为是产品代码错了，其实是测试环境没搭对"**。三次我都先去读真实堆栈（surefire 报告 / 原始日志），没有凭现象改产品代码，这一步是对的。

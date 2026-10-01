@@ -1,5 +1,6 @@
 package com.jcpress.common.exception;
 
+import cn.dev33.satoken.exception.NotLoginException;
 import com.jcpress.common.result.Result;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,21 @@ public class GlobalExceptionHandler {
         log.warn("参数校验失败 {}", detail);
         return ResponseEntity.status(ErrorCodeEnum.PARAM_ERROR.getHttpStatus())
                 .body(Result.error(ErrorCodeEnum.PARAM_ERROR, detail));
+    }
+
+    /**
+     * Sa-Token 的未登录异常 → 401（不是 500）。
+     *
+     * 口径固定为：**完全没带 token → 40101 未登录**；带了但无效 / 过期 / 被顶下线 → **40102**。
+     * 两者 HTTP 状态码都是 401（规划 §9.1：状态码与业务码同时正确）。
+     */
+    @ExceptionHandler(NotLoginException.class)
+    public ResponseEntity<Result<Void>> handleNotLogin(NotLoginException e) {
+        ErrorCodeEnum errorCode = NotLoginException.NOT_TOKEN.equals(e.getType())
+                ? ErrorCodeEnum.NOT_LOGIN
+                : ErrorCodeEnum.TOKEN_INVALID;
+        log.warn("未登录或登录失效 type={} message={}", e.getType(), e.getMessage());
+        return ResponseEntity.status(errorCode.getHttpStatus()).body(Result.error(errorCode));
     }
 
     /** 兜底：日志留现场，前端只拿到脱敏文案 */

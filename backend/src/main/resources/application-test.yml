@@ -1,0 +1,26 @@
+# 测试环境：用本机专用库 + Redis 独立 db，避免污染开发数据。
+# 为什么不用 Testcontainers：本机 Docker Desktop 未运行（见 docs/decisions.md 环境表）。
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/jcpress_test?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: 123456
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 15
+      timeout: 5000
+  flyway:
+    # 测试库允许被清理重建（生产禁用）
+    clean-disabled: false
+
+mybatis-plus:
+  configuration:
+    # 测试里不需要把每条 SQL 都打到控制台
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+logging:
+  level:
+    com.jcpress: info

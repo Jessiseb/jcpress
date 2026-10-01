@@ -2,9 +2,9 @@ package com.jcpress.web;
 
 import com.jcpress.common.exception.GlobalExceptionHandler;
 import com.jcpress.web.support.ExceptionProbeController;
+import com.jcpress.web.support.WebSliceTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 这是模板没做到、而规划 §9.1 明确要求的一条：**HTTP 状态码与业务码必须同时正确**
  * （官方模板一律返回 HTTP 200，再靠 code 区分）。
  */
-@WebMvcTest(controllers = ExceptionProbeController.class)
+@WebSliceTest(controllers = ExceptionProbeController.class)
 @Import(GlobalExceptionHandler.class)
 class ResultContractTest {
 
