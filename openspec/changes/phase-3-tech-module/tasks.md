@@ -5,15 +5,15 @@
 
 ## 1. W1 后端骨架与规约卡口
 
-- [ ] 1.1 建立 `backend/` 工程骨架（pom 升到 Spring Boot 3.3.4 / Java 17、删 ES/COS/微信/Excel/session/knife4j-openapi2、启动类不 exclude Redis、复制 mvnw），验证 `JAVA_HOME=<jdk-17> mvn -q -DskipTests compile` 退出码为 0
-- [ ] 1.2 实现统一响应体与全局异常映射（`Result{code,message,data,traceId}`、`ErrorCodeEnum` 自带 HTTP 状态、`TraceIdFilter`），验证 `ResultContractTest` 全绿且「HTTP 状态码与业务码同时正确」
-- [ ] 1.3 用 Gson 取代 Jackson（`LongToStringAdapter` / `LocalDateTimeAdapter` / `LocalDateAdapter`、`serializeNulls`、转换器插到第 0 位、Jackson 保留在 classpath），验证 `GsonContractTest` 三条断言（Long 字符串化 / 时间格式 / null 字段）全绿
-- [ ] 1.4 接入数据源 + MyBatis-Plus + Flyway 并落规划 §6 的 7 张表（**不配置** `logic-delete-field`），验证 `FlywayMigrationTest` 全绿且 ngram 全文索引可被 `MATCH ... AGAINST` 查询
-- [ ] 1.5 接入 Redis 与 Sa-Token 1.44.0，并**先跑运行时探针**（登录 → 写 Redis → 读回 → 续期 → 登出），验证 `SaTokenRedisTest` 全绿；若失败则按 design D-D 的备选改自研 `SaTokenDao` 并把结论回写 `docs/decisions.md`
-- [ ] 1.6 实现分页查询对象（`size` 服务端限幅 50）与 `HealthService` 分层骨架（接口 + impl、构造器注入），验证 `PageQueryTest` 全绿
-- [ ] 1.7 把 `Agent.md` 与规划 §11.4 的规则落成卡口：ArchUnit 12 条（分层方向、portal/admin 互斥、禁字段注入、动词前缀、禁 `QueryWrapper`、只用 GET/POST、方法级 `@RequestMapping` 须声明 method）+ 源码文本扫描（Lombok 白名单、`RequestMethod.PUT/PATCH/DELETE`），验证 `mvn -q test -Dtest='ArchitectureTest,SourceConventionTest'` 全绿
-- [ ] 1.8 实现 `/api/health` 探活接口（含 DB 与 Redis），验证 MockMvc 契约测试全绿，且真启动一次后 `curl /api/health` 返回 `code=0` 与 `db=UP`、`redis=UP`
-- [ ] 1.9 W1 出口复核：验证 `compile` + `mvn test`（全量）+ 冒烟三条全绿，并在 `docs/dev-journal.md` 追加 W1 留痕后提交
+- [x] 1.1 建立 `backend/` 工程骨架（pom 升到 Spring Boot 3.3.4 / Java 17、删 ES/COS/微信/Excel/session/knife4j-openapi2、启动类不 exclude Redis、复制 mvnw），验证 `JAVA_HOME=<jdk-17> mvn -q -DskipTests compile` 退出码为 0
+- [x] 1.2 实现统一响应体与全局异常映射（`Result{code,message,data,traceId}`、`ErrorCodeEnum` 自带 HTTP 状态、`TraceIdFilter`），验证 `ResultContractTest` 全绿且「HTTP 状态码与业务码同时正确」
+- [x] 1.3 用 Gson 取代 Jackson（`LongToStringAdapter` / `LocalDateTimeAdapter` / `LocalDateAdapter`、`serializeNulls`、转换器插到第 0 位、Jackson 保留在 classpath），验证 `GsonContractTest` 三条断言（Long 字符串化 / 时间格式 / null 字段）全绿
+- [x] 1.4 接入数据源 + MyBatis-Plus + Flyway 并落规划 §6 的 7 张表（**不配置** `logic-delete-field`），验证 `FlywayMigrationTest` 全绿且 ngram 全文索引可被 `MATCH ... AGAINST` 查询
+- [x] 1.5 接入 Redis 与 Sa-Token 1.44.0，并**先跑运行时探针**（登录 → 写 Redis → 读回 → 续期 → 登出），验证 `SaTokenRedisTest` 全绿；若失败则按 design D-D 的备选改自研 `SaTokenDao` 并把结论回写 `docs/decisions.md` —— **实测通过，备选不需要**（见 decisions #106）
+- [x] 1.6 实现分页查询对象（`size` 服务端限幅 50）与 `HealthService` 分层骨架（接口 + impl、构造器注入），验证 `PageQueryTest` 全绿
+- [x] 1.7 把 `Agent.md` 与规划 §11.4 的规则落成卡口：ArchUnit 12 条（分层方向、portal/admin 互斥、禁字段注入、动词前缀、禁 `QueryWrapper`、只用 GET/POST、方法级 `@RequestMapping` 须声明 method）+ 源码文本扫描（Lombok 白名单、`RequestMethod.PUT/PATCH/DELETE`），验证 `mvn -q test -Dtest='ArchitectureTest,SourceConventionTest'` 全绿，并**做一次反向验证**证明卡口真的会红（见 decisions #101）
+- [x] 1.8 实现 `/api/health` 探活接口（含 DB 与 Redis），验证 MockMvc 契约测试全绿，且真启动一次后 `curl /api/health` 返回 `code=0` 与 `db=UP`、`redis=UP`
+- [x] 1.9 W1 出口复核：验证 `compile` + `mvn test`（全量）+ 冒烟三条全绿，并在 `docs/dev-journal.md` 追加 W1 留痕后提交
 
 ## 2. W2 技术分享领域与公开接口
 
