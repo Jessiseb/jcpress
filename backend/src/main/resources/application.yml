@@ -54,7 +54,11 @@ jcpress:
     max-bytes: 5242880
 
 knife4j:
-  enable: true
+  # 只在 dev 打开（见 application-dev.yml）。默认关掉的原因不只是"没必要"：
+  # 它的自动配置依赖 springdoc 的 Bean，而非 Web 模式（importer profile）下没有这些 Bean，
+  # 于是上下文初始化直接失败 —— 实测报
+  # "No qualifying bean of type SpringDocConfigProperties available"。
+  enable: false
   openapi:
     title: jcpress 接口文档
     version: 1.0

@@ -14,3 +14,7 @@ spring:
 logging:
   level:
     com.jcpress: debug
+
+# 接口文档只在开发环境打开
+knife4j:
+  enable: true

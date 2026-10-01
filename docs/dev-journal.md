@@ -1831,3 +1831,50 @@ W5 做导入器时会补 `content/tech/phase-3-backend-retro.md`，届时那篇�
 ### 36.5 一处刻意的设计取舍（上传 URL 的两个前缀）
 
 `resource-path=/uploads`（服务端资源映射，相对 context-path）与 `public-prefix=/api/uploads`（写进正文的对外 URL）**必须是两个键**。因为后端 `context-path=/api`，文件实际服务在 `/api/uploads/...`；混用会让正文里的图片 404 —— 而这**只有在肉眼看图时才会发现**。第 ⑧ 步"直接访问返回的 URL 得到 200"就是为它写的验证。
+
+---
+
+## 阶段 37 · W5 Markdown 导入器（tasks 4.1–4.4）· 2026-10-02
+
+### 37.1 我这一步发的关键原话
+
+**无新指令**（「计划通过，开始实施」继续覆盖）。
+
+### 37.2 AI 关键产出
+
+| 项 | 内容 |
+| --- | --- |
+| 导入器 | `FrontMatter` / `FrontMatterParser`（SnakeYAML，零新增依赖）/ `ImportException` / `ImportItem` / `ImportReport` / `MarkdownImporter` / `ImportRunner` |
+| 配置 | `application-importer.yml`（`web-application-type: none`，CLI 模式） |
+| 仓库源 | `content/tech/phase-3-backend-retro.md`（**从 V2 的正文里提取生成**，逐字一致，避免手抄漂移） |
+| **测试** | **110/110 全绿**（W5 新增 6 条：首次新增 / 再次更新 / 坏文件整批不写 / 缺 front-matter / slug 非法 / 空目录 / 已发布缺时间兜底） |
+
+**CLI 实测（真打包成 jar 跑，三个场景）**：
+
+| 场景 | 结果 |
+| --- | --- |
+| `--import=../content/tech --dry-run` | **退出码 0、8.0s**；输出「将处理 1 个文件 / 未写库」；库中文章数不变 |
+| `--import=../content/tech` | **退出码 0**；输出「**新增 0 篇 / 更新 1 篇 / 跳过 0 篇 / 失败 0 篇**」；`gmt_modified` 从 `02:05:57` → `02:18:47`（**是更新而不是重复插入**） |
+| 不带 `--import` | **退出码 0、8.1s**，只有启动/关闭日志，零导入动作 |
+
+### 37.3 被驳回 / 纠偏
+
+本轮**无用户纠偏**，但有两处**环境/框架反过来纠正了我**（见 37.4）。
+
+### 37.4 翻车与返工（两处真问题，都在 CLI 第一次真跑时暴露）
+
+| # | 现象 | 归因 | 处置 |
+| --- | --- | --- | --- |
+| ① | 导入器 CLI **跑完不退出**，`java` 进程存活 12 分钟 | `@EnableScheduling` 在启动类上，**Spring 的调度线程池是非守护线程** → `ApplicationRunner` 干完活 JVM 也不退。更糟的是日志里看到 `[scheduling-1] ArticleViewManager : 浏览量回写完成` —— **CLI 导入一次内容，却把浏览量刷回了数据库** | `@EnableScheduling` 移到 `SchedulingConfig` 并带 `@Profile("!importer")`；`ImportRunner` 干完活显式 `System.exit(SpringApplication.exit(...))`，输入错误用非 0 退出码 → decisions #118 |
+| ② | 同一个 profile 启动直接失败：`No qualifying bean of type SpringDocConfigProperties available` | knife4j 的 `knife4jOpenApiCustomizer` 依赖 springdoc 的 Bean，而**非 Web 模式**（`web-application-type: none`）没有它们 | `knife4j.enable` 默认 false，只在 dev 打开（它本来就是开发期工具）→ decisions #119 |
+
+**这两条是同一类问题**：把一个"Web 应用"的配置（定时任务、接口文档）留在了**共享的公共配置**里，于是 CLI 模式被它拖住。触发条件很隐蔽 —— 只有"真的以 CLI 方式跑一次"才会暴露，单元测试跑不到。
+
+**归因**：我写 `application-importer.yml` 时只想到了"不起 Tomcat"，没想到**启动类上的注解同样会生效**。
+教训：**新增一个运行形态（CLI / worker / 定时任务）时，要回头审一遍所有全局开关**（`@Enable*`、自动配置、公共 yml）。
+
+### 37.5 一处刻意的做法
+
+`content/tech/phase-3-backend-retro.md` **不是手写的**，而是用脚本从 `V2__seed_data.sql` 里把正文提取出来再拼上 front-matter 生成的 —— 目的是保证"仓库里的 Markdown 源"与"数据库里的种子内容"**逐字一致**。手抄一遍不仅费时，还会在将来某次导入时把正文悄悄改短（导入是 upsert，短的那份会覆盖长的）。
+
+**环境坑（值得记）**：Windows 下把 Java 进程输出重定向到文件时，**logback 写的是 GBK、`System.out` 写的是 UTF-8**，同一个日志文件里两种编码混在一起，中文必然有一部分乱码（能看到「新增 0 篇 / 更新 1 篇」这种数字可辨、文字乱码的行）。排查时不要以为是程序输出有问题。

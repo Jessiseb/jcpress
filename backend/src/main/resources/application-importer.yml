@@ -1,0 +1,37 @@
+# 导入器 profile：CLI 模式，不起 Web 容器
+#
+# 用法：
+#   java -jar target/jcpress-backend-0.1.0-SNAPSHOT.jar \
+#        --spring.profiles.active=importer --import=../content/tech --dry-run
+#
+# 说明：数据库连接沿用 dev 的那一套（导入是本地维护动作），所以这里再显式写一遍 ——
+# 只靠 application.yml 的公共配置是没有 datasource 的。
+spring:
+  main:
+    web-application-type: none
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/jcpress?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: 123456
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 0
+      timeout: 5000
+  flyway:
+    enabled: true
+
+# 导入是批处理，不需要 Sa-Token 与定时任务刷屏，也不需要把每条 SQL 打出来
+sa-token:
+  is-log: false
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+logging:
+  level:
+    root: warn
+    com.jcpress: info

@@ -39,10 +39,10 @@
 
 ## 4. W5 Markdown 导入器
 
-- [ ] 4.1 实现 front-matter 解析与校验（SnakeYAML，无新增依赖；title/slug/category 必填、slug 格式、status 枚举），验证「缺 front-matter」「分类不存在」「空目录」三种失败都带文件名或明确原因
-- [ ] 4.2 实现导入器主流程（两段式：先全量解析校验、再单事务落库；按「类型 + slug」幂等；永不删除已发布内容；已发布但缺时间时兜底为导入时刻），验证 `MarkdownImporterTest` 四条全绿（首次新增 / 再次更新 / 坏文件整批不写 / 空目录报错）
-- [ ] 4.3 实现 CLI 入口与 `application-importer.yml`（非 web 模式、无 HTTP 端点、无参数则静默退出）、写 `content/tech/*.md` 仓库源，验证 `--dry-run` 打印将处理清单且库不变、真导入报告「新增 0 / 更新 1」
-- [ ] 4.4 W5 出口复核：在 `docs/dev-journal.md` 追加 W5 留痕（含导入器实测输出）后提交
+- [x] 4.1 实现 front-matter 解析与校验（SnakeYAML，无新增依赖；title/slug/category 必填、slug 格式、status 枚举），验证「缺 front-matter」「分类不存在」「空目录」三种失败都带文件名或明确原因
+- [x] 4.2 实现导入器主流程（两段式：先全量解析校验、再单事务落库；按「类型 + slug」幂等；永不删除已发布内容；已发布但缺时间时兜底为导入时刻），验证 `MarkdownImporterTest` 四条全绿（首次新增 / 再次更新 / 坏文件整批不写 / 空目录报错）
+- [x] 4.3 实现 CLI 入口与 `application-importer.yml`（非 web 模式、无 HTTP 端点、无参数则静默退出）、写 `content/tech/*.md` 仓库源，验证 `--dry-run` 打印将处理清单且库不变、真导入报告「新增 0 / 更新 1」
+- [x] 4.4 W5 出口复核：在 `docs/dev-journal.md` 追加 W5 留痕（含导入器实测输出）后提交
 
 ## 5. W4 前台与后台 UI
 
