@@ -18,10 +18,12 @@
 
 | 文件 | 范围 | 状态 |
 | --- | --- | --- |
-| **本文件** | 索引 + **W1 后端骨架与规约卡口** | ✅ 已写 |
-| `docs/plan-tech-module-w2-domain.md` | W2 技术分享领域 + 公开接口 | 待写 |
-| `docs/plan-tech-module-w3-admin-importer.md` | W3 后台写平面（登录/增改删/发布/上传/审计）**+ W5 Markdown 导入器 CLI** | 待写 |
-| `docs/plan-tech-module-w4-frontend.md` | W4 前台三页 + 后台写入口 UI + 视觉改版 | 待写 |
+| **本文件** | 索引 + **W1 后端骨架与规约卡口** | ✅ 1471 行 / 9 任务 / 50 步 |
+| `docs/plan-tech-module-w2-domain.md` | W2 技术分享领域 + 公开接口 | ✅ 1442 行 / 8 任务 / 48 步 |
+| `docs/plan-tech-module-w3-admin-importer.md` | W3 后台写平面（登录/增改删/发布/上传/审计）**+ W5 Markdown 导入器 CLI** | ✅ 2422 行 / 9 任务 / 57 步 |
+| `docs/plan-tech-module-w4-frontend.md` | W4 前台三页 + 后台写入口 UI + 视觉改版 | ✅ 1706 行 / 10 任务 / 65 步 |
+
+**合计：36 个任务 / 220 个可执行步骤。** 每个工作流都以「过验收门 + 追加 dev-journal 留痕 + commit」收口。
 
 **对技能的一处适配（如实记录）**：writing-plans 要求「每个改代码的步骤都给出完整代码」。本计划对**含逻辑的部分**（配置、Gson 适配器、异常映射、SQL、ArchUnit 规则、Service 逻辑、测试、React 组件）给出可直接落盘的真实代码；对**无逻辑样板**（DO/DTO/VO 这类纯字段类，本期约 20 个）不逐行重复，改为「**1 个完整示例 + 逐字段表**（字段名 / 类型 / 注解）」。理由：样板逐行抄会把计划膨胀到数千行而信息量不增，且字段表已消除全部猜测空间。**该适配已记入开发日志。**
 

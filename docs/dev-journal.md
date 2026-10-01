@@ -1538,3 +1538,60 @@ A 档测的是「`load` 之后不等待、直接采样 3 秒」，这 3 秒里�
 
 brainstorm 阶段到此**闭合**（技能要求的九步：探索 → 视觉伴侣征询 → 澄清 → 备选 → 分节呈现 → 写文档 → 自查 → 用户复核 → 转 writing-plans 中的前八步已完成）。
 下一步：`writing-plans` 产出 `docs/plan-tech-module.md` → **计划评审**（用户第二次卡口）。
+
+---
+
+## 阶段 32 · 三期实施计划（writing-plans）· **计划评审通过**（2026-10-02）
+
+### 32.1 我这一步发的关键原话
+
+> **「计划通过，开始实施（推荐）」**
+
+（这之前的四轮里，用户对计划本身没有提出修改 —— 因为我在每份计划写完时都先做了一遍 self-review，把会失败的写法就地修掉了。）
+
+### 32.2 AI 关键产出
+
+| 产出 | 路径 | 规模 |
+| --- | --- | --- |
+| 计划索引 + W1 后端骨架 | [`docs/plan-tech-module.md`](plan-tech-module.md) | 1471 行 / 9 任务 / 50 步 |
+| W2 领域与公开接口 | [`docs/plan-tech-module-w2-domain.md`](plan-tech-module-w2-domain.md) | 1442 行 / 8 任务 / 48 步 |
+| W3 后台写平面 + W5 导入器 | [`docs/plan-tech-module-w3-admin-importer.md`](plan-tech-module-w3-admin-importer.md) | 2422 行 / 9 任务 / 57 步 |
+| W4 前台与后台 UI | [`docs/plan-tech-module-w4-frontend.md`](plan-tech-module-w4-frontend.md) | 1706 行 / 10 任务 / 65 步 |
+| | **合计** | **7041 行 / 36 任务 / 220 步** |
+
+提交序列：`8c5caab`（索引+W1）→ `597162d`（W2）→ `75c51f6`（W3+W5）→ `510dd41`（W4）。全部在分支 `feat/phase-3-tech-module` 上。
+
+**每个工作流的收口动作都写进了计划**：过验收门 → 追加本日志一段（四样）→ commit。所以「每完成一个阶段就补一段」这条要求是**计划里的一个显式步骤**，不是靠自觉。
+
+### 32.3 被驳回 / 纠偏
+
+本轮**无**。用户在计划评审时直接通过。
+
+### 32.4 翻车与返工（计划期的 self-review 战果 —— 21 处）
+
+**没有环境翻车**，但写计划本身逮出 **21 处「照抄就会失败」的写法**。按性质分五类（这是本轮最值钱的部分）：
+
+| 类别 | 数量 | 具体 |
+| --- | --- | --- |
+| **照抄编译不过** | 5 | ① ArchUnit `noFields().should().beAnnotatedWith(A).andShould().beAnnotatedWith(B)` 语义是"两个注解都有才违规"（规则等于失效）；② 方法判据用了不确定存在的 `.areNotStatic()`；③ `redis.rename()` 实际返回 `void`；④ `import type { Root } from 'hast'`（`@types/hast` 只是传递依赖）；⑤ CodeMirror `paste` 的形参是 `Event`，取不到 `clipboardData` |
+| **编译能过但测试必红** | 5 | ⑥ `jsonPath("$.data").doesNotExist()`（我们开了 `serializeNulls`，`data:null` 会出现）；⑦ `getLoginIdByToken()` 经 Redis 回来可能是 `Long`，直接比字符串假红；⑧ **Sa-Token 的 `StpUtil.login()` 需要 web 请求级上下文**，非 web 的 `@SpringBootTest` 里必抛异常（整条测试策略要改）；⑨ `LocalFileStorage` 的 `@PostConstruct` 建目录方法包级私有，测试在另一个包调不到；⑩ "超限"用例是 1MB 上限配 2KB 文件 |
+| **静默功能缺陷**（不报错但功能不对） | 5 | ⑪ **上传图片的 URL 前缀只有一个配置键** —— 它同时要当 `addResourceHandlers` 的（相对 context-path）路径与写进正文的对外 URL，两者不可能相同，正文里的图片会 **404**；⑫ 导入器新建「已发布」文时 `publish_time` 为 null → 公开列表（要求 `IS NOT NULL`）**看不见它**；⑬ `AdminArticleService` 缺 `listForAdmin`/`getForAdmin` 实现、`AdminArticleVO` 缺 `contentMd` → 后台编辑页拿不到正文；⑭ 首页新区块漏 `aria-labelledby` → `useActiveScene` 不把它算成 scene，**区块数仍是 7**，停靠分析全部建立在错误前提上；⑮ `WebMvcConfig` 手拼 `"file:" + Windows 反斜杠路径` |
+| **假绿**（测了等于没测） | 2 | ⑯ 「裸 `@RequestMapping`」用**文本正则**查，分不清类级/方法级，会误伤 `@RequestMapping("/v1/articles")` 这种标准写法，**等于我自己的卡口卡死我自己的 Controller**；⑰ 停靠探针用 `field.querySelector('*')` 取天体，选择器取错会永远报「压字 0 处」（已改成 `:scope > *` 并要求先读 `CelestialField.tsx` 确认真实结构） |
+| **设计层不可行 / 边界错误** | 2 | ⑱ 设计 D8 的「slug 自动从标题生成」对**中文标题做不到**（要拼音库，本期没批）；⑲ Mapper 直接回 VO 破坏 `repository` 只碰 DO/投影的层次边界 |
+
+（⑩ 的"超限用例假绿"已计入「编译能过但测试必红」一栏，不重复计数。）
+
+另外补了 2 处**声明缺漏**：`CategoryMapper.getByScopeAndSlug`（导入器解析 `category: java-backend` 要用）、`ArticleMapper.listForAdmin`。
+
+**归因**：这 21 处里有 12 处属于「我写得很顺、但 API 的实际签名/语义不是我以为的那样」（`redis.rename` 的返回值、ArchUnit 的组合语义、Sa-Token 的上下文要求、`@types/hast` 的来源）。**教训：写计划时凡是要调用一个我没读过源码的库，先把签名查实** —— 查到就改，比实现期撞上便宜得多。
+
+### 32.5 过程偏差（如实记录）
+
+1. **writing-plans 技能要求的两个执行子技能没装**：`superpowers:subagent-driven-development` 与 `superpowers:executing-plans` 在 `~/.agents/skills` 与项目 `.agents/skills` 下都不存在（已核实）。因此执行方式定为**本会话内联逐任务执行 + 每任务后复核并 commit**，这条写在计划索引的头部，不假装能派子代理。
+2. **无逻辑样板不逐行抄**：技能要求"每个改代码的步骤都给出完整代码"。对 20 来个纯字段类（DO/DTO/VO）我改成「1 个完整示例 + 逐字段表」—— 逐行抄会把计划再撑大一千多行而信息量不增。已在计划头显式记明这处适配。
+3. **计划拆成 4 个文件**而不是技能默认的单文件：一个工作流一份，每份单独看都能产出可运行可测的软件。
+
+### 32.6 下一步
+
+`openspec new change phase-3-tech-module` → 按 spec-driven schema 产出 proposal / specs 增量 / design / tasks 四件 → 然后 W1 开工。
+**W1 Task 5 的第一件事是 Sa-Token 1.44.0 在本机 Redis 5.0.14 上的运行时探针** —— 这是全期唯一还没被验证过的高风险假设（jar 静态检查只能证明没有 `KEEPTTL`）。
