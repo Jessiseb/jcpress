@@ -17,14 +17,14 @@
 
 ## 2. W2 技术分享领域与公开接口
 
-- [ ] 2.1 建立领域模型（DO / 行投影 / `ArticleQuery` / VO / 显式转换器），验证 `ArticleConverterTest` 全绿且 `ArticleCardVO` 上不存在 `status`、`gmtModified`、`contentMd` 字段
-- [ ] 2.2 写 Mapper 与 XML 自写 SQL（公开列表含分类联表、按 slug 取已发布、相邻篇两条、浏览量增量回写、标签批量取），验证 `ArticleMapperTest` 五条全绿（草稿不可见、倒序、相邻篇方向正确、增量可累加）
-- [ ] 2.3 实现 `ArticleService` 公开读路径（列表含批量标签避免 N+1、详情内联相邻篇、找不到抛 40401、`size` 限幅），验证 `ArticleServiceTest` 全绿
-- [ ] 2.4 实现分类与标签服务（含已发布计数、空 scope 回退 TECH），验证 `CategoryServiceTest` 全绿且无已发布文章的分类仍以计数 0 出现
-- [ ] 2.5 实现浏览量 Manager（Redis `SADD` 去重 + `INCR` 计数 + `SCAN` + `RENAME` 定时回写，**禁用 GETDEL**），验证 `ArticleViewManagerTest` 三条全绿（同指纹只计一次 / 不同指纹累加 / 回写落库并清键）
-- [ ] 2.6 实现公开接口（`GET /v1/articles`、`GET /v1/articles/{slug}`、`POST /v1/articles/{slug}/view`、`GET /v1/categories`、`GET /v1/tags`），验证 `ArticleControllerTest` 全绿且响应体为统一形状与分页结构
-- [ ] 2.7 写 `V2__seed_data.sql`（4 分类 / 6 标签 / 1 篇真实已发布文 / 5 篇草稿含提纲正文 / 后台账号 BCrypt）并补写那篇真实正文（覆盖标题、列表、表格、行内代码、围栏代码块、引用），验证 `SeedDataTest` 全绿（已发布恰好 1 篇、草稿 5 篇、哈希以 `$2a$` 开头）
-- [ ] 2.8 W2 出口复核：逐个手测五个公开接口（列表只 1 条、id 为字符串、时间为 `yyyy-MM-dd HH:mm:ss`），在 `docs/dev-journal.md` 追加 W2 留痕后提交
+- [x] 2.1 建立领域模型（DO / 行投影 / `ArticleQuery` / VO / 显式转换器），验证 `ArticleConverterTest` 全绿且 `ArticleCardVO` 上不存在 `status`、`gmtModified`、`contentMd` 字段
+- [x] 2.2 写 Mapper 与 XML 自写 SQL（公开列表含分类联表、按 slug 取已发布、相邻篇两条、浏览量增量回写、标签批量取），验证 `ArticleMapperTest` 五条全绿（草稿不可见、倒序、相邻篇方向正确、增量可累加）
+- [x] 2.3 实现 `ArticleService` 公开读路径（列表含批量标签避免 N+1、详情内联相邻篇、找不到抛 40401、`size` 限幅），验证 `ArticleServiceTest` 全绿
+- [x] 2.4 实现分类与标签服务（含已发布计数、空 scope 回退 TECH），验证 `CategoryServiceTest` 全绿且无已发布文章的分类仍以计数 0 出现
+- [x] 2.5 实现浏览量 Manager（Redis `SADD` 去重 + `INCR` 计数 + `SCAN` + `RENAME` 定时回写，**禁用 GETDEL**），验证 `ArticleViewManagerTest` 三条全绿（同指纹只计一次 / 不同指纹累加 / 回写落库并清键）
+- [x] 2.6 实现公开接口（`GET /v1/articles`、`GET /v1/articles/{slug}`、`POST /v1/articles/{slug}/view`、`GET /v1/categories`、`GET /v1/tags`），验证 `ArticleControllerTest` 全绿且响应体为统一形状与分页结构
+- [x] 2.7 写 `V2__seed_data.sql`（4 分类 / 6 标签 / 1 篇真实已发布文 / 5 篇草稿含提纲正文 / 后台账号 BCrypt）并补写那篇真实正文（覆盖标题、列表、表格、行内代码、围栏代码块、引用），验证 `SeedDataTest` 全绿（已发布恰好 1 篇、草稿 5 篇、哈希以 `$2a$` 开头）
+- [x] 2.8 W2 出口复核：逐个手测五个公开接口（列表只 1 条、id 为字符串、时间为 `yyyy-MM-dd HH:mm:ss`），在 `docs/dev-journal.md` 追加 W2 留痕后提交
 
 ## 3. W3 后台写平面
 

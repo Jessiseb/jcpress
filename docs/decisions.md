@@ -185,6 +185,11 @@
 | 106 | **Sa-Token 1.44.0 + Spring Boot 3.3.4 + 本机 Redis 5.0.14：整条链路实测可用**（风险退役） | W1 的运行时探针（`SaTokenRedisTest`，走真实 HTTP 链路而非直接在测试方法里调 `StpUtil`）证明：登录签发 token → 写进 Redis（键前缀 `jcpress-token`）→ 按 token 反查主体 → **续期**（1.46.0 正是死在 `SET ... KEEPTTL`）→ 登出后同 token 返回 **401 + 40102**。设计里为它准备的备选（自研 `SaTokenDao`）**不需要了**。注意：`StpUtil.login()` 需要 web 请求级上下文，非 web 的 `@SpringBootTest` 里直接调会抛 `SaTokenContextException` —— 那是测法不对，不是产品缺陷 |
 | 107 | **`git commit -m` 的消息里含中文引号会被 PowerShell 截断** | 报错形如 `pathspec '异常处理器答了个' did not match any file(s) known to git`，看起来像 git 出错，实际是 shell 引号把参数切开了。处置：**提交信息一律走 `git commit -F <文件>`**（W1 期间踩了两次） |
 | 108 | **Maven 的中文日志在控制台会乱码** | JVM 以 GBK 写 stdout，直接读会得到 `未预锟斤拷锟届常` 之类。处置：跑 mvn 时带 `MAVEN_OPTS=-Dfile.encoding=UTF-8`；已经写进文件的日志用 `[System.Text.Encoding]::GetEncoding('GBK')` 解码后读 |
+| 109 | **`@MapperScan` 不能挂在 `@SpringBootApplication` 上** | W1 时它没事（一个 Mapper 都没有），**加了第一个 Mapper 之后引爆**：`@WebMvcTest` 切片也会用它去注册 Mapper Bean，而切片里没有 DataSource → `Property 'sqlSessionFactory' or 'sqlSessionTemplate' are required` → **所有切片测试一起挂**。处置：`@MapperScan` 移到 `MyBatisPlusConfig`（普通 `@Configuration`，切片的类型过滤器不扫它）。教训：这类"延迟引爆"的坑，只有在**第一个真实使用者出现**时才暴露，所以判据要在有真实代码之后再跑一遍 |
+| 110 | **自定义 XML 里查 `is_*` 列必须起别名** | MyBatis 的驼峰映射会把列 `is_top` 找成属性 `isTop`，而 Agent.md 要求 POJO 布尔语义字段**不带 is 前缀**（实体里是 `top`）；`@TableField("is_top")` 只对 MyBatis-Plus 自己生成的 SQL 生效，管不到自定义 XML。不起别名 → **`top` 恒为 null 且不报任何错**。处置：写 `a.is_top AS top`，并在 `ArticleMapperTest` 里加一条专门盯它的断言 |
+| 111 | **计数的过滤条件要写在 `LEFT JOIN ... ON` 里，不能写在 `WHERE`** | 「分类/标签总览」需要**没有已发布文章的分类也出现（计数 0）**；写成 `WHERE a.status = 1` 会把这些分类整体过滤掉。实测已验证：分类接口返回 4 条，其中 3 条计数为 0。处置：条件进 `ON`，并在 `CategoryServiceTest` 里留一条回归判据 |
+| 112 | **种子数据的外键用 slug 子查询解析，不写死自增 ID** | 测试库删过数据后 `AUTO_INCREMENT` **不会回退**，写死 `category_id = 2` 会得到"分类挂错"的**静默**错误。处置：`INSERT ... SELECT ... FROM category WHERE slug = 'java-backend'` |
+| 113 | **判据会把代码推向更合规的写法（实例）** | `ArticleQuery` 继承 `PageQuery` 时，`@Data` 会生成 equals/hashCode，子类为消 Lombok 告警就得加 `@EqualsAndHashCode(callSuper = true)` —— 而它不在 Agent.md 的白名单里。**处置不是放宽规则，而是只取需要的 `@Getter @Setter`**（查询对象只需要读写）。同类还有 `HealthService.check()` → `getHealth()`（动词前缀）。**卡口是判据不是建议** |
 
 ## 环境注意事项（Windows + WorkBuddy 沙箱）
 

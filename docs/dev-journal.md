@@ -1719,3 +1719,57 @@ Invoke-RestMethod http://127.0.0.1:8080/api/health
 **Task 1.9（W1 出口复核）**：`mvn -q -DskipTests compile` exit 0 · `mvn test` **29/29** · 冒烟三条全绿。**W1 收口。**
 
 一处顺带的自我纠偏：`HealthService.check()` 这个名字**过不了自己的命名卡口**（动词前缀白名单里没有 check），改名 `getHealth()` —— 卡口是判据不是建议，所以改的是代码而不是规则。
+
+---
+
+## 阶段 35 · W2 技术分享领域与公开接口（tasks 2.1–2.8）· 2026-10-02
+
+### 35.1 我这一步发的关键原话
+
+**无新指令**（用户上一条「计划通过，开始实施」继续覆盖）。
+
+### 35.2 AI 关键产出
+
+| 项 | 内容 |
+| --- | --- |
+| 领域 | 5 个 DO、3 个行投影、`ArticleQuery`、5 个 VO、2 个显式转换器 |
+| 数据访问 | `ArticleMapper`（列表/详情/按类型取/相邻篇/浏览量增量）+ 4 份 XML；`ArticleContentMapper` 只继承方法 |
+| 服务 | `ArticleService`（列表/详情/浏览量）、`CategoryService`、`TagService` |
+| Manager | `ArticleViewManager`（SADD 去重 + INCR + `@Scheduled` 刷新） |
+| 接口 | `ArticleController` / `CategoryController` / `TagController` / `IpUtils` |
+| 种子 | `V2__seed_data.sql`：4 分类 / 8 标签 / **1 篇真实发布文（正文 3167 字）** / 5 篇草稿（带提纲）/ 后台账号（真算出来的 BCrypt 哈希） |
+| **测试** | **59/59 全绿**（W2 新增 30 条：转换器 5 / Mapper 4 / 服务 5+3 / Manager 3 / 控制器 3 / 种子 7） |
+
+**真启动冒烟（Task 2.8）实测**：
+
+```
+① GET /api/v1/articles?type=TECH&size=20   → total=1（只有已发布那篇）
+   id=1 类型=String · 分类=Java 后端 · 标签=redis,architecture,spring-boot · 阅读=7分钟 · publishTime=2026-10-02 09:00:00
+② GET /api/v1/articles/phase-3-backend-retro → 正文 3167 字，prev=null next=null
+③ GET /api/v1/categories?scope=TECH → 4 条，其中 3 条计数为 0（没有被 WHERE 过滤掉）
+④ GET /api/v1/tags → 8 条，未使用的计数为 0
+⑤ POST .../view 连打两次 → Redis view:count:1 = 1（同指纹同日只计一次）
+⑥ 草稿 slug / 不存在的 slug → HTTP 404 + {"code":40401,...,"traceId":"bb0e873f"}
+   且响应头 X-Trace-Id 与响应体 traceId 一致
+```
+
+### 35.3 被驳回 / 纠偏
+
+本轮**无用户纠偏**。有三处是**我自己的判据/环境反过来纠正了我**（见 35.4）。
+
+### 35.4 翻车与返工（四条，其中两条是"延迟引爆"型）
+
+| # | 现象 | 归因 | 处置 |
+| --- | --- | --- | --- |
+| ① | `SourceConventionTest` 报 `lombok.EqualsAndHashCode` 不在白名单 | `ArticleQuery` 继承 `PageQuery` 时，`@Data` 会生成 equals/hashCode，子类为消告警就得加 `@EqualsAndHashCode(callSuper = true)` | 改为只取需要的 **`@Getter @Setter`** —— 取子集反而两边都干净（合规 + 无告警）。**卡口又一次把代码推向更合规的写法**，而不是让我去放宽规则（→ decisions #113） |
+| ② | **所有 `@WebMvcTest` 切片上下文加载失败**：`Property 'sqlSessionFactory' or 'sqlSessionTemplate' are required` | `@MapperScan` 挂在启动类上，切片也会用它注册 Mapper Bean，而切片没有 DataSource。**W1 时它完全正常**（一个 Mapper 都没有），是加了第一个 Mapper 才引爆 | `@MapperScan` 移到 `MyBatisPlusConfig`（→ decisions #109）。教训：**"延迟引爆"的坑只有在第一个真实使用者出现时才暴露，所以判据要在有真实代码之后再跑一遍** |
+| ③ | XML 里选 `a.is_top`，`top` 会**静默为 null** | MyBatis 驼峰映射把 `is_top` 找成 `isTop`，而实体字段叫 `top`（Agent.md 不许 POJO 布尔字段带 is 前缀）；`@TableField("is_top")` 只对 MP 自生成的 SQL 生效 | 写 `a.is_top AS top`，并加一条专门盯它的断言（→ decisions #110） |
+| ④ | 编译错误：`assertThat(body).contains("### ").isFalse()` | AssertJ 的 `contains` 返回字符串断言对象，没有 `isFalse()`；而且这条断言本身也没意义（正文有没有三级标题不该被钉死） | **直接删掉** —— 不为了"让测试跑起来"而改写成一个凑合的断言 |
+
+**另外两条不是翻车但是决策，已记入 decisions**：计数的过滤条件必须写在 `LEFT JOIN ... ON` 里（写在 WHERE 会把"没有已发布文章的分类"整体过滤掉，实测分类接口 4 条里有 3 条计数为 0，正是靠这个才出现）；种子数据的外键用 slug 子查询解析而不是写死自增 ID（测试库删过数据后 `AUTO_INCREMENT` 不回退，写死会得到"分类挂错"的静默错误）。
+
+### 35.5 一个刻意的取舍
+
+`V2__seed_data.sql` 里那篇真实发布文的正文**写进了迁移文件**（3167 字），而不是让导入器从 `content/**` 灌。
+理由：本期还没有导入器（W5），而前台详情页的验收**需要真实素材**；正文同时覆盖了表格、围栏代码块、引用、外链、行内代码、列表 —— `SeedDataTest` 对这些逐条断言，缺一项就红。
+W5 做导入器时会补 `content/tech/phase-3-backend-retro.md`，届时那篇文可以走导入路径重跑（幂等，不会重复）。
