@@ -42,7 +42,7 @@ const isWanted = (cp) =>
     await page.goto(`${BASE}${route}`, { waitUntil: 'networkidle', timeout: 60000 })
     // 摘掉入场隐藏态，并把折叠面板全部展开 —— 折叠状态下的文案也要有字形
     await page.evaluate(() => {
-      document.documentElement.removeAttribute('data-reveal')
+      document.documentElement.removeAttribute('data-reveal-armed')
       document.querySelectorAll('button[aria-expanded="false"]').forEach((b) => b.click())
     })
     await page.waitForTimeout(300)

@@ -23,7 +23,7 @@ const { chromium } = require('playwright-core')
     await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle', timeout: 60000 })
     await page.evaluate((t) => {
       document.documentElement.setAttribute('data-theme', t)
-      document.documentElement.removeAttribute('data-reveal')
+      document.documentElement.removeAttribute('data-reveal-armed')
     }, theme)
     await page.waitForTimeout(300)
 

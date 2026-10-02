@@ -16,7 +16,7 @@ const { chromium } = require('playwright-core')
     // 静态版式：摘掉入场隐藏态，否则拍到的是淡入中间态
     await page.evaluate((t) => {
       document.documentElement.setAttribute('data-theme', t)
-      document.documentElement.removeAttribute('data-reveal')
+      document.documentElement.removeAttribute('data-reveal-armed')
     }, theme)
     await page.waitForTimeout(300)
 

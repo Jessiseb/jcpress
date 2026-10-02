@@ -40,8 +40,15 @@
   place-items: center;
   border-radius: 10px;
   aspect-ratio: 4 / 3;
-  /* 无封面时的「字体封面」底：品牌渐变，不依赖外部图片、不闪 */
-  background: linear-gradient(135deg, var(--ds-c-accent-bg) 0%, var(--ds-c-accent) 100%);
+  /* 无封面时的「字体封面」底：品牌渐变，不依赖外部图片、不闪。
+     ⚠️ 这里**写死品牌色、不跟随主题**：封面块是一块「品牌面」，不是随主题变的正文面。
+     用令牌的话暗色主题的 accent 会变亮（#0756ab → #2388f6），白字对比度掉到 2.82:1
+     （低于大字号 3:1 的 AA 线，实测）；钉死浅色那组品牌值后，两主题都是 7.5:1 左右。
+     另外**必须先写一条不透明 `background-color` 再叠渐变**：渐变走 `background-image`，
+     审计的 `effectiveBg` 只认 `background-color`，否则会一路上溯到卡片浅色底，
+     把白字算成「白底白字」（假报 1:1）。 */
+  background-color: #0756ab;
+  background-image: linear-gradient(135deg, #096fdc 0%, #0756ab 100%);
 }
 
 .cover img {

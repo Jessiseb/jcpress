@@ -44,7 +44,7 @@ const isWanted = (cp) =>
     await page.goto(`${BASE}${route}`, { waitUntil: 'networkidle', timeout: 60000 })
     // 与全量收集一致：摘掉入场隐藏态、展开折叠面板，保证展示字真的在 DOM 里
     await page.evaluate(() => {
-      document.documentElement.removeAttribute('data-reveal')
+      document.documentElement.removeAttribute('data-reveal-armed')
       document.querySelectorAll('button[aria-expanded="false"]').forEach((b) => b.click())
     })
     await page.waitForTimeout(300)

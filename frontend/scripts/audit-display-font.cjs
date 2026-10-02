@@ -132,7 +132,7 @@ const check = (name, pass, detail) => {
     const page = await ctx.newPage()
     await page.goto(`${BASE}${route}`, { waitUntil: 'networkidle', timeout: 60000 })
     await page.evaluate(() => {
-      document.documentElement.removeAttribute('data-reveal')
+      document.documentElement.removeAttribute('data-reveal-armed')
       document.querySelectorAll('button[aria-expanded="false"]').forEach((b) => b.click())
     })
     if (inject) {

@@ -10,7 +10,7 @@ const { chromium } = require('playwright-core')
   const browser = await chromium.launch({ channel: 'msedge', args: ['--no-sandbox'] })
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } })
   await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle', timeout: 60000 })
-  await page.evaluate(() => document.documentElement.removeAttribute('data-reveal'))
+  await page.evaluate(() => document.documentElement.removeAttribute('data-reveal-armed'))
   await page.waitForTimeout(600)
 
   const sceneCount = await page.evaluate(

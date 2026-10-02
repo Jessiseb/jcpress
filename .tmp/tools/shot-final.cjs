@@ -1,16 +1,37 @@
 const { chromium } = require('playwright-core')
 
-const BASE = process.argv[3] || 'http://127.0.0.1:5173/'
-// 文件名前缀：同一套视口要拍多个页面时用来区分（如 tech-desktop-light-full.png）
-const PREFIX = process.argv[4] || ''
+const ORIGIN = 'http://127.0.0.1:5173'
+// 输出目录（第一个位置参数）；缺省落到 .tmp/shots-p3
+const OUT = process.argv[2] || '.tmp/shots-p3'
 
 /**
+ * 三期验收截图矩阵（Task 5.10）。
+ *
+ * 与二期的差别：二期只拍首页一套 5 视口；三期有两条新路由（`/tech` 卡片流、`/tech/:slug`
+ * 阅读页，另有后台登录页要看视觉隔离），所以改成「四视口 × 四路由」的网格。
+ *
  * 验收截图分两种，不能混：
  *  A. 静态版式 —— 先滚一遍触发入场，再摘掉 data-reveal 让隐藏态失效，
  *     确保拍到的是最终状态，而不是动画中间态（整页截图会把视口拉高，
  *     那一刻元素刚开始淡入，直接拍会拍到空白）。
  *  B. 动效验证 —— 不摘属性，滚到目标位置后等 900ms，确认元素确实浮现出来了。
  */
+const VIEWS = [
+  { name: '1280-light', width: 1280, height: 900, scheme: 'light' },
+  { name: '768-light', width: 768, height: 1024, scheme: 'light' },
+  { name: '390-light', width: 390, height: 844, scheme: 'light' },
+  { name: '375-light', width: 375, height: 812, scheme: 'light' },
+]
+
+const DETAIL_SLUG = 'phase-3-backend-retro'
+
+const ROUTES = [
+  { name: 'home', path: '/' },
+  { name: 'tech', path: '/tech' },
+  { name: 'detail', path: `/tech/${DETAIL_SLUG}` },
+  { name: 'admin-login', path: '/admin/login' },
+]
+
 async function scrollThrough(page) {
   await page.evaluate(async () => {
     // 页面全局开了 scroll-behavior: smooth，程序化 scrollTo 会变成动画，
@@ -55,84 +76,114 @@ async function freezeFlowFrame(page) {
 }
 
 ;(async () => {
-  const out = process.argv[2]
+  const fs = require('fs')
+  fs.mkdirSync(OUT, { recursive: true })
+
   const browser = await chromium.launch({ channel: 'msedge', args: ['--no-sandbox'] })
 
-  const views = [
-    { name: 'desktop-light', width: 1280, height: 900, scheme: 'light' },
-    { name: 'mobile-light', width: 390, height: 844, scheme: 'light' },
-    { name: 'mobile-dark', width: 390, height: 844, scheme: 'dark' },
-    // 375：规划 §2.8 的四档里最小的一档（二期补进来，一期只用 390 覆盖）
-    { name: 'mobile375-light', width: 375, height: 812, scheme: 'light' },
-    { name: 'tablet-light', width: 768, height: 1024, scheme: 'light' },
-  ]
+  // 记录每格的溢出结论，最后汇总成表（矩阵 V9 的证据）
+  const rows = []
 
-  for (const v of views) {
-    const ctx = await browser.newContext({
-      viewport: { width: v.width, height: v.height },
-      deviceScaleFactor: 1,
-      colorScheme: v.scheme,
-    })
-    const page = await ctx.newPage()
-    await page.goto(BASE, { waitUntil: 'networkidle', timeout: 60000 })
-    await page.waitForTimeout(700)
+  for (const route of ROUTES) {
+    console.log(`\n###### 路由 ${route.name}  ${route.path}`)
+    for (const v of VIEWS) {
+      const ctx = await browser.newContext({
+        viewport: { width: v.width, height: v.height },
+        deviceScaleFactor: 1,
+        colorScheme: v.scheme,
+      })
+      const page = await ctx.newPage()
+      await page.goto(`${ORIGIN}${route.path}`, { waitUntil: 'networkidle', timeout: 60000 })
+      await page.waitForTimeout(700)
 
-    // ---- A/B 之前：确认入场序列确实接管了 ----
-    const revealState = await page.evaluate(() => ({
-      armed: document.documentElement.getAttribute('data-reveal'),
-      total: document.querySelectorAll('[data-reveal]').length,
-      hidden: document.querySelectorAll('[data-reveal]').length
-        ? Array.from(document.querySelectorAll('[data-reveal]')).filter(
-            (el) => getComputedStyle(el).opacity !== '1',
-          ).length
-        : 0,
-    }))
+      // ---- A/B 之前：确认入场序列确实接管了 ----
+      const revealState = await page.evaluate(() => ({
+        armed: document.documentElement.getAttribute('data-reveal-armed'),
+        total: document.querySelectorAll('[data-reveal]').length,
+        hidden: document.querySelectorAll('[data-reveal]').length
+          ? Array.from(document.querySelectorAll('[data-reveal]')).filter(
+              (el) => getComputedStyle(el).opacity !== '1',
+            ).length
+          : 0,
+      }))
 
-    await scrollThrough(page)
+      await scrollThrough(page)
 
-    const revealed = await page.evaluate(
-      () => document.querySelectorAll('[data-reveal].is-revealed').length,
-    )
+      const revealed = await page.evaluate(
+        () => document.querySelectorAll('[data-reveal].is-revealed').length,
+      )
 
-    const overflow = await page.evaluate(() => ({
-      scrollWidth: document.documentElement.scrollWidth,
-      clientWidth: document.documentElement.clientWidth,
-      pageHeight: document.body.scrollHeight,
-    }))
+      // 门控属性已与内容标记拆开（data-reveal-armed / data-reveal），
+      // 查询 [data-reveal] 天然只命中内容元素，revealNodes 就是真实内容元素数。
+      const unrevealed = revealState.total - revealed
 
-    console.log(
-      `${v.name}: armed=${revealState.armed} revealNodes=${revealState.total} ` +
-        `hiddenOnLoad=${revealState.hidden} revealedAfterScroll=${revealed} | ` +
-        `scrollWidth=${overflow.scrollWidth} clientWidth=${overflow.clientWidth} ` +
-        `overflow=${overflow.scrollWidth > overflow.clientWidth ? 'YES !!' : 'no'} pageHeight=${overflow.pageHeight}`,
-    )
+      const overflow = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        clientWidth: document.documentElement.clientWidth,
+        pageHeight: document.body.scrollHeight,
+      }))
 
-    // ---- A. 摘掉隐藏态后拍静态版式 ----
-    await page.evaluate(() => document.documentElement.removeAttribute('data-reveal'))
-    await page.waitForTimeout(250)
+      const overflowed = overflow.scrollWidth > overflow.clientWidth
+      rows.push({ route: route.name, view: v.name, overflowed, unrevealed, ...overflow })
 
-    // ⚠️ `animations: 'disabled'` 是二期必须加的：页面上多了一层**常驻 CSS 动画**的
-    // position:fixed 流线布景层之后，Chromium 的截图会拍到空白/陈旧帧
-    // （实测 fullPage 64KB vs 正常 573KB、首屏 122KB 全空 vs 正常 220KB）。
-    // 前提是先用 freezeFlowFrame() 把流线定格在一帧代表态 —— 否则
-    // `animations: 'disabled'` 会把相位全部归零，图案退化成「挤在左边缘」的假象。
-    await freezeFlowFrame(page)
-    await page.waitForTimeout(200)
-    await page.screenshot({
-      path: `${out}/${PREFIX}${v.name}-hero.png`,
-      clip: { x: 0, y: 0, width: v.width, height: Math.min(v.height, 700) },
-      animations: 'disabled',
-    })
-    await page.screenshot({
-      path: `${out}/${PREFIX}${v.name}-full.png`,
-      fullPage: true,
-      animations: 'disabled',
-    })
+      console.log(
+        `${v.name}: armed=${revealState.armed} revealNodes=${revealState.total} ` +
+          `hiddenOnLoad=${revealState.hidden} revealedAfterScroll=${revealed} ` +
+          `unrevealed=${unrevealed} | ` +
+          `scrollWidth=${overflow.scrollWidth} clientWidth=${overflow.clientWidth} ` +
+          `overflow=${overflowed ? 'YES !!' : 'no'} pageHeight=${overflow.pageHeight}`,
+      )
 
-    await ctx.close()
+      // ---- A. 摘掉隐藏态后拍静态版式 ----
+      await page.evaluate(() => document.documentElement.removeAttribute('data-reveal'))
+      await page.waitForTimeout(250)
+
+      // ⚠️ `animations: 'disabled'` 是二期必须加的：页面上多了一层**常驻 CSS 动画**的
+      // position:fixed 流线布景层之后，Chromium 的截图会拍到空白/陈旧帧
+      // （实测 fullPage 64KB vs 正常 573KB、首屏 122KB 全空 vs 正常 220KB）。
+      // 前提是先用 freezeFlowFrame() 把流线定格在一帧代表态 —— 否则
+      // `animations: 'disabled'` 会把相位全部归零，图案退化成「挤在左边缘」的假象。
+      await freezeFlowFrame(page)
+      await page.waitForTimeout(200)
+      await page.screenshot({
+        path: `${OUT}/${route.name}-${v.name}-hero.png`,
+        clip: { x: 0, y: 0, width: v.width, height: Math.min(v.height, 700) },
+        animations: 'disabled',
+      })
+      await page.screenshot({
+        path: `${OUT}/${route.name}-${v.name}-full.png`,
+        fullPage: true,
+        animations: 'disabled',
+      })
+
+      await ctx.close()
+    }
   }
 
   await browser.close()
+
+  // ---- 汇总：溢出矩阵 + 入场序列（V9 / 入场完整性的证据） ----
+  console.log('\n\n===== 溢出汇总（四路由 × 四视口）=====')
+  const header = ['路由/视口', ...VIEWS.map((v) => v.name)].join('\t')
+  console.log(header)
+  for (const route of ROUTES) {
+    const cells = VIEWS.map((v) => {
+      const r = rows.find((x) => x.route === route.name && x.view === v.name)
+      return r ? (r.overflowed ? 'YES !!' : 'no') : '-'
+    })
+    console.log([route.name, ...cells].join('\t'))
+  }
+  const bad = rows.filter((r) => r.overflowed)
+  console.log(bad.length === 0 ? '\n✔ 全部 16 格无横向溢出' : `\n✘ ${bad.length} 格溢出`)
+
+  // 入场完整性：凡是页面带 data-reveal 的，滚过一遍后都必须拿到 .is-revealed
+  console.log('\n===== 入场序列完整性（home 路由）=====')
+  const homeRows = rows.filter((r) => r.route === 'home')
+  const missed = homeRows.filter((r) => r.unrevealed > 0)
+  homeRows.forEach((r) => console.log(`  ${r.view}: 未揭示 ${r.unrevealed}`))
+  console.log(missed.length === 0 ? '  ✔ 全部视口入场序列完整触发' : `  ✘ ${missed.length} 个视口有未揭示元素`)
+
+  process.exit(bad.length > 0 || missed.length > 0 ? 1 : 0)
 })().catch((e) => {
   console.error('ERR', e.message)
   process.exit(1)

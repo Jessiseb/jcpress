@@ -14,7 +14,7 @@ const { chromium } = require('playwright-core')
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } })
   await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle', timeout: 60000 })
   // 关掉入场动画，避免元素还在位移时量矩形
-  await page.evaluate(() => document.documentElement.removeAttribute('data-reveal'))
+  await page.evaluate(() => document.documentElement.removeAttribute('data-reveal-armed'))
   await page.waitForTimeout(600)
 
   const sceneCount = await page.evaluate(

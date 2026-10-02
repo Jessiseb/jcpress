@@ -356,12 +356,20 @@ button {
    入场序列
    --------------------------------------------------------------------------
    硬约束：隐藏态只在 JS 真正跑起来之后才生效（useReveal 给 <html> 打
-   data-reveal="on"）。无 JS、爬虫抓取、以及将来的构建期预渲染产物里，
-   正文始终是可见的 —— 不拿 SEO 换动效。
+   data-reveal-armed="on" —— **独立的门控属性**）。无 JS、爬虫抓取、
+   以及构建期预渲染产物里，正文始终是可见的 —— 不拿 SEO 换动效。
+
+   ⚠️ 门控属性为什么必须与内容标记 `data-reveal` **分开**：
+   `[data-reveal='on'] [data-reveal]` 这种写法里，两个选择器是同一个属性名，
+   于是给 `<html>` 打的开关会**自匹配** —— `<html>` 自己也被算作一个待入场元素。
+   它在 useReveal 的作用子树之外，永远拿不到 `.is-revealed`，结果是：
+   `document.querySelectorAll('[data-reveal]')` 永远比实际内容元素多 1 个，
+   且这一个恒为 opacity:0。门禁与截图脚本都得靠 `tagName !== 'HTML'` 手动绕开
+   （audit-behavior.cjs 就是这么打补丁的）。改成独立属性后，查询天然只命中内容元素。
    缓动与时长取 frontend-design 基准（常规过渡 300–400ms，此处 460ms 覆盖
    opacity + transform 两个属性，观感约等于 320ms 的单属性过渡）。
    ========================================================================== */
-[data-reveal='on'] [data-reveal] {
+[data-reveal-armed='on'] [data-reveal] {
   opacity: 0;
   /* r2：位移 18 → 28px，并加极轻放大（0.985 → 1）—— 用户反馈「缺滑动闪出的感觉」。
      只动 transform / opacity（两项都走合成器）：一旦引入 filter / clip-path / 高度动画，
@@ -374,7 +382,7 @@ button {
   will-change: opacity, transform;
 }
 
-[data-reveal='on'] [data-reveal].is-revealed {
+[data-reveal-armed='on'] [data-reveal].is-revealed {
   opacity: 1;
   transform: none;
   will-change: auto;

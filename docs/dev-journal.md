@@ -2022,3 +2022,72 @@ scene 7 天体矩形 x=77   y=65  w=230  压字 0 处
 ### 40.5 环境限制（新增一条，重要）
 
 本机 Node **同步**子进程调用（`execFileSync` / `spawnSync`）**一律抛 `EBUSY`**，与目标程序无关（`git`/`echo`/`python.exe`/绝对路径全试过）。异步 `spawn` 正常。这一条比「esbuild 磁盘读取被拒」更宽 —— 它解释了为什么 `build-font-subset.cjs`、`audit-display-font.cjs` 这类用同步 spawn 的脚本全跑不动。**处置纪律：凡是报告里要用到同步子进程的脚本，都改为异步 spawn，或在工作流里直接调用底层命令。** 本次 `fonts:build:article` 的 npm 脚本虽已写好（供环境正常时用），但本机是用等价的 `python -m fontTools.subset …` 直接生成产物的。
+
+---
+
+## 阶段 41 · W4 Task 5.10（验收评估集与工具扩展）
+
+### 41.1 用户关键原话
+
+- （承接）「继续完成未完成的第三期开发」—— 继续推进 W4 剩余任务，本轮为 5.10。
+
+### 41.2 AI 关键输出
+
+**产出 `docs/phase3-effect-matrix.md`**（评估集，11 条效果 V1–V11，每条「实测」栏都是真实数字）。
+
+**工具扩展与实测结果：**
+
+| 工具 | 扩展内容 | 实测 |
+| --- | --- | --- |
+| `audit-contrast.cjs` | 参数化到 4 路由 × 亮/暗（原写死 `goto('/')`） | 8 组，未达标 **0**；覆盖 227 / 28 / 166 / 4 处文本 |
+| `audit-behavior.cjs` | 新增 `auditPhase3()`（#1–#12）；修 `proseCh` 探针、区块顺序、`/tech` 陈旧断言 | **82 项，通过 82，失败 0** |
+| `shot-final.cjs` | 改造成 4 视口 × 4 路由，输出 `shots-p3/`（32 张），输出溢出矩阵 + 入场完整性 | 16 格全 `no`；home 四视口**未揭示 0** |
+| `audit-firstscreen.cjs`（新） | 运行时请求归属：首屏零请求 + 详情页/后台反向对照 | 全绿（详情页拉 react-markdown+文章字体；后台编辑器拉 codemirror 3 条） |
+| `build-p3.sh` + `build-probe.cjs`（新） | esbuild 生产构建 + 产物体积/依赖归属分析 | **首屏 82.9 KB gzip**（判据 ≤200KB，富余 58.6%） |
+| `probe-docking.cjs` | 已验证 8 scene | 8 scene **压字 0 处** |
+| `audit-display-font.cjs` | 已验证 | **8/8**，覆盖 104 个展示字 |
+
+**生产产物入口契约（V10 取证）：**
+
+```
+--- 首屏 initial chunks ---
+      64.6 KB gz  chunk-3W42ODD5.js      ← react + react-dom + router + query
+      15.6 KB gz  main.js                ← 本站业务代码 + 首页区块
+       2.6 KB gz  chunk-EYF7DI5L.js
+       0.2 KB gz  chunk-6K2HCF2O.js
+  ▶ 首屏 JS+CSS 合计 gzip 82.9 KB
+
+--- 懒加载 ---
+     206.3 KB gz  AdminArticleEditPage   ← codemirror
+     104.2 KB gz  chunk-TDPQDSXQ         ← react-markdown + remark/rehype + highlight.js
+```
+
+**依赖双向断言（防假绿）**：react-markdown / codemirror / highlight.js 三者「首屏不含」且「懒加载含」，全部 ✔。
+
+### 41.3 被驳回 / 纠偏
+
+无用户纠偏。但本轮我**自己纠了自己两处判据错误**（见 41.4 ①②），且都是「先写错 → 被实测打脸 → 改正」的模式。
+
+### 41.4 翻车与返工（五条）
+
+| # | 现象 | 归因 | 处置 |
+| --- | --- | --- | --- |
+| ① | 入场序列门禁恒为 `36/37`（差 1 个永不揭示） | **`data-reveal` 一属性两义**：`useReveal` 用它当门控开关（打在 `<html>` 上），同时又用它标记待入场元素。CSS 写的是 `[data-reveal='on'] [data-reveal]` —— 两个选择器同名，`<html>` 自己**自匹配**成一个待入场元素；它在观察子树之外，永远拿不到 `.is-revealed` | 新增独立门控属性 **`data-reveal-armed`**，与内容标记 `data-reveal` 拆开。改完 `querySelectorAll('[data-reveal]')` 天然只命中内容元素；门禁从 `36/37` 变 **`37/37`（未揭示 0）**，且 `audit-behavior.cjs` 里 `filter(el => el.tagName !== 'HTML')` 的补丁可以删掉 |
+| ② | 首屏体积判据把 `codemirror` 列进「详情页应当加载」，导致反向对照失败 | **我写错了判据**：codemirror 是**后台编辑器**专属，只读的详情页本来就不该有它 | 反向对照改到 `/admin/articles/1`（带 token）；另加一条「详情页不含 codemirror」防回退 |
+| ③ | `vite build` 在沙箱内、沙箱外**都**跑不动，报 `winapi error #5` | 起初以为是沙箱拦截 Node spawn。**排查后推翻了**：把 esbuild.exe 直接放 shell 里执行正常（`--version` → 0.25.12），是**本机 EDR 对 esbuild 子进程文件读取的拦截**（`ERROR_ACCESS_DENIED`），且**不稳定**（同一条命令先后两次，一次成功一次失败） | 不再硬啃这个环境问题。改为「shell 里直接跑 esbuild 生产打包 + Node 只读产物分析」两步走；`build-probe.cjs` 完全不 spawn |
+| ④ | 首屏体积实测 859 KB，超 200KB 判据（dev server 口径） | dev 下 `/@vite/client`(32.8KB) + `@react-refresh`(23.4KB) 是**生产不存在**的；lucide-react 未 tree-shake 把整包图标(220KB)拉进来 | **不自欺地扣数**：换成真实生产构建口径（minify + tree-shaking），得 **82.9 KB**。dev 的 859KB 分解数据保留在矩阵里作为「dev vs prod 差异」的证据 |
+| ⑤ | esbuild CSS 把 `serif-sc-article` 的 `@font-face` 合进了入口 `main.css` | esbuild 与 Vite 的 CSS 切分策略不同：esbuild 会把静态 CSS-import 的规则合并进入口 CSS | 不把这条做成静态文本断言（那是错的判据）。**`@font-face` 只是声明、不触发下载**，改用**运行时请求**判定 → 首页/`/tech` 零请求、详情页 1 条，实测通过 |
+
+### 41.5 环境限制（更新，合并为两条）
+
+1. **esbuild 子进程读盘被 EDR 拦截**（`winapi error #5`）：`vite build`、`vitest run` 都跑不动 ——
+   但它们失败在**启动/配置加载**阶段，源码打包与测试代码本身没问题。
+2. **Node 同步 spawn 一律 `EBUSY`**（阶段 40 已记）：`execFileSync` / `spawnSync` 不可用，异步 `spawn` 正常。
+
+**因此 `vitest run` 本机不可用**（同 ①）。替代覆盖已写进矩阵：`tsc --noEmit` + 82 项浏览器行为断言 + 8 组对比度审计。
+换到无 EDR 拦截的机器上，`vitest run` 应回归一键复跑 —— 这一点在矩阵里显式标注，**不当作「已通过」**。
+
+### 41.6 留痕纪律自查
+
+矩阵中 **无一条「已知问题」**：V1–V11 十一条「实测」栏全部是跑出来的真实数字。
+唯一的外部依赖是 `vitest`（环境不可用），已在文档里如实标注并给出替代覆盖，未伪造通过。

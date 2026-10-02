@@ -98,31 +98,40 @@ const AUDIT = () => {
   return results
 }
 
+// 三期：参数化路由（原来写死 `goto('/')`）。AUDIT 函数与判定逻辑一个字都没改。
+const PAGES = [
+  { name: 'home', path: '/' },
+  { name: 'tech', path: '/tech' },
+  { name: 'detail', path: '/tech/phase-3-backend-retro' },
+  { name: 'admin-login', path: '/admin/login' },
+]
+
 ;(async () => {
   const browser = await chromium.launch({ channel: 'msedge', args: ['--no-sandbox'] })
   let failures = 0
-  for (const scheme of ['light', 'dark']) {
-    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: scheme })
-    const page = await ctx.newPage()
-    await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle', timeout: 60000 })
-    await page.waitForTimeout(600)
-    await page.evaluate(() => document.documentElement.removeAttribute('data-reveal'))
-    await page.waitForTimeout(200)
+  for (const target of PAGES) {
+    for (const scheme of ['light', 'dark']) {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: scheme })
+      const page = await ctx.newPage()
+      await page.goto(`http://127.0.0.1:5173${target.path}`, { waitUntil: 'networkidle', timeout: 60000 })
+      await page.waitForTimeout(600)
+      await page.evaluate(() => document.documentElement.removeAttribute('data-reveal-armed'))
+      await page.waitForTimeout(200)
 
-    const rows = await page.evaluate(AUDIT)
-    const bad = rows.filter((r) => !r.pass)
-    failures += bad.length
-    console.log(`\n=== ${scheme} === 检查 ${rows.length} 处文本，未达标 ${bad.length} 处`)
-    bad.forEach((r) =>
+      const rows = await page.evaluate(AUDIT)
+      const bad = rows.filter((r) => !r.pass)
+      failures += bad.length
       console.log(
-        `  ✗ ${r.ratio}:1 (需 ${r.need}) ${r.size}px/${r.weight} [${r.cls}] "${r.text}"`,
-      ),
-    )
-    if (bad.length === 0) console.log('  ✔ 全部通过 AA')
-
-    const worst = [...rows].sort((a, b) => a.ratio - b.ratio).slice(0, 3)
-    worst.forEach((r) => console.log(`  · 最低三处之一：${r.ratio}:1 ${r.size}px "${r.text}"`))
-    await ctx.close()
+        `\n=== ${target.name} · ${scheme} === 检查 ${rows.length} 处文本，未达标 ${bad.length} 处`,
+      )
+      bad.forEach((r) =>
+        console.log(
+          `  ✗ ${r.ratio}:1 (需 ${r.need}) ${r.size}px/${r.weight} [${r.cls}] "${r.text}"`,
+        ),
+      )
+      if (bad.length === 0) console.log('  ✔ 全部通过 AA')
+      await ctx.close()
+    }
   }
   await browser.close()
   console.log(`\n合计未达标：${failures}`)

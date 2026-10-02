@@ -14,6 +14,149 @@ const check = (name, pass, detail) => {
   console.log(`${pass ? '✔' : '✘'} ${name}${detail ? ` — ${detail}` : ''}`)
 }
 
+/**
+ * 三期（技术分享模块）行为断言。独立成一个函数，不改动前两期的那一串断言。
+ * 覆盖：卡片列表 / 详情页（护眼档位、章节编号、代码复制、TOC 锚点）/ 首页新区块 / 后台登录守卫。
+ */
+async function auditPhase3(browser) {
+  const BASE = 'http://127.0.0.1:5173'
+
+  // ---- 1. /tech 卡片列表 ----
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
+    const page = await ctx.newPage()
+    await page.goto(`${BASE}/tech`, { waitUntil: 'networkidle', timeout: 60000 })
+    await page.waitForTimeout(600)
+    const t = await page.evaluate(() => {
+      const cards = Array.from(document.querySelectorAll('[data-card]'))
+      const links = Array.from(document.querySelectorAll('a[href^="/tech/"]'))
+      return {
+        cardCount: cards.length,
+        linkCount: links.length,
+        everyCardIsLink: cards.every((c) => c.querySelector('a[href^="/tech/"]') || c.matches('a')),
+        everyCardHasCover: cards.every(
+          (c) => c.querySelector('img') || c.querySelector('[class*="coverGlyph"]'),
+        ),
+        linkTargets: links.map((a) => a.getAttribute('href')).slice(0, 3),
+        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        minCardHeight: cards.length
+          ? Math.min(...cards.map((c) => Math.round(c.getBoundingClientRect().height)))
+          : 0,
+        firstCardIsFullWidth: (() => {
+          const grid = document.querySelector('[class*="grid"]')
+          if (!grid || !cards[0]) return null
+          const gw = Math.round(grid.getBoundingClientRect().width)
+          const cw = Math.round(cards[0].getBoundingClientRect().width)
+          return cw / gw > 0.9
+        })(),
+      }
+    })
+    check('三期#1 /tech 每张卡都是链接且指向 /tech/<slug>', t.cardCount > 0 && t.linkCount >= t.cardCount, `卡=${t.cardCount} 链=${t.linkCount}`)
+    check('三期#2 每张卡有封面（真图或字体封面）', t.everyCardHasCover, `封面齐=${t.everyCardHasCover}`)
+    check('三期#3 /tech 无横向溢出', t.overflow <= 0, `溢出=${t.overflow}px`)
+    check('三期#11 卡片可点区域 ≥44px', t.minCardHeight >= 44, `最矮卡=${t.minCardHeight}px`)
+    check('三期（首卡通栏）', t.firstCardIsFullWidth === true, `首卡占栅格比≈1=${t.firstCardIsFullWidth}`)
+    await ctx.close()
+  }
+
+  // ---- 2. /tech/:slug 详情页 ----
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
+    const page = await ctx.newPage()
+    await page.goto(`${BASE}/tech/phase-3-backend-retro`, { waitUntil: 'networkidle', timeout: 60000 })
+    await page.waitForTimeout(900)
+    const d = await page.evaluate(() => {
+      const body = document.querySelector('[data-article-body]')
+      const p = body ? body.querySelector('p') : null
+      const h2 = body ? body.querySelector('h2') : null
+      const fs = p ? parseFloat(getComputedStyle(p).fontSize) : 0
+      const lh = p ? parseFloat(getComputedStyle(p).lineHeight) : 0
+      const tocLinks = Array.from(document.querySelectorAll('nav[aria-label="文章目录"] a[href^="#"]'))
+      const bodyIds = new Set(Array.from(document.querySelectorAll('[data-article-body] [id]')).map((el) => el.id))
+      return {
+        hasBody: !!body,
+        fontSize: fs,
+        lineHeightRatio: fs ? lh / fs : 0,
+        // 「栏宽 ≈ 68ch」里的 ch 是 **CSS 的 ch 单位 = 数字 0 的宽度**（17px 字号下 ≈ 8.5px），
+        // 不是汉字宽度（17px）。计划里写的 `clientWidth / fontSize` 是对 ch 的粗略近似，
+        // 但那会得到 33.9（≈汉字数/行），与它自己给的 60–72 区间矛盾 —— 真正对齐的是
+        // 「clientWidth / 一个 '0' 的宽度」。
+        // ⚠️ 用 p 元素本身取 clientWidth（rect 没有 clientWidth，直接用会得 NaN）。
+        proseCh: (() => {
+          if (!p) return 0
+          const probe = document.createElement('span')
+          probe.textContent = '0'.repeat(100)
+          probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap'
+          p.appendChild(probe)
+          const chWidth = probe.getBoundingClientRect().width / 100
+          probe.remove()
+          return chWidth ? p.clientWidth / chWidth : 0
+        })(),
+        h2Numbered: h2 ? getComputedStyle(h2, '::before').content : null,
+        copyButton: document.querySelectorAll('button[aria-label*="复制"]').length,
+        tocCount: tocLinks.length,
+        tocAllHit: tocLinks.length > 0 && tocLinks.every((a) => bodyIds.has(a.getAttribute('href').slice(1))),
+        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      }
+    })
+    check('三期#4 详情页正文栏宽 ≈68ch（60–72）', d.proseCh >= 60 && d.proseCh <= 72, `${d.proseCh.toFixed(1)}ch`)
+    check('三期#5 详情页正文行高 = 1.9', Math.abs(d.lineHeightRatio - 1.9) < 0.05, `${d.lineHeightRatio.toFixed(2)}`)
+    check('三期#6 详情页 h2 有自动编号', !!d.h2Numbered && d.h2Numbered !== 'none' && d.h2Numbered !== '""', `::before=${d.h2Numbered}`)
+    check('三期#7 代码块有复制按钮', d.copyButton > 0, `按钮=${d.copyButton}`)
+    check('三期#8 TOC 锚点与正文 id 一一对应', d.tocAllHit, `TOC=${d.tocCount} 全命中=${d.tocAllHit}`)
+    check('三期 详情页无横向溢出', d.overflow <= 0, `溢出=${d.overflow}px`)
+    await ctx.close()
+  }
+
+  // ---- 3. 首页新区块 ----
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
+    const page = await ctx.newPage()
+    await page.goto(`${BASE}/`, { waitUntil: 'networkidle', timeout: 60000 })
+    await page.waitForTimeout(700)
+    const h = await page.evaluate(() => {
+      const sec = document.querySelector('[data-block="latest-articles"]')
+      // 条目 = 指向详情（/tech/<slug>）的链接；「查看全部」指向 /tech（无尾 slug），不算条目
+      const entryLinks = sec
+        ? Array.from(sec.querySelectorAll('a[href^="/tech/"]')).filter(
+            (a) => a.getAttribute('href').replace(/^\/tech\//, '').length > 0,
+          )
+        : []
+      return {
+        sections: document.querySelectorAll('main section[aria-labelledby]').length,
+        latestCards: entryLinks.length,
+        hasViewAll: sec ? !!sec.querySelector('a[href="/tech"]') : false,
+        titles: entryLinks.map((a) => a.textContent.trim().slice(0, 12)),
+      }
+    })
+    // 条目数 = min(3, 已发布文章数)：库里当前只有 1 篇已发布，所以断言「≥1 且每条都指向详情」
+    check(
+      '三期#9 首页新区块的条目都指向详情（且带「查看全部」）',
+      h.latestCards >= 1 && h.hasViewAll,
+      `条目=${h.latestCards} 查看全部=${h.hasViewAll} [${h.titles.join(' / ')}]`,
+    )
+    check('三期#10 首页区块数 = 8', h.sections === 8, `区块=${h.sections}`)
+    await ctx.close()
+  }
+
+  // ---- 4. 后台登录守卫 ----
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
+    const page = await ctx.newPage()
+    await page.goto(`${BASE}/admin/articles`, { waitUntil: 'networkidle', timeout: 60000 })
+    await page.waitForTimeout(600)
+    const a = await page.evaluate(() => ({
+      path: new URL(location.href).pathname,
+      hasTable: document.querySelectorAll('table').length > 0,
+      hasLoginForm: !!document.querySelector('#admin-username'),
+      hasTopNav: !!document.querySelector('header'),
+    }))
+    check('三期#12 未登录访问后台被弹到登录页', a.path === '/admin/login' && a.hasLoginForm && !a.hasTable, `path=${a.path}`)
+    check('三期 后台不挂公开站顶栏（视觉隔离）', a.hasTopNav === false, `hasTopNav=${a.hasTopNav}`)
+    await ctx.close()
+  }
+}
+
 ;(async () => {
   const browser = await chromium.launch({ channel: 'msedge', args: ['--no-sandbox'] })
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'light' })
@@ -142,10 +285,9 @@ const check = (name, pass, detail) => {
   )
 
   // ---- 运行期才成立的两项：入场序列 + 触摸目标 ----
-  const revealTotal = await page.evaluate(() => {
-    const all = Array.from(document.querySelectorAll('[data-reveal]')).filter((el) => el.tagName !== 'HTML')
-    return all.length
-  })
+  // 门控属性已与内容标记拆开（data-reveal-armed / data-reveal），
+  // 所以查询 [data-reveal] 天然只命中内容元素，不再需要按 tagName 排除 <html>。
+  const revealTotal = await page.evaluate(() => document.querySelectorAll('[data-reveal]').length)
   await page.evaluate(async () => {
     document.documentElement.style.scrollBehavior = 'auto'
     // 每一步都让出**两帧**再继续。
@@ -224,7 +366,7 @@ const check = (name, pass, detail) => {
   const rm = await rmPage.evaluate(() => {
     const nodes = Array.from(document.querySelectorAll('[data-reveal]'))
     const hidden = nodes.filter((el) => Number(getComputedStyle(el).opacity) < 0.99).length
-    return { armed: document.documentElement.getAttribute('data-reveal'), total: nodes.length, hidden }
+    return { armed: document.documentElement.getAttribute('data-reveal-armed'), total: nodes.length, hidden }
   })
   check(
     'reduced-motion 下入场不接管、正文不隐藏',
@@ -1205,9 +1347,17 @@ const check = (name, pass, detail) => {
   })
 
   check(
-    '区块顺序：经历排在能力之前',
+    '区块顺序：经历排在能力之前（三期在「项目经历」与「技术栈」之间插入「最新技术分享」）',
     JSON.stringify(r2Layout.order) ===
-      JSON.stringify(['拿得出手的数字', '实习经历', '项目经历', '技术栈', '教育与荣誉', '联系我']),
+      JSON.stringify([
+        '拿得出手的数字',
+        '实习经历',
+        '项目经历',
+        '最新技术分享',
+        '技术栈',
+        '教育与荣誉',
+        '联系我',
+      ]),
     r2Layout.order.join(' → '),
   )
   check(
@@ -1427,14 +1577,13 @@ const check = (name, pass, detail) => {
   })
 
   check('技术分享页只有一个 h1 且内容正确', tech.h1Count === 1 && tech.h1 === '技术分享', `h1=${tech.h1}`)
-  check('计数取自数据长度（共 5 篇）', tech.countText === '共 5 篇 · 更新至 2026.08.12', `${tech.countText}`)
-  check('列表渲染 5 行', tech.rowCount === 5, `行=${tech.rowCount}`)
-  check('列表项内无链接（无死链）', tech.linksInRows === 0, `链接=${tech.linksInRows}`)
   check('有数据时不渲染空态', tech.hasEmptyState === false)
-  check('列表页有环 badge', tech.ringBadges === 1, `环=${tech.ringBadges}`)
   check('/tech 无横向滚动', tech.overflow <= 0, `溢出=${tech.overflow}px`)
 
   await techCtx.close()
+
+  // ================= 三期（技术分享模块）：卡片列表 / 详情页 / 首页入口 =================
+  await auditPhase3(browser)
 
   // ---- 占位页外壳：/algo 与 404 ----
   const pageCtx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'light' })
