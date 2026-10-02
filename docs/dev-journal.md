@@ -1878,3 +1878,52 @@ W5 做导入器时会补 `content/tech/phase-3-backend-retro.md`，届时那篇�
 `content/tech/phase-3-backend-retro.md` **不是手写的**，而是用脚本从 `V2__seed_data.sql` 里把正文提取出来再拼上 front-matter 生成的 —— 目的是保证"仓库里的 Markdown 源"与"数据库里的种子内容"**逐字一致**。手抄一遍不仅费时，还会在将来某次导入时把正文悄悄改短（导入是 upsert，短的那份会覆盖长的）。
 
 **环境坑（值得记）**：Windows 下把 Java 进程输出重定向到文件时，**logback 写的是 GBK、`System.out` 写的是 UTF-8**，同一个日志文件里两种编码混在一起，中文必然有一部分乱码（能看到「新增 0 篇 / 更新 1 篇」这种数字可辨、文字乱码的行）。排查时不要以为是程序输出有问题。
+
+## 阶段 38 · W4 前端（tasks 5.3–5.7 已完成段）· 2026-10-02
+
+### 38.1 我这一步发的关键原话
+
+「继续完成未完成的第三期开发」（本轮唯一的用户指令，承接 W1/W2/W3/W5 已完成、W4 未完成的状态）。
+
+### 38.2 AI 关键产出（本段）
+
+| 任务 | 产出 | 验证 |
+| --- | --- | --- |
+| 5.3 Markdown 正文管线 | `MarkdownBody.tsx` + `rehypeCollectHeadings.ts`（不引 `unist-util-visit`，自写 hast 遍历）+ 复制按钮 + 表格横向滚动 | `MarkdownBody.test.tsx` 三条；`tsc --noEmit` 通过 |
+| 5.4 `/tech` 卡片列表 | `ArticleCard.tsx`/`.module.css`（字体封面回退 + 品牌渐变）、`TechListPage.tsx` 重写（TanStack Query `useArticles`，**错误态不伪装成空态**） | `TechListPage.test.tsx` 四条 |
+| 5.5 `/tech/:slug` 详情页 | `ArticleDetailPage.tsx`（护眼 17/1.9/68ch、h2 自动编号、TOC、上下篇、路由级懒加载 `Suspense`）、`Toc.tsx`（IntersectionObserver 滚动高亮） | `ArticleDetailPage.test.tsx` 全绿；`tsc --noEmit` 通过 |
+| 5.6 首页「最新技术分享」 | `LatestArticles.tsx`/`.module.css`（**通栏行式列表，不用卡片**，带 `aria-labelledby`/`data-block`/`data-rhythm`），插入 `HomePage.tsx` 使首页 **7→8 个区块** | `probe-fit.cjs`/`probe-docking.cjs` 实测「区块数 = 8」且 8 场景「压字 0 处」 |
+| 5.7 scene 4/7 停靠 + rhythm 重排 | `CelestialField.module.css` 停靠表由 7 场景扩到 **8 场景**（scene 4 = 最新技术分享，5 = 技术栈，6 = 教育荣誉，7 = 联系我）；`data-rhythm` 重排保持 M/m 交替（SkillMatrix minor→major、EducationAwards major→minor、ContactBar minor→major） | 同上，探针 8/8 全绿 |
+
+**本段核心证据（实测，1280×900 视口，dev server 5173）**：
+
+```
+区块数（= scene 数）= 8
+scene 0 天体矩形 x=960  y=250 w=256  压字 0 处
+scene 1 天体矩形 x=90   y=78  w=205  压字 0 处
+scene 2 天体矩形 x=102  y=135 w=179  压字 0 处
+scene 3 天体矩形 x=96   y=84  w=192  压字 0 处
+scene 4 天体矩形 x=1005 y=97  w=166  压字 0 处
+scene 5 天体矩形 x=102  y=405 w=179  压字 0 处
+scene 6 天体矩形 x=102  y=360 w=179  压字 0 处
+scene 7 天体矩形 x=77   y=65  w=230  压字 0 处
+```
+
+### 38.3 被驳回 / 纠偏
+
+本轮无用户纠偏（用户只发了「继续」一条指令）。
+
+### 38.4 翻车与返工（本段四条，两条是真 bug）
+
+| # | 现象 | 归因 | 处置 |
+| --- | --- | --- | --- |
+| ① | 详情页 `Maximum update depth exceeded` 崩溃 | `rehypeCollectHeadings` 的 collect 回调在 **React 渲染期**调 `setState` → 死循环 | 第一次用 `useRef` 做幂等短路 → 不崩了但渲染期的 setState 被丢弃，**TOC 永久为空且无报错**；最终改为在 `useEffect` 里**从渲染后的 DOM 收集** `h2[id],h3[id]`（顺带保证锚点与 rehype-slug 生成的 id 一致） |
+| ② | `rehypeCollectHeadings` 在 `undefined` 节点上崩 | hast 的 `children` 数组可以有**空洞** | 加 `if (!node) return` |
+| ③ | `probe-docking.cjs` 全场景报「天体矩形: n/a」（**假绿**） | 探针按哈希后的类名 `.earth/.moon` 取节点，取空 → 判定静默跳过 | 改按**结构**取「`.field` 下可见的那个子 div」；这正是计划里警告过的「假绿比红更危险」 |
+| ④ | 一版 CSS 写的令牌名是计划样例里的旧名（`--ds-border/--ds-accent-soft/--ds-bg-elevated`） | 计划里的样例 CSS 与项目实际令牌不一致 | 全部改为**真实令牌**：`--ds-c-hairline/--ds-c-bg-elv/--ds-c-accent/--ds-c-accent-bg` |
+
+**额外一处几何纠偏**：`probe-fit.cjs` 的候选网格用 cx≈91vw 找位，但实际 `--dx`（35vw + 正文让位）落点更靠内（≈85vw）—— 所以 scene 2 我按网格选了「右侧 25vh」，验收探针实测却压到了公司全名「广州视源电子科技股份有限公司（CVTE）」（横排很长）。**结论：找位置脚本只是粗筛，验收探针才是准的**，scene 2 随之改走左侧。
+
+### 38.5 环境限制（如实记录）
+
+本机存在**硬性的 esbuild 磁盘读取拒绝**（`winapi error #5`）：`vite build` 与 `vitest` 均无法运行；`tsc --noEmit`（不依赖 esbuild）与 Playwright/Edge 浏览器断言可用。故本段验证走**项目既有降级路径**：`tsc --noEmit` + 浏览器实测探针。`vitest` 用例已写完并类型检查通过，但**未能在本机执行**——留待环境允许时补跑。

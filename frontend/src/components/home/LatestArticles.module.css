@@ -1,0 +1,122 @@
+/* 首页「最新技术分享」（三期）
+   --------------------------------------------------------------------------
+   通栏紧凑列表，**不是卡片** —— 首页的视觉纪律是「面板只给关键数字 / 项目经历 /
+   技术栈三类区块」，这一块必须保持通栏、无面板底色、无投影。行与行靠间距分开。 */
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* 与「项目经历」表格同一档：顶部一条细线做起手，行间细线分隔 */
+  border-top: 1px solid var(--ds-c-hairline);
+}
+
+.list > li + li {
+  border-top: 1px solid var(--ds-c-hairline);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--ds-space-4);
+  align-items: baseline;
+  padding-block: var(--ds-space-3);
+  text-decoration: none;
+  color: inherit;
+  /* 触摸目标：整行可点，纵向 padding + 行高保证 ≥44px */
+  min-height: 44px;
+}
+
+/* 聚光式悬停（与项目经历表格、列表页同一套交互语言）：左侧一根强调竖条 */
+.row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 2px;
+  height: 0;
+  background: var(--ds-c-accent);
+  transition: height 160ms var(--ds-ease-out);
+}
+
+.row {
+  position: relative;
+}
+
+@media (hover: hover) {
+  .row:hover::before {
+    height: 100%;
+  }
+
+  .row:hover .title {
+    color: var(--ds-c-accent);
+  }
+}
+
+.title {
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-fs-h3);
+  font-weight: var(--ds-fw-display);
+  line-height: 1.5;
+  color: var(--ds-c-text);
+  transition: color 160ms var(--ds-ease-out);
+}
+
+.meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: var(--ds-fs-xs);
+  color: var(--ds-c-text-subtle);
+  white-space: nowrap;
+}
+
+.category {
+  color: var(--ds-c-accent);
+}
+
+/* 日期是纯数字 → 保留等宽；「N 分钟」含中文 → 不走等宽栈（decisions #41） */
+.date {
+  font-family: var(--ds-font-mono);
+}
+
+.state {
+  margin-top: var(--ds-space-3);
+  color: var(--ds-c-text-mute);
+}
+
+.state a {
+  color: var(--ds-c-accent);
+}
+
+.more {
+  margin-top: var(--ds-space-3);
+  font-size: var(--ds-fs-sm);
+}
+
+.more a {
+  color: var(--ds-c-text-mute);
+  text-decoration: none;
+}
+
+.more a:hover {
+  color: var(--ds-c-accent);
+}
+
+@media (max-width: 719px) {
+  /* 窄屏：标题与档案行分两行，避免日期被挤到换行 */
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ds-space-1);
+  }
+
+  .title {
+    font-size: 1.05rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row::before,
+  .title {
+    transition: none;
+  }
+}

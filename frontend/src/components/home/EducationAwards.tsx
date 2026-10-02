@@ -15,7 +15,7 @@ export default function EducationAwards({ education, awards }: Props) {
     <section
       className="container section"
       aria-labelledby="edu-title"
-      data-rhythm="major"
+      data-rhythm="minor"
     >
       <h2 id="edu-title" className="sectionTitle" data-reveal>
         教育与荣誉

@@ -5,6 +5,7 @@ import HighlightStats from '@/components/home/HighlightStats'
 import SkillMatrix from '@/components/home/SkillMatrix'
 import ExperienceTimeline from '@/components/home/ExperienceTimeline'
 import ProjectShowcase from '@/components/home/ProjectShowcase'
+import LatestArticles from '@/components/home/LatestArticles'
 import EducationAwards from '@/components/home/EducationAwards'
 import ContactBar from '@/components/home/ContactBar'
 
@@ -23,6 +24,10 @@ export default function HomePage() {
       <HighlightStats metrics={highlights} />
       <ExperienceTimeline experiences={experiences} />
       <ProjectShowcase projects={projects} />
+      {/* 三期新增：产出之后、能力清单之前的「最新技术分享」。
+          插入它把首页从 7 个区块变成 8 个 —— 天体停靠表（scene 4/7）、data-rhythm、
+          reveal 错峰、四视口截图与对比度审计都已随之重验。 */}
+      <LatestArticles />
       <SkillMatrix groups={skillGroups} />
       <EducationAwards education={education} awards={awards} />
       <ContactBar contacts={contacts} />

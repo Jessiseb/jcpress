@@ -55,7 +55,7 @@ const LEGEND: { tier: Tier; label: string }[] = [
  */
 export default function SkillMatrix({ groups }: Props) {
   return (
-    <section className="container section" aria-labelledby="skills-title" data-rhythm="minor">
+    <section className="container section" aria-labelledby="skills-title" data-rhythm="major">
       <h2 id="skills-title" className="sectionTitle" data-reveal>
         技术栈
       </h2>

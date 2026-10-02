@@ -33,7 +33,7 @@ export default function ContactBar({ contacts }: Props) {
     <section
       className="container section"
       aria-labelledby="contact-title"
-      data-rhythm="minor"
+      data-rhythm="major"
     >
       <h2 id="contact-title" className="sectionTitle" data-reveal>
         联系我
