@@ -14,8 +14,9 @@ dist-ssr/
 .vite/
 *.local
 frontend/.tmp/
-# 三期生产构建产物（.tmp/tools/build-p3.sh 的输出，供 build-probe.cjs 分析；体积 MB 级不入库）
+# 三期生产构建产物（.tmp/tools/build-p3.sh 的输出与中间目录；体积 MB 级不入库）
 frontend/.tmp-build/
+frontend/.tmp-build.new/
 # TypeScript 增量构建缓存：机器相关、会随编译变动，入库只会制造无意义的 diff
 *.tsbuildinfo
 

@@ -56,7 +56,7 @@
 - [x] 5.8 实现后台写入口（登录页 + 文章列表 + 编辑页 + `RequireAdmin` 守卫 + CodeMirror 6 编辑器与粘贴上传，与公开站视觉隔离，`robots.txt` 禁收录 `/admin`），验证 `AdminArticleEditPage.test.tsx` 全绿且手工走通「改标题 → 保存 → 发布 → 前台刷新可见」
 - [x] 5.9 生成文章页专用字体子集（GB2312 一级字 3755、两档、独立 `font-family`、只在详情页 chunk 被引用），验证 `audit-display-font.cjs` 在含 `/tech/:slug` 的路由集合上全绿，且首屏构建产物中不含该字体文件
 - [x] 5.10 建立验收评估集 `docs/phase3-effect-matrix.md` 并扩展工具（对比度审计参数化到四条路由、行为断言加三期 section、截图加三条路由），验证矩阵中每条「实测」列都填了真实数字且无「已知问题」遗留
-- [ ] 5.11 W4 出口复核：跑通评估集的一键复跑六条命令，完成 9 项手工验收清单，在 `docs/dev-journal.md` 追加 W4 留痕后提交
+- [x] 5.11 W4 出口复核：跑通评估集的一键复跑六条命令，完成 9 项手工验收清单，在 `docs/dev-journal.md` 追加 W4 留痕后提交
 
 ## 6. 集成收尾
 

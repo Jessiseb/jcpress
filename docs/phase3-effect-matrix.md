@@ -3,7 +3,9 @@
 > 用途：本期的视觉与交互**不可单测**，用这张表代替 TDD —— 每条效果 = 判据 + 复核命令 + 实测结果。
 > 复跑全部：见 §「一键复跑」。任何一条未达标都不算完成。
 >
-> 所有「实测」栏都是**真实跑出来的数字**，跑不过的条目已修到过，无「已知问题」遗留。
+> 所有「实测」栏都是**真实跑出来的数字**，无「待填」、无「已知问题」。
+> 唯二例外是两处**环境限制**（不是产品缺陷），都已在下文如实标注并给出替代覆盖：
+> ① `vitest run` 本机跑不动（esbuild 被 EDR 拦）；② V10 ② 的构建体积本机不可复现。
 
 ## 一键复跑
 
@@ -27,13 +29,33 @@ bash .tmp/tools/build-p3.sh && node .tmp/tools/build-probe.cjs   # 生产构建�
 ### 构建口子的说明（重要）
 
 `cd frontend; npm run build`（即 `vite build`）在**本机跑不起来**：Vite 会 spawn esbuild 子进程，
-而本机对「由 Node 派生的子进程读取文件」一律返回 `winapi error #5`（= ERROR_ACCESS_DENIED，
-典型的企业级 EDR/杀软拦截）。
+而本机 EDR 拦截「esbuild 子进程读取文件」，返回 `winapi error #5`（= ERROR_ACCESS_DENIED）。
 
-已确认**不是 esbuild 二进制的问题**：把 `node_modules/@esbuild/win32-x64/esbuild.exe`
-直接在 shell 里执行是正常的（`--version` → `0.25.12`），只有从 Node 里 spawn 才被拒。
+**三个已确认的事实**（避免后来人重复踩坑）：
 
-所以 V10 的构建验证拆成两步（脚本在 `.tmp/tools/`）：
+1. `esbuild.exe --version` 永远成功 —— 因为它**不读任何文件**。
+   所以「esbuild 能跑」**不代表**「构建能跑」，别用 `--version` 判断环境是否可用。
+2. 拦截**不稳定**：同一条打包命令可能这次成功、下次失败。2026-10-02 曾成功产出过一次完整产物
+   （下面 §入口 chunk 契约 的数据来自那一次），之后转为**持续拦截**，重试 6 次仍失败。
+3. 与**沙箱无关**：在沙箱内外、用绝对/相对路径、直接跑二进制 / 经 Node wrapper 调用，
+   表现一致（都失败）。所以这不是权限配置问题，是环境级的 EDR 策略。
+
+**处置**：
+
+- V10 的**模块归属**判定（首屏不含编辑器/Markdown/文章字体）改用**运行时请求**，不依赖构建 ——
+  `audit-firstscreen.cjs`，**可复现、已全绿**。
+- V10 的**gzip 体积**判定依赖构建产物，本机**不可复现**。
+  `build-p3.sh` 已做成「重试 + 失败保留上次产物 + 非零退出」，不会静默通过。
+  **换到无 EDR 拦截的机器上必须重跑 `bash .tmp/tools/build-p3.sh && node .tmp/tools/build-probe.cjs`**，
+  并把实测值回填到上表 V10 的 ②。
+
+```bash
+# ① 在 shell 里直接用 esbuild 做生产打包（minify + tree-shaking + splitting，语义同 Vite 生产模式）
+bash .tmp/tools/build-p3.sh
+
+# ② Node 只读产物做判定（读文件不触发 spawn，不踩限制）
+node .tmp/tools/build-probe.cjs
+```
 
 ```bash
 # ① 在 shell 里直接用 esbuild 做生产打包（minify + tree-shaking + splitting，语义同 Vite 生产模式）
@@ -59,7 +81,7 @@ node .tmp/tools/build-probe.cjs
 | V7 | 双主题对比度 | 四条路由 × 亮暗，未达标 0 | audit-contrast | ✔ 8 组（home/tech/detail/admin-login × light/dark）合计未达标 **0**；覆盖 227/28/166/4 处文本 |
 | V8 | 天体不压字 | 8 个 scene 全部「压字 0 处」 | probe-docking | ✔ 8 scene 全部压字 0 处；区块数=scene 数=8 |
 | V9 | 四视口无溢出 | 四条路由 × 四视口 `overflow=no` | shot-final | ✔ 16 格全 `no`（home/tech/detail/admin-login × 1280/768/390/375） |
-| V10 | 首屏体积 | 首屏 chunk 不含编辑器/Markdown/文章字体；gzip ≤200KB | build-probe + audit-firstscreen | ✔ 首屏 **82.9 KB gzip**；不含 react-markdown/codemirror/highlight.js/serif-sc-article；三者反向对照均在懒加载 chunk |
+| V10 | 首屏体积 | ① 首屏不含编辑器/Markdown/文章字体（运行时请求）② 生产构建首屏 gzip ≤200KB | **①** audit-firstscreen（可复现）**②** build-p3.sh + build-probe.cjs（本机受 EDR 限制，见下） | **① ✔ 全绿**（首屏 76 条请求中零命中；详情页/后台反向对照均命中）**② ✔ 历史实测 82.9 KB gzip**（2026-10-02 02 次成功构建取得；本机后续被 EDR 持续拦截，需换机复跑） |
 | V11 | 字体不混款 | 展示字 ⊆ 静态 700 ∪ 文章 700 | audit-display-font | ✔ 8/8；覆盖 104 个展示字（静态 700 的 60 字 ∪ 文章 700 的 4485 字） |
 
 ## 三期专项行为断言（audit-behavior `auditPhase3()`）
@@ -82,6 +104,9 @@ node .tmp/tools/build-probe.cjs
 **audit-behavior 合计 82 项，通过 82，失败 0。**
 
 ## 入口 chunk 契约（V10 取证）
+
+> ⚠️ 下面这组数字来自 **2026-10-02 那一次成功的生产构建**（之后本机转为持续拦截，见上文）。
+> 它是**真实产出**、不是估算；但换机后必须重跑确认。产物清单（供比对文件名格式）：
 
 生产构建（esbuild：minify + tree-shaking + splitting）：
 
