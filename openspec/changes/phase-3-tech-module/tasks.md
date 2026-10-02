@@ -53,7 +53,7 @@
 - [x] 5.5 实现 `/tech/:slug` 详情页（护眼档位 17px/1.9/68ch、章节自动编号、代码复制、右侧目录 + 窄屏折叠、上下篇、路由级懒加载），验证 `ArticleDetailPage.test.tsx` 全绿且 `npx tsc --noEmit` 通过
 - [x] 5.6 实现首页「最新技术分享」区块（**通栏行式列表，不用卡片**；带 `aria-labelledby` 与 `data-block`），把首页从 7 个区块改为 8 个，验证行为断言中「区块数 = 8」与「3 个条目都指向详情」通过
 - [x] 5.7 补 `CelestialField` 的 scene 4 与 scene 7 停靠规则并重排 `data-rhythm`（保持 M/m 交替），验证 `probe-docking.cjs` 在 8 个 scene 上全部报「压字 0 处」，且实测矩形已写进 CSS 注释
-- [ ] 5.8 实现后台写入口（登录页 + 文章列表 + 编辑页 + `RequireAdmin` 守卫 + CodeMirror 6 编辑器与粘贴上传，与公开站视觉隔离，`robots.txt` 禁收录 `/admin`），验证 `AdminArticleEditPage.test.tsx` 全绿且手工走通「改标题 → 保存 → 发布 → 前台刷新可见」
+- [x] 5.8 实现后台写入口（登录页 + 文章列表 + 编辑页 + `RequireAdmin` 守卫 + CodeMirror 6 编辑器与粘贴上传，与公开站视觉隔离，`robots.txt` 禁收录 `/admin`），验证 `AdminArticleEditPage.test.tsx` 全绿且手工走通「改标题 → 保存 → 发布 → 前台刷新可见」
 - [ ] 5.9 生成文章页专用字体子集（GB2312 一级字 3755、两档、独立 `font-family`、只在详情页 chunk 被引用），验证 `audit-display-font.cjs` 在含 `/tech/:slug` 的路由集合上全绿，且首屏构建产物中不含该字体文件
 - [ ] 5.10 建立验收评估集 `docs/phase3-effect-matrix.md` 并扩展工具（对比度审计参数化到四条路由、行为断言加三期 section、截图加三条路由），验证矩阵中每条「实测」列都填了真实数字且无「已知问题」遗留
 - [ ] 5.11 W4 出口复核：跑通评估集的一键复跑六条命令，完成 9 项手工验收清单，在 `docs/dev-journal.md` 追加 W4 留痕后提交

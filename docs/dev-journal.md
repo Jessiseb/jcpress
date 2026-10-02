@@ -1927,3 +1927,54 @@ scene 7 天体矩形 x=77   y=65  w=230  压字 0 处
 ### 38.5 环境限制（如实记录）
 
 本机存在**硬性的 esbuild 磁盘读取拒绝**（`winapi error #5`）：`vite build` 与 `vitest` 均无法运行；`tsc --noEmit`（不依赖 esbuild）与 Playwright/Edge 浏览器断言可用。故本段验证走**项目既有降级路径**：`tsc --noEmit` + 浏览器实测探针。`vitest` 用例已写完并类型检查通过，但**未能在本机执行**——留待环境允许时补跑。
+
+## 阶段 39 · W4 后台写入口（task 5.8）· 2026-10-02
+
+### 39.1 我这一步发的关键原话
+
+「继续完成未完成的第三期开发」（承接阶段 38）。
+
+### 39.2 AI 关键产出
+
+| 文件 | 说明 |
+| --- | --- |
+| `frontend/src/hooks/useAdminAuth.ts` | 登录态 hook：真源是 sessionStorage 的 token，`/me` 只做校验；`enabled: getToken()!==null`、`retry:false` |
+| `frontend/src/hooks/useAdminArticles.ts` | 列表/详情/保存/发布/删除五个 hook；写操作统一失效 `['admin','articles']` + 公开站 `['articles']`/`['latest-articles']` 前缀 |
+| `frontend/src/components/admin/MarkdownEditor.tsx` + `.module.css` | CodeMirror 6 双栏（左编辑右预览）+ **粘贴图片即上传**；编辑器只在挂载时建一次（`onChangeRef` 回写，避免重建丢光标） |
+| `frontend/src/pages/admin/{AdminLayout,AdminLoginPage,AdminArticleListPage,AdminArticleEditPage,RequireAdmin}.tsx` + `admin.module.css` | 一条顶栏 + 登录卡 + 列表（状态/分类/关键词筛选、状态徽标、删除二次确认）+ 编辑页（中文标题空 slug 本地拦截）+ 守卫三态 |
+| `frontend/src/App.tsx` | 三条 admin 路由懒加载；`isAdmin` 时**不挂** `FlowField`/`TopNav`/`Footer`/`ScrollProgress`（视觉隔离，规划 §10.4） |
+| `frontend/public/robots.txt` | 新建，`Disallow: /admin` |
+| `frontend/package.json` | 新增 `codemirror@6.0.2`、`@codemirror/lang-markdown@6.5.2`、`@codemirror/view@6.43.13` |
+
+**浏览器全链路实测（`probe-admin.cjs`，替代跑不起来的 vitest）**：
+
+```
+① 未登录访问 /admin/articles → /admin/login
+   后台隔离（应全 false）: {"hasTopNav":false,"hasFooter":false,"hasFlow":false}
+② 登录后 → /admin/articles
+③ 列表行数 = 6（1 已发布 + 5 草稿）
+④ 编辑页回填标题 = "三期后端复盘：模板、Redis 版本与「没人守」的规则"
+   中文标题+空slug 拦截提示 = "中文标题请手填英文 slug（如 my-first-post）"
+⑤ 保存后 → /admin/articles
+⑥ 列表中找到改后文章: {"status":"已发布"}
+⑦ 前台 /tech 可见改后标题 = true
+```
+
+⑦ 是这一条链路的关键：**后台改标题 → 保存 → 前台刷新立即可见**，端到端通。
+
+### 39.3 被驳回 / 纠偏
+
+本轮无用户纠偏。
+
+### 39.4 翻车与返工
+
+| # | 现象 | 归因 | 处置 |
+| --- | --- | --- | --- |
+| ① | `useSaveAdminArticle` 类型报错：`Promise<void> \| Promise<string>` 不能赋给 `MutationFunction<void,…>` | 新建接口返回新 id（string），更新接口返回 void，两条并成一条 mutationFn 时返回类型不一致 | 显式标注 `useMutation<string \| null, Error, …>`，mutationFn 统一成 `async` 返回 `string \| null` |
+| ② | 探针第 ⑤ 步「保存后仍停在 /admin/articles/1」，误判为导航失败 | 探针自己在 4b 把 slug 清空做拦截测试后**没填回去**，第 5 步被同一条校验拦下；且 `waitForURL('**/admin/articles')` 的 `**` 会吞掉尾段匹配到 `/articles/1` | 探针补回 slug；改用 `waitForFunction(pathname === '/admin/articles')` 精确判等。**应用本身无 bug**（单独逐帧观察确认 500ms 内即跳转） |
+
+**一处操作失误（如实记录）**：为「复位」文章 1 我一度直接调后台接口把 `contentMd` 写成了占位串「（正文略）」，**覆盖了真实正文**（3167 字）。发现后立即用 W5 导入器 `--import=../content/tech` 复原（幂等 upsert：新增 0 / 更新 1），正文与标题均逐字恢复。教训：**复位测试数据要走「从源文件重建」的路径，不要手搓 payload 去覆盖**。
+
+### 39.5 环境限制（延续）
+
+`vitest` 仍被 esbuild 磁盘读取拒绝挡在门外（`Cannot read file "package.json": winapi error #5`）。故 `AdminArticleEditPage.test.tsx`（两条：中文标题拦截、保存带 id）**已写完并通过 `tsc --noEmit`，但本机跑不了**；改用 `probe-admin.cjs` 的浏览器全链路验收覆盖同等语义。留待环境允许时补跑单测。

@@ -1,0 +1,75 @@
+/* 后台 Markdown 编辑器：左编辑 / 右预览的两栏工作台。
+   视觉**故意**与公开站隔离（规划 §10.4）：无衬线、无圆角卡片、无天体贴图背景，
+   只用中性令牌与硬边框 —— 让人一眼看出「这是后台，不是自己的网站」。 */
+
+.editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--ds-space-4);
+  min-height: 420px;
+}
+
+@media (max-width: 900px) {
+  .editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--ds-c-border);
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-c-bg);
+  overflow: hidden;
+}
+
+.paneHead {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border-bottom: 1px solid var(--ds-c-border-soft);
+  background: var(--ds-c-bg-alt);
+  font-family: var(--ds-font-sans);
+  font-size: 0.8125rem;
+  font-weight: var(--ds-fw-medium);
+  color: var(--ds-c-text-mute);
+}
+
+.hint {
+  font-weight: var(--ds-fw-regular);
+  color: var(--ds-c-accent);
+}
+
+/* CodeMirror 宿主：撑满剩余高度，内部滚动 —— 编辑器不把页面顶高。 */
+.cmHost {
+  flex: 1;
+  min-height: 380px;
+  overflow: auto;
+}
+
+/* CodeMirror 会把自己的 DOM 注进 .cmHost，这里让它 100% 撑满并统一等宽字体。 */
+.cmHost :global(.cm-editor) {
+  height: 100%;
+  font-family: var(--ds-font-mono);
+  font-size: 0.875rem;
+}
+
+.cmHost :global(.cm-editor.cm-focused) {
+  outline: none;
+}
+
+.cmHost :global(.cm-scroller) {
+  font-family: var(--ds-font-mono);
+  line-height: 1.7;
+}
+
+.preview {
+  flex: 1;
+  padding: var(--ds-space-4);
+  overflow: auto;
+  /* 预览里是文章正文，沿用正文排版；容器本身仍是后台的中性外观 */
+  color: var(--ds-c-text);
+}

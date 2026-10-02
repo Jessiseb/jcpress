@@ -1,0 +1,290 @@
+/* 后台管理台样式（登录 / 列表 / 编辑共用）。
+   纪律（规划 §10.4）：与公开站**视觉隔离** —— 无衬线、无天体/流线背景、无衬线标题。
+   公开站的 identity 是「衬线 + 流线 + 圆角卡片」；这里反过来：中性灰面、硬边框、
+   小圆角，像一块工具面板。共用一份 CSS 是为了三页色调一致。 */
+
+.page {
+  max-width: 1080px;
+  margin-inline: auto;
+  padding: var(--ds-space-6) var(--ds-space-5) var(--ds-space-7);
+  font-family: var(--ds-font-sans);
+  color: var(--ds-c-text);
+}
+
+/* ---- 顶栏 ---- */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-4);
+  padding-block: var(--ds-space-3);
+  border-bottom: 1px solid var(--ds-c-border);
+  margin-bottom: var(--ds-space-6);
+}
+
+.brand {
+  font-size: 1rem;
+  font-weight: var(--ds-fw-semibold);
+  color: var(--ds-c-text);
+}
+
+.topbarSpacer {
+  flex: 1;
+}
+
+.who {
+  font-size: 0.8125rem;
+  color: var(--ds-c-text-mute);
+}
+
+/* ---- 通用控件 ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-1);
+  padding: var(--ds-space-1) var(--ds-space-3);
+  border: 1px solid var(--ds-c-border);
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-c-bg);
+  color: var(--ds-c-text);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.btn:hover {
+  background: var(--ds-c-control-hover);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  border-color: var(--ds-c-accent-bg);
+  background: var(--ds-c-accent-bg);
+  color: var(--ds-c-accent-text);
+}
+
+.btnPrimary:hover {
+  background: var(--ds-c-accent-hover);
+  border-color: var(--ds-c-accent-hover);
+}
+
+.btnDanger {
+  border-color: var(--ds-c-red-text);
+  color: var(--ds-c-red-text);
+}
+
+.btnDanger:hover {
+  background: var(--ds-c-red-soft);
+}
+
+/* ---- 表单 ---- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-1);
+  margin-bottom: var(--ds-space-4);
+}
+
+.label {
+  font-size: 0.8125rem;
+  font-weight: var(--ds-fw-medium);
+  color: var(--ds-c-text-mute);
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border: 1px solid var(--ds-c-border);
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-c-bg);
+  color: var(--ds-c-text);
+  font-family: var(--ds-font-sans);
+  font-size: 0.875rem;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: 2px solid var(--ds-c-accent);
+  outline-offset: 1px;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 4.5rem;
+}
+
+.fieldError {
+  font-size: 0.75rem;
+  color: var(--ds-c-red-text);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--ds-space-4);
+}
+
+@media (max-width: 720px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---- 登录卡 ---- */
+.loginWrap {
+  max-width: 360px;
+  margin: 8vh auto 0;
+}
+
+.loginCard {
+  padding: var(--ds-space-6);
+  border: 1px solid var(--ds-c-border);
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-c-bg-elv);
+}
+
+.loginTitle {
+  margin: 0 0 var(--ds-space-5);
+  font-size: 1.125rem;
+  font-weight: var(--ds-fw-semibold);
+}
+
+/* ---- 列表 ---- */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+  align-items: center;
+  margin-bottom: var(--ds-space-4);
+}
+
+.toolbarSpacer {
+  flex: 1;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.table th,
+.table td {
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border-bottom: 1px solid var(--ds-c-border-soft);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table th {
+  font-size: 0.75rem;
+  font-weight: var(--ds-fw-medium);
+  color: var(--ds-c-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.titleCell {
+  font-weight: var(--ds-fw-medium);
+  color: var(--ds-c-text);
+}
+
+.numCell {
+  font-family: var(--ds-font-mono);
+  font-size: 0.8125rem;
+  color: var(--ds-c-text-mute);
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  gap: var(--ds-space-1);
+  justify-content: flex-end;
+}
+
+/* 状态徽标：草稿灰 / 已发布绿 / 归档黄 */
+.badge {
+  display: inline-block;
+  padding: 1px var(--ds-space-2);
+  border-radius: var(--ds-radius-xs);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.badgeDraft {
+  background: var(--ds-c-grey-soft);
+  color: var(--ds-c-grey-text);
+}
+
+.badgePublished {
+  background: var(--ds-c-green-soft);
+  color: var(--ds-c-green-text);
+}
+
+.badgeArchived {
+  background: var(--ds-c-yellow-soft);
+  color: var(--ds-c-yellow-text);
+}
+
+/* ---- 状态区（空 / 错误 / 加载）：三态各自可辨，不互相伪装 ---- */
+.state {
+  padding: var(--ds-space-7) var(--ds-space-4);
+  text-align: center;
+  color: var(--ds-c-text-mute);
+  font-size: 0.875rem;
+}
+
+.stateError {
+  color: var(--ds-c-red-text);
+}
+
+/* ---- 编辑页 ---- */
+.editHead {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  margin-bottom: var(--ds-space-5);
+}
+
+.editTitle {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: var(--ds-fw-semibold);
+}
+
+.saveBar {
+  display: flex;
+  gap: var(--ds-space-2);
+  align-items: center;
+  margin-top: var(--ds-space-5);
+  padding-top: var(--ds-space-4);
+  border-top: 1px solid var(--ds-c-border);
+}
+
+.saveBarSpacer {
+  flex: 1;
+}
+
+.savedHint {
+  font-size: 0.8125rem;
+  color: var(--ds-c-green-text);
+}
+
+/* ---- 二次确认条（删除） ---- */
+.confirmRow {
+  display: inline-flex;
+  gap: var(--ds-space-1);
+  align-items: center;
+}
+
+.confirmText {
+  font-size: 0.8125rem;
+  color: var(--ds-c-red-text);
+}
