@@ -2,17 +2,23 @@
 
 > 个人网站 —— 展示个人经历与技术栈，沉淀技术分享与项目笔记。
 > 当前状态：**一期前端已完结**（首页 / 频道外壳 / 视觉语言，见 `docs/dev-journal.md` 阶段 1–14）；
-> **二期视觉修订已完结并归档**（三轮：`phase-2-visual` → `phase-2-r2` → `phase-2-r3`，
-> 见 `openspec/changes/archive/2026-10-01-phase-2-r3/`）。后端与部署尚未开始。
+> **二期视觉修订已完结并归档**（`openspec/changes/archive/2026-10-01-phase-2-r3/`）；
+> **三期（技术分享模块）后端 + 前台/后台 UI 已完结**（分支 `feat/phase-3-tech-module`）：
+> Spring Boot 后端（公开读接口 + 后台写平面 + Markdown 导入器）、`/tech` 列表与详情页、
+> `/admin` 登录与写入口、文章专用字体子集。
+> 效果与验收见 [`docs/phase3-effect-matrix.md`](docs/phase3-effect-matrix.md)。
 
 ## 技术栈
 
 | 层 | 选型 |
 | --- | --- |
-| 前端 | React 18 + TypeScript + Vite + React Router + TanStack Query；**构建期预渲染**（SEO）；**移动端优先适配** |
-| 后端 | Java 21 + Spring Boot 3 + MyBatis-Plus + **Gson** + **Sa-Token**（仅后台登录用） |
-| 存储 | MySQL 8（内容 + 后台账号） · Redis 7（Sa-Token 会话 / 缓存 / 限流） |
+| 前端 | React 18 + TypeScript + Vite 6 + React Router 6 + TanStack Query 5；**构建期预渲染**（SEO）；**移动端优先适配** |
+| 后端 | **Java 17** + Spring Boot 3.3.4 + MyBatis-Plus + **Gson** + **Sa-Token 1.44.0**（仅后台登录用） |
+| 存储 | MySQL 8（内容 + 后台账号） · Redis 7（Sa-Token 会话 / 缓存 / 限流 / 浏览量去重） |
 | 部署 | Docker Compose（Nginx + Backend + MySQL + Redis） |
+
+> ⚠️ **JDK 基线是 17**。本机 `JAVA_HOME` 常指向其它版本，跑后端命令前先
+> `export JAVA_HOME=<jdk-17>`，否则 `./mvnw` 会以错误版本启动。
 
 ## 规划文档
 
@@ -47,36 +53,62 @@
 | 后台账号 | 数据库手工维护，**不开放注册** |
 | 完整管理后台 | **放在 M7，按需启动** —— 见规划文档 [§10](docs/项目前期规划.md#10-后台管理系统)（决策 D8） |
 
-## 验收怎么跑（前端）
+## 验收怎么跑
 
-**权威清单在 [`docs/phase2-effect-matrix.md`](docs/phase2-effect-matrix.md)**（二期把它当作「评估集」：每条视觉效果的判据 + 复核命令 + 实测结果）。常用命令：
+**权威清单**：[`docs/phase3-effect-matrix.md`](docs/phase3-effect-matrix.md)（三期，**当前**）
+与 [`docs/phase2-effect-matrix.md`](docs/phase2-effect-matrix.md)（二期，视觉修订）。
+两者都是「评估集」：每条效果的判据 + 复核命令 + 实测结果。
+
+### 后端
+
+```bash
+# 前置：JDK 17（本机 JAVA_HOME 常指向 8/21，必须显式指定）
+export JAVA_HOME="<path-to-jdk-17>"
+
+cd backend
+./mvnw -q -B test                          # 全量测试：111 run / 0 fail / 0 error
+./mvnw -q -DskipTests compile              # 只编译
+./mvnw -q spring-boot:run                  # 起服务（默认 8080）
+curl -s http://127.0.0.1:8080/api/health   # 期望 code=0 且 db=UP、redis=UP
+
+# Markdown 导入器（CLI，非 web 模式；--dry-run 只打印将处理的清单）
+./mvnw -q spring-boot:run -Dspring-boot.run.profiles=importer -Dspring-boot.run.arguments="--dry-run"
+```
+
+需要 MySQL 8 与 Redis ≥6.0 在跑（Sa-Token 会话依赖 Redis）。
+
+### 前端
 
 ```bash
 # 前置：dev server 必须在 5173 上跑着（截图与浏览器断言里的 URL 是硬编码的）
 cd frontend && npm run dev
 
-# 1) 类型检查与单测
+# 类型检查（本机可用）
 cd frontend && npx tsc --noEmit
-cd frontend && node node_modules/vitest/vitest.mjs run      # 26/26
 
-# 2) 浏览器行为断言（71 项：结构、渐变护栏、触摸目标、入场、流线层、滚动联动、
-#    排版与面板、天体布景层与分节停靠、贴图登记、技术栈与联系方式）
+# 浏览器行为断言：二期 71 项 + 三期专项 12 项 = 82 项
 node .tmp/tools/audit-behavior.cjs
 
-# 3) 对比度审计（亮暗各约 240 处文本，未达标必须为 0）
+# 对比度审计（4 条路由 × 亮/暗 = 8 组合，未达标必须为 0）
 node .tmp/tools/audit-contrast.cjs
 
-# 4) 四视口截图 + 横向溢出（1280 / 768 / 390 / 375）
-node .tmp/tools/shot-final.cjs .tmp/shots-p2
+# 天体分节停靠（8 scene，每场「压字 0 处」）
+node .tmp/tools/probe-docking.cjs
 
-# 5) 移动端性能归因（帧率 / 掉帧 / 长任务，含「隐藏流线层 / 只关动画」对照）
-node .tmp/tools/audit-perf.cjs
+# 首屏资源归属 + 体积（三期 V10）
+node .tmp/tools/audit-firstscreen.cjs        # 首屏不含编辑器/Markdown/文章字体
+node .tmp/tools/audit-firstscreen-prod.cjs   # 首屏 gzip 生产口径（判据 ≤200KB）
 
-# 6) 生产构建 + Lighthouse 移动端（**必须对生产构建测**）
-cd frontend && npm run build && npx vite preview --port 4173
-npx --yes lighthouse@12 http://127.0.0.1:4173/ --only-categories=performance \
-  --form-factor=mobile --chrome-flags="--headless=new --no-sandbox"
+# 四视口截图 + 横向溢出（1280 / 768 / 390 / 375）
+node .tmp/tools/shot-final.cjs .tmp/shots-p3
 ```
+
+> ⚠️ **`vitest run` 与 `vite build` 在本机跑不动**：EDR 拦截 esbuild 子进程读文件
+> （`winapi error #5`）。两者都失败在**启动/配置加载阶段**，测试代码与业务代码本身没问题。
+> 替代覆盖：`tsc --noEmit` + `audit-behavior.cjs` 的浏览器实测 + 对比度审计 +
+> `audit-firstscreen-prod.cjs`（零子进程，用 `esbuild-wasm` 直接算生产体积）。
+> **换到没有 EDR 拦截的机器上，`vitest run` / `vite build` 应回归。**
+> 详情见 `docs/phase3-effect-matrix.md` 的「构建口子的说明」。
 
 两条会误导人的经验（都写进了 `docs/decisions.md`）：
 
@@ -94,6 +126,12 @@ npx --yes lighthouse@12 http://127.0.0.1:4173/ --only-categories=performance \
 | --- | --- | --- | --- | --- |
 | 500 | `frontend/public/fonts/serif-sc-500.woff2` | 全站字符表（`.tmp/fonts/chars.txt`） | 92.7KB / 531 字 | 定位行、一句话定位、区块导语以外的衬线层 |
 | 700 | `frontend/public/fonts/serif-sc-700.woff2` | **只含展示字**（`.tmp/fonts/chars-display.txt`） | 9.0KB / 45 字 | `h1` / `h2` / 关键数字 |
+| 500·article | `frontend/public/fonts/serif-sc-article-500.woff2` | GB2312 一级字（`.tmp/fonts/chars-article.txt`） | 825KB / 4601 字 | **三期新增**：技术文章正文，独立 family `JCPress Serif SC Article` |
+| 700·article | `frontend/public/fonts/serif-sc-article-700.woff2` | 同上 | 840KB / 4601 字 | **三期新增**：文章内标题 |
+
+> **文章字体只在详情页下载**：`fonts-article.css` 由 `/tech/:slug` 路由的懒加载 chunk 引用，
+> 首页与 `/tech` 列表**不请求**这两个文件（`audit-firstscreen.cjs` 有反向断言守住这条）。
+> `@font-face` 只是声明、不触发下载，所以判据看的是**运行时请求**而非 CSS 文本归属。
 
 ```bash
 cd frontend
@@ -115,15 +153,16 @@ npm run fonts:build:display  # 700 档（自动跑「只收展示字」的字符
 - 两个 `@font-face` 的 `unicode-range` 必须**逐字一致**，否则会出现同一个字一半走 Georgia、
   一半走子集的分裂。
 
-## 仓库结构（规划）
+## 仓库结构
 
 ```text
 jcpress/
-├── docs/                # 前期规划与决策记录
+├── docs/                # 前期规划、决策记录、效果矩阵、开发留痕
 ├── design-system/       # 设计 token、提取产物与溯源说明
-├── content/             # Markdown 源文件（技术文章 / 项目笔记，待创建）
-├── frontend/            # React SPA，含 /admin 后台路由（待创建）
-├── backend/             # Spring Boot 应用（待创建）
+├── content/             # Markdown 源文件（技术文章 / 项目笔记），供导入器灌库
+├── frontend/            # React SPA，含 /admin 后台路由（三期已实现写入口）
+├── backend/             # Spring Boot 应用（三期已实现公开读 + 后台写 + 导入器）
+├── openspec/            # OpenSpec 变更与归档（每个变更一份 tasks/specs）
 └── deploy/              # docker-compose、nginx、Dockerfile（待创建）
 ```
 
@@ -132,9 +171,9 @@ jcpress/
 1. 确认 [`docs/项目前期规划.md` §15](docs/项目前期规划.md#15-待确认决策) 剩下的 **D1、D4–D7、D11、D12** 决策
    （已定：D2 生活经验暂不做 · D3 SPA+构建期预渲染 · D8 后台分三步 · D9 前台免登录 + 后台 Sa-Token ·
    D10 单仓多模块 · D13 品牌主色青碧 Teal）
-2. ~~确定品牌主色~~ **已定青碧 Teal**：M1 把 `theme.jcpress.css` 接进前端入口
-3. 启动 **M1 工程骨架**：前后端最小可运行工程 + Docker 依赖 + 统一响应/异常 + Gson 转换器 +
-   Markdown 导入器 + 主题层接入 + 移动端抽屉骨架
+2. **三期收尾**：归档 `openspec/changes/phase-3-tech-module/`（6.1 集成验收与 6.2 文档同步已完成）
+3. 规划中尚未启动的部分：算法笔记 `/algo`、项目笔记 `/projects`、搜索、
+   Docker 部署与预渲染流水线（见规划文档里程碑 M4/M6）
 
 ## 说明
 

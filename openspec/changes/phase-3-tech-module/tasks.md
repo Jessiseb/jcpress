@@ -61,4 +61,4 @@
 ## 6. 集成收尾
 
 - [x] 6.1 全链路集成验收：按 `docs/phase3-effect-matrix.md` 从零复跑（前端测试 + 后端测试 + 四条路由的对比度与截图 + 停靠探针 + 构建产物体积核对），确认首屏 chunk 不含编辑器/Markdown/文章字体且首屏 gzip ≤200KB
-- [ ] 6.2 文档同步：把 Java 21→17、Sa-Token 1.44.0 与 Redis 约束、上传 URL 双前缀、slug 不支持中文生成、详情页预渲染回退这五处口径回写 `docs/项目前期规划.md` 与 `README.md`，验证两处文档中不再出现「Java 21」且 README 的验收章节含后端命令
+- [x] 6.2 文档同步：把 Java 21→17、Sa-Token 1.44.0 与 Redis 约束、上传 URL 双前缀、slug 不支持中文生成、详情页预渲染回退这五处口径回写 `docs/项目前期规划.md` 与 `README.md`，验证两处文档中不再出现「Java 21」且 README 的验收章节含后端命令
