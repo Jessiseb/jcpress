@@ -1,0 +1,64 @@
+.toc {
+  font-size: 13px;
+}
+
+.tocTitle {
+  margin-bottom: 0.7em;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--ds-c-text-subtle);
+}
+
+.toc ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* 目录本身不该有可滚动区 —— 窄屏折叠进 <details> 后跟随页面滚动即可 */
+}
+
+.toc a {
+  display: block;
+  padding-left: 0.7em;
+  border-left: 2px solid transparent;
+  color: var(--ds-c-text-mute);
+  text-decoration: none;
+  line-height: 1.6;
+  transition:
+    color 140ms var(--ds-ease-out),
+    border-color 140ms var(--ds-ease-out);
+}
+
+.toc a:hover {
+  color: var(--ds-c-text);
+}
+
+/* 当前小节：左侧竖条 + 强调色。用 border 而不是背景块，避免在暗色下出现色带 */
+.toc a[aria-current='location'] {
+  border-left-color: var(--ds-c-accent);
+  color: var(--ds-c-accent);
+}
+
+/* h3 层级：缩进半档，字号略小 */
+.toc .level3 a {
+  padding-left: 1.6em;
+  font-size: 12px;
+}
+
+/* 常驻栏（桌面）：粘顶，长文滚动时目录一直可见 */
+@media (min-width: 1024px) {
+  .toc {
+    position: sticky;
+    top: 5rem;
+    max-height: calc(100vh - 8rem);
+    overflow-y: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toc a {
+    transition: none;
+  }
+}

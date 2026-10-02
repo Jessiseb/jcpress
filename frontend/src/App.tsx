@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
 import TopNav from '@/components/layout/TopNav'
@@ -8,6 +9,13 @@ import CelestialField from '@/components/visual/CelestialField'
 import HomePage from '@/pages/home/HomePage'
 import ChannelPlaceholder from '@/pages/ChannelPlaceholder'
 import TechListPage from '@/pages/tech/TechListPage'
+
+/**
+ * 路由级懒加载（三期）：详情页与后台都**不进首屏包**。
+ * 详情页会拖进 Markdown 渲染链（react-markdown / highlight.js），后台还要再拖一个
+ * CodeMirror —— 二者都与首屏无关，混进首屏会直接顶破 200KB 预算。
+ */
+const ArticleDetailPage = lazy(() => import('@/pages/tech/ArticleDetailPage'))
 
 export default function App() {
   // 天体只在首页挂载：它的「分节停靠」位置是按首页那 7 个区块配的，
@@ -32,6 +40,14 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/tech" element={<TechListPage />} />
+          <Route
+            path="/tech/:slug"
+            element={
+              <Suspense fallback={<p className="container section">正在加载…</p>}>
+                <ArticleDetailPage />
+              </Suspense>
+            }
+          />
           <Route
             path="/algo"
             element={

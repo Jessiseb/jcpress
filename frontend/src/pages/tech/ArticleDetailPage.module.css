@@ -1,0 +1,164 @@
+.wrap {
+  /* 详情页整页允许更宽：正文由 .prose 的 36rem 收窄，这里给右侧目录留位置 */
+  max-width: 1180px;
+}
+
+.state {
+  margin-top: var(--ds-space-4);
+  color: var(--ds-c-text-mute);
+}
+
+.errorTitle {
+  font-size: 1.6rem;
+}
+
+.header {
+  margin-bottom: var(--ds-space-6);
+}
+
+.breadcrumb {
+  font-size: var(--ds-fs-xs);
+  letter-spacing: 0.04em;
+}
+
+.breadcrumb a {
+  color: var(--ds-c-text-subtle);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  color: var(--ds-c-accent);
+}
+
+.title {
+  margin: 0.6rem 0 0.9rem;
+  font-family: var(--ds-font-display);
+  font-size: clamp(1.7rem, 4vw, 2.5rem);
+  font-weight: var(--ds-fw-display-strong);
+  line-height: 1.35;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  font-size: 13px;
+  color: var(--ds-c-text-subtle);
+}
+
+.category {
+  color: var(--ds-c-accent);
+}
+
+/* ── 版式：单栏 → ≥1024px 变成「正文 68ch + 右侧目录 220px」 ── */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2.5rem;
+}
+
+.main {
+  min-width: 0;
+}
+
+.mobileToc {
+  margin-bottom: 1.4rem;
+  border: 1px solid var(--ds-c-hairline);
+  border-radius: var(--ds-radius-lg);
+  padding: 0.8rem 1rem;
+}
+
+.mobileToc > summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--ds-c-text-mute);
+}
+
+.mobileToc[open] > summary {
+  margin-bottom: 0.6rem;
+}
+
+.aside {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    /* 正文栏宽仍由 .prose 定义；这里只决定两栏的相对位置 */
+    grid-template-columns: minmax(0, 1fr) 220px;
+    justify-content: center;
+  }
+
+  .mobileToc {
+    display: none;
+  }
+
+  .aside {
+    display: block;
+  }
+}
+
+/* ── 上下篇 ── */
+.adjacent {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 3rem 0 1.5rem;
+}
+
+.adjacentCard {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--ds-c-hairline);
+  border-radius: 12px;
+  background: var(--ds-c-bg-elv);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 160ms ease;
+}
+
+.adjacentCard:hover {
+  border-color: var(--ds-c-accent);
+}
+
+.adjacentNext {
+  text-align: right;
+}
+
+.adjacentLabel {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--ds-c-accent);
+}
+
+.adjacentTitle {
+  font-family: var(--ds-font-display);
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
+
+.back {
+  font-size: var(--ds-fs-sm);
+}
+
+.back a {
+  color: var(--ds-c-text-mute);
+  text-decoration: none;
+}
+
+.back a:hover {
+  color: var(--ds-c-accent);
+}
+
+@media (max-width: 719px) {
+  .adjacent {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adjacentCard {
+    transition: none;
+  }
+}

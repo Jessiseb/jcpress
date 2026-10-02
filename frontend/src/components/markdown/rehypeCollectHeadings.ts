@@ -30,7 +30,10 @@ const textOf = (node: HastNode): string => {
 export function rehypeCollectHeadings(collect: (items: TocItem[]) => void) {
   return (tree: unknown) => {
     const items: TocItem[] = []
-    const walk = (node: HastNode) => {
+    const walk = (node: HastNode | undefined) => {
+      // hast 的 children 数组允许有「空洞」（undefined 占位），直接解引用会崩。
+      // 这个坑只在真实文章上暴露：单元测试的 markdown 片段恰好没有空洞。
+      if (!node) return
       if (node.tagName === 'h2' || node.tagName === 'h3') {
         const id = node.properties?.id
         if (typeof id === 'string') {
