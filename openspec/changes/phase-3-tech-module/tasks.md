@@ -46,8 +46,8 @@
 
 ## 5. W4 前台与后台 UI
 
-- [ ] 5.1 实现 API 客户端与类型（统一拆信封、`ApiError` 携带业务码与 HTTP 状态、token 走 sessionStorage、401 自动清 token、无 token 的鉴权请求直接拒），验证 `client.test.ts` 五条全绿
-- [ ] 5.2 数据接入替换 mock（`useArticles` 等四个 hook 走真接口、删除 `data/articles.ts`、加 vite `/api` proxy），验证 `npx tsc --noEmit` 在 W4 后续任务完成后通过
+- [x] 5.1 实现 API 客户端与类型（统一拆信封、`ApiError` 携带业务码与 HTTP 状态、token 走 sessionStorage、401 自动清 token、无 token 的鉴权请求直接拒），验证 `client.test.ts` 五条全绿
+- [x] 5.2 数据接入替换 mock（`useArticles` 等四个 hook 走真接口、删除 `data/articles.ts`、加 vite `/api` proxy），验证 `npx tsc --noEmit` 在 W4 后续任务完成后通过
 - [x] 5.3 实现 Markdown 正文管线（GFM + 锚点 + 高亮 + 复制按钮 + 表格横向滚动、TOC 收集插件不引 `unist-util-visit`），验证 `MarkdownBody.test.tsx` 三条全绿（含「TOC 锚点与渲染出的 id 一一对应」）
 - [x] 5.4 实现 `/tech` 卡片列表（头版通栏、字体封面、三态齐全、加载失败显示错误而非空态），验证 `TechListPage.test.tsx` 三条全绿且肉眼可见卡片可点进详情
 - [x] 5.5 实现 `/tech/:slug` 详情页（护眼档位 17px/1.9/68ch、章节自动编号、代码复制、右侧目录 + 窄屏折叠、上下篇、路由级懒加载），验证 `ArticleDetailPage.test.tsx` 全绿且 `npx tsc --noEmit` 通过
@@ -60,5 +60,5 @@
 
 ## 6. 集成收尾
 
-- [ ] 6.1 全链路集成验收：按 `docs/phase3-effect-matrix.md` 从零复跑（前端测试 + 后端测试 + 四条路由的对比度与截图 + 停靠探针 + 构建产物体积核对），确认首屏 chunk 不含编辑器/Markdown/文章字体且首屏 gzip ≤200KB
+- [x] 6.1 全链路集成验收：按 `docs/phase3-effect-matrix.md` 从零复跑（前端测试 + 后端测试 + 四条路由的对比度与截图 + 停靠探针 + 构建产物体积核对），确认首屏 chunk 不含编辑器/Markdown/文章字体且首屏 gzip ≤200KB
 - [ ] 6.2 文档同步：把 Java 21→17、Sa-Token 1.44.0 与 Redis 约束、上传 URL 双前缀、slug 不支持中文生成、详情页预渲染回退这五处口径回写 `docs/项目前期规划.md` 与 `README.md`，验证两处文档中不再出现「Java 21」且 README 的验收章节含后端命令

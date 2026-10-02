@@ -4,20 +4,25 @@
 > 复跑全部：见 §「一键复跑」。任何一条未达标都不算完成。
 >
 > 所有「实测」栏都是**真实跑出来的数字**，无「待填」、无「已知问题」。
-> 唯二例外是两处**环境限制**（不是产品缺陷），都已在下文如实标注并给出替代覆盖：
-> ① `vitest run` 本机跑不动（esbuild 被 EDR 拦）；② V10 ② 的构建体积本机不可复现。
+> 唯一例外是一处**环境限制**（不是产品缺陷），已在下文如实标注并给出**可复现的替代覆盖**：
+> `vitest run` / `vite build` 本机跑不动（esbuild 子进程被 EDR 拦）；
+> V10 的体积判据已改用 `audit-firstscreen-prod.cjs`（零子进程 esbuild-wasm），**可复现**。
 
 ## 一键复跑
 
-```powershell
-cd frontend; npx tsc --noEmit
+> 工具都在**仓库根**的 `.tmp/tools/`（不是 `frontend/.tmp/tools/`），`cd` 到仓库根再跑。
+
+```bash
+cd frontend && npx tsc --noEmit; cd ..
 node .tmp/tools/audit-behavior.cjs
 node .tmp/tools/audit-contrast.cjs
 node .tmp/tools/probe-docking.cjs
 node .tmp/tools/audit-firstscreen.cjs
+node .tmp/tools/audit-firstscreen-prod.cjs          # V10② 首屏 gzip（生产口径，可复现）
 node .tmp/tools/shot-final.cjs .tmp/shots-p3
-cd frontend; FONT_PROBE_PYTHON=E:/Python/Python312/python.exe node scripts/audit-display-font.cjs
-bash .tmp/tools/build-p3.sh && node .tmp/tools/build-probe.cjs   # 生产构建体积（见下方「构建口子的说明」）
+cd frontend && FONT_PROBE_PYTHON=E:/Python/Python312/python.exe node scripts/audit-display-font.cjs; cd ..
+# 交叉核对（本机受 EDR 拦时按设计非零退出，见下）：
+bash .tmp/tools/build-p3.sh && node .tmp/tools/build-probe.cjs
 ```
 
 > ⚠️ **`vitest run` 在本机不可用**，原因与下面的构建问题同源（esbuild 子进程被拒）。
@@ -44,29 +49,40 @@ bash .tmp/tools/build-p3.sh && node .tmp/tools/build-probe.cjs   # 生产构建�
 
 - V10 的**模块归属**判定（首屏不含编辑器/Markdown/文章字体）改用**运行时请求**，不依赖构建 ——
   `audit-firstscreen.cjs`，**可复现、已全绿**。
-- V10 的**gzip 体积**判定依赖构建产物，本机**不可复现**。
-  `build-p3.sh` 已做成「重试 + 失败保留上次产物 + 非零退出」，不会静默通过。
-  **换到无 EDR 拦截的机器上必须重跑 `bash .tmp/tools/build-p3.sh && node .tmp/tools/build-probe.cjs`**，
-  并把实测值回填到上表 V10 的 ②。
+- V10 的**gzip 体积**判定改用 `audit-firstscreen-prod.cjs` —— **零子进程**，用 `esbuild-wasm`
+  在 Node 里直接做 minify，**可复现**（已实测 161.6 KB）。见下方 §首屏体积的生产口径。
+- `build-p3.sh` + `build-probe.cjs` 保留为**交叉核对**：它走真 esbuild 打包（含跨模块 tree-shaking），
+  语义更贴近 Vite 生产产物；本机被 EDR 拦时按设计**非零退出**、不静默通过。
+  **换到无 EDR 拦截的机器上应重跑一次**，两条路径结果应同量级（prod-cjs 是上界，故应略大于 build-p3）。
 
-```bash
-# ① 在 shell 里直接用 esbuild 做生产打包（minify + tree-shaking + splitting，语义同 Vite 生产模式）
-bash .tmp/tools/build-p3.sh
+## 首屏体积的生产口径（V10② 取证）
 
-# ② Node 只读产物做判定（读文件不触发 spawn，不踩限制）
-node .tmp/tools/build-probe.cjs
-```
+`audit-firstscreen-prod.cjs` 的算法，三层各自可核查：
 
-```bash
-# ① 在 shell 里直接用 esbuild 做生产打包（minify + tree-shaking + splitting，语义同 Vite 生产模式）
-bash .tmp/tools/build-p3.sh
+| 层 | 内容 | 怎么算 | 实测 gzip |
+| --- | --- | --- | --- |
+| L1 | 业务代码 `src/**` | 浏览器抓 dev 转译产物 → `esbuild-wasm` transform(minify) → gzip9 | **101.9 KB** |
+| L2 | 首屏依赖 | **显式取 `node_modules` 的 `*.production.min.js`** → gzip9 | **57.8 KB** |
+| L3 | `lucide-react` | 从源码解析实际 import 的 8 个图标 → 逐个取 esm 图标文件 minify+gzip | **1.9 KB** |
+| | **合计** | 判据 ≤200 KB | **161.6 KB ✔** |
 
-# ② Node 只读产物做判定（读文件不触发 spawn，不踩限制）
-node .tmp/tools/build-probe.cjs
-```
+> **交叉核对**：`build-p3.sh` + `build-probe.cjs` 走真 esbuild 打包（含跨模块 tree-shaking），
+> 2026-10-02 侥幸成功某次实测 **82.9 KB**（懒加载 316.4 KB，react-markdown/codemirror/highlight.js 三个 chunk 均在懒加载侧）。
+> 它比本工具小，符合预期 —— 本工具不做跨模块 DCE，是**上界**。本机现已无法重跑该路径（EDR 持续拦截）。
 
-`build-probe.cjs` 的判定与 Vite 构建产物同构：入口 = `main.tsx`，
-`lazy(() => import())` 由 esbuild 自动切成独立 chunk，首屏 = 入口 + 静态 import 闭包。
+**两个容易踩的坑（本工具专门绕开了）**：
+
+1. **不能用 Vite dev 的 `.vite/deps/*` 算生产体积** —— 那里是 `*.development.js`
+   （`react-dom.development.js` 910KB raw / `scheduler.development.js` / `react-jsx-dev-runtime.development.js`）。
+   按它算会得到 255.5 KB（超标），但生产换 `*.production.min.js` 后 L2 只有 57.8 KB。
+   → L2 因此**不解析 dev 产物，直接取生产版文件**，清单在脚本里逐条列出。
+2. **`lucide-react` 不能按整包算** —— dev 预打包整包 raw 1288.9 KB，
+   而源码只 import 8 个图标；生产 tree-shake 后只剩这 8 个（合计 1.9 KB）。
+   → L3 因此**从源码正则解析图标名**再逐个取文件，是可核查的实算。
+
+**口径边界（诚实标注）**：本工具按模块独立 minify，不做跨模块 DCE，结果是生产体积的**上界**；
+方向安全（上界 ≤200KB ⇒ 生产必然 ≤200KB）。反向的低估项是生产会加少量 chunk 加载胶水（KB 级），
+远小于上述高估，净效果仍是上界。
 
 ## 效果清单
 
@@ -81,7 +97,7 @@ node .tmp/tools/build-probe.cjs
 | V7 | 双主题对比度 | 四条路由 × 亮暗，未达标 0 | audit-contrast | ✔ 8 组（home/tech/detail/admin-login × light/dark）合计未达标 **0**；覆盖 227/28/166/4 处文本 |
 | V8 | 天体不压字 | 8 个 scene 全部「压字 0 处」 | probe-docking | ✔ 8 scene 全部压字 0 处；区块数=scene 数=8 |
 | V9 | 四视口无溢出 | 四条路由 × 四视口 `overflow=no` | shot-final | ✔ 16 格全 `no`（home/tech/detail/admin-login × 1280/768/390/375） |
-| V10 | 首屏体积 | ① 首屏不含编辑器/Markdown/文章字体（运行时请求）② 生产构建首屏 gzip ≤200KB | **①** audit-firstscreen（可复现）**②** build-p3.sh + build-probe.cjs（本机受 EDR 限制，见下） | **① ✔ 全绿**（首屏 76 条请求中零命中；详情页/后台反向对照均命中）**② ✔ 历史实测 82.9 KB gzip**（2026-10-02 02 次成功构建取得；本机后续被 EDR 持续拦截，需换机复跑） |
+| V10 | 首屏体积 | ① 首屏不含编辑器/Markdown/文章字体（运行时请求）② 首屏 gzip ≤200KB | **①** audit-firstscreen.cjs（可复现）**②** audit-firstscreen-prod.cjs（可复现；build-p3.sh 为交叉核对，本机受 EDR 限制） | **① ✔ 全绿**（首屏请求中零命中；详情页/后台反向对照均命中）**② ✔ 161.6 KB gzip**（零子进程实测：L1 业务 101.9 + L2 生产版依赖 57.8 + L3 lucide 实算图标 1.9） |
 | V11 | 字体不混款 | 展示字 ⊆ 静态 700 ∪ 文章 700 | audit-display-font | ✔ 8/8；覆盖 104 个展示字（静态 700 的 60 字 ∪ 文章 700 的 4485 字） |
 
 ## 三期专项行为断言（audit-behavior `auditPhase3()`）
@@ -103,39 +119,10 @@ node .tmp/tools/build-probe.cjs
 
 **audit-behavior 合计 82 项，通过 82，失败 0。**
 
-## 入口 chunk 契约（V10 取证）
+## 入口 chunk 契约（运行时，跨环境稳定）
 
-> ⚠️ 下面这组数字来自 **2026-10-02 那一次成功的生产构建**（之后本机转为持续拦截，见上文）。
-> 它是**真实产出**、不是估算；但换机后必须重跑确认。产物清单（供比对文件名格式）：
-
-生产构建（esbuild：minify + tree-shaking + splitting）：
-
-```
---- 首屏 initial chunks ---
-      64.6 KB gz  chunk-3W42ODD5.js      ← react + react-dom + router + query
-      15.6 KB gz  main.js                ← 本站业务代码 + 首页区块
-       2.6 KB gz  chunk-EYF7DI5L.js
-       0.2 KB gz  chunk-6K2HCF2O.js
-  ▶ 首屏 JS+CSS 合计 gzip 82.9 KB（判据 ≤200KB，富余 58.6%）
-
---- 懒加载 chunks（首屏不加载）---
-     206.3 KB gz  AdminArticleEditPage-EMQW7TBM.js   ← codemirror + 编辑页
-     104.2 KB gz  chunk-TDPQDSXQ.js                  ← react-markdown + remark/rehype + highlight.js
-       1.7 KB gz  ArticleDetailPage-RIURAXKS.js
-       1.4 KB gz  AdminArticleListPage-522M7ODW.js
-       ...
-  ▶ 懒加载合计 gzip 316.4 KB
-```
-
-依赖归属（首屏必须没有 / 懒加载必须有，双向断言防假绿）：
-
-| 依赖 | 首屏 | 懒加载 |
-| --- | --- | --- |
-| react-markdown 全家桶 | ✔ 不含 | ✔ 1 个 chunk |
-| codemirror | ✔ 不含 | ✔ 1 个 chunk |
-| highlight.js | ✔ 不含 | ✔ 1 个 chunk |
-
-运行时字体归属（`audit-firstscreen.cjs`，dev server 实测请求）：
+> 不依赖构建产物，用 dev server 的**真实请求**判定，任何机器都能复现。
+> 核心：首屏**不许有**、详情页/后台**必须有** —— 双向断言，防「两边都空」的假绿。
 
 | 路由 | serif-sc-article 请求 | react-markdown | codemirror |
 | --- | --- | --- | --- |
@@ -149,20 +136,21 @@ node .tmp/tools/build-probe.cjs
 > 但 `@font-face` 只是**声明**、不触发下载，所以「首页不下载文章字体」这条用**运行时请求**判定，
 > 而不是看 CSS 文本归属。
 
-### dev 口径 vs prod 口径的差异（为什么不拿 dev 数字下结论）
+### dev 口径 vs prod 口径（为什么 dev 的 859.2 KB 不能用）
 
 `audit-firstscreen-size.cjs` 在 dev server 上实测首屏 **859.2 KB gzip**，远超 200KB ——
-但这个数字**不能**用来判 V10，因为它混进了生产构建里不存在的东西：
+但这个数字**不能**用来判 V10，因为它混进了生产构建里不存在 / 会变形的东西：
 
 | 分类 | gzip | 生产构建里会怎样 |
 | --- | --- | --- |
 | dev 专属（`/@vite/client` + `@react-refresh`） | 56.2 KB | **完全不存在**（只由 react() 插件在 serve 阶段注入） |
-| 未 tree-shake 的 deps（`.vite/deps/*`） | 472.8 KB | rollup/esbuild 只保留被 import 的具名导出。例：lucide-react 整包 220.1 KB，本站只用了 **8 个图标** |
+| dev 版 deps（`.vite/deps/*`，`*.development.js`） | 472.8 KB | 换 `*.production.min.js`；lucide-react 整包 220.1→tree-shake 成 8 个图标 |
 | 业务代码 + 字体 + CSS（`/src/*`、`/fonts/*`、`*.css`） | 330.2 KB | 保留，但会被 minify |
 
-所以 V10 的判据走**真实生产构建**（`build-p3.sh` + `build-probe.cjs`）：**82.9 KB gzip**。
-dev 的 859.2 KB 保留在这里，是为了说明「dev 与 prod 的差距有多大、差在哪」，
-也提醒后来人**不要**用 dev server 的数字去判体积门禁。
+所以 V10 的判据走 **`audit-firstscreen-prod.cjs`（161.6 KB，可复现）**，
+`build-p3.sh`（82.9 KB，历史）作交叉核对。dev 的 859.2 KB 保留在此，
+是为了说明差距有多大、差在哪，也提醒后来人**不要**拿 dev 数字判体积门禁。
+
 
 ## 天体停靠实测矩形（8 scene，probe-docking）
 

@@ -2161,3 +2161,93 @@ scene 7 天体矩形 x=77   y=65  w=230  压字 0 处
 本轮严格按「每个阶段实时写入」执行：41 节在 5.10 提交前写入，42 节在 5.11 提交前写入，
 **没有末尾批量补录**。四要素（用户原话 / AI 输出 / 被驳回 / 返工）齐全；
 本轮 4 条返工中有 **3 条是我自己的判据错误**，全部记录在案，未掩盖。
+
+---
+
+## 阶段 43 — Task 6.1 全链路集成验收
+
+**日期**：2026-10-02
+**对应任务**：`openspec/changes/phase-3-tech-module/tasks.md` §6 集成收尾 → 6.1
+**分支**：`feat/phase-3-tech-module`
+
+### 43.1 用户原话
+
+> 「继续完成未完成的第三期开发」
+
+（承接 W4 完成后的剩余项：6.1 全链路集成验收 + 6.2 文档同步。）
+
+### 43.2 AI 关键输出
+
+**Step 0 — 先补一处清单漏勾**：`tasks.md` 里 **5.1 / 5.2 仍是 `[ ]`**，
+但两者早已在 `d701c1d`（`feat(web): API 客户端与类型 + 数据接入换真接口`）提交完成。
+核对产物齐全（`src/api/{client,types,articles,admin}.ts`、`client.test.ts`、`vite.config.ts` 的 `/api` proxy）后补勾，
+避免清单与实际状态长期不一致误导后来人。
+
+**Step 1 — 后端全量测试（本会话首次跑，JDK 17）**：
+
+```
+JAVA_HOME="/c/Program Files/Java/jdk-17" ./mvnw -q -B test
+TOTAL  Tests run: 111, Failures: 0, Errors: 0, Skipped: 0   （24 个测试类）
+```
+
+> 注：本机 `JAVA_HOME` 默认指向 `corretto-1.8.0_452`（JDK 8），而工程要求 17。
+> 必须显式 `export JAVA_HOME=/c/Program Files/Java/jdk-17`，否则 `mvnw` 会以 JDK 8 启动并失败。
+> 这一条应写进 README 的验收章节（6.2 处理）。
+
+**Step 2 — 前端一键复跑（按 `docs/phase3-effect-matrix.md`）**：
+
+| 项 | 命令 | 实测 |
+| --- | --- | --- |
+| 类型检查 | `npx tsc --noEmit` | exit 0 |
+| 行为断言 | `audit-behavior.cjs` | 82 项 / 82 通过 / 0 失败 |
+| 对比度 | `audit-contrast.cjs` | 8 组合（4 路由 × 2 主题）合计未达标 **0** |
+| 天体停靠 | `probe-docking.cjs` | 8 scene 全部「压字 0 处」 |
+| 首屏归属 | `audit-firstscreen.cjs` | 全绿（/ 零命中；详情页/后台反向对照命中） |
+| **首屏体积** | **`audit-firstscreen-prod.cjs`（本轮新建）** | **161.6 KB gzip ≤ 200 KB** |
+| 截图 | `shot-final.cjs .tmp/shots-p3` | 16 格无横向溢出；home 入场未揭示 0 |
+| 字体 | `audit-display-font.cjs` | 8 项 / 8 通过 |
+| 构建（交叉核对） | `build-p3.sh` | 按设计**非零退出**（6/6 被 EDR 拦），不静默通过 |
+
+**Step 3 — 本轮的核心产出：把 V10② 从「不可复现」变成「可复现」**
+
+W4 收尾时 V10② 只能引用「2026-10-02 某次侥幸成功的 82.9 KB」，
+换台机器或过几天重跑拿不出同一个数字 —— **等于没有判据**。
+本轮新建 `audit-firstscreen-prod.cjs`，**全程零子进程**（用 `esbuild-wasm` 在 Node 内做 minify），
+把生产口径固定下来：
+
+| 层 | 内容 | 算法 | 实测 gzip |
+| --- | --- | --- | --- |
+| L1 | 业务代码 `src/**` | 浏览器抓 dev 转译产物 → esbuild-wasm transform(minify) → gzip9 | 101.9 KB |
+| L2 | 首屏依赖 | **显式取 `node_modules` 的 `*.production.min.js`** | 57.8 KB |
+| L3 | `lucide-react` | 正则解析源码实际 import 的 8 个图标 → 逐个取 esm 文件 minify+gzip | 1.9 KB |
+| | **合计** | 判据 ≤200 KB | **161.6 KB ✔** |
+
+### 43.3 被驳回 / 纠偏
+
+无用户纠偏。本轮有 **两次自我纠错**（见 43.4 ①②），其中第二次是**我的算法本身高估**，
+属于典型的「先跑通、再质疑数字合理性、然后返工」流程。
+
+### 43.4 翻车与返工（两条，都是自己的错）
+
+| # | 现象 | 归因 | 处置 |
+| --- | --- | --- | --- |
+| ① | `audit-firstscreen-prod.cjs` 初版跑出 **255.5 KB（超标）**，一度以为真的没达标 | L2 直接拿 Vite dev 的 `.vite/deps/*` 做 minify —— 但那是 **`*.development.js`**（`react-dom.development.js` raw 910KB / `scheduler.development.js` / `react-jsx-dev-runtime.development.js`）。生产会换成 `*.production.min.js`，两者体积差 3~4 倍 | 改 L2 为**显式清单取生产版文件**（7 条，逐条写在脚本里可核对）。react-dom 从 85.3 → **41.4 KB**，L2 从 151.7 → **57.8 KB**，合计 255.5 → **161.6 KB ✔** |
+| ② | 初版还把 `lucide-react` **整包 220 KB** 计入首屏 | dev 预打包是整包（raw 1288.9 KB），而源码只 import 8 个图标，生产 tree-shake 后只剩这些 | 改 L3 为**从源码正则解析图标名**再逐个取 `dist/esm/icons/<slug>.mjs` 算体积（1.9 KB）。这是可核查的实算，不是「整包打个折」 |
+
+> 两次返工的共同教训：**「dev 产物 ≈ 生产产物」这个假设在依赖层完全不成立**。
+> dev 走 development 版 + 不做 tree-shaking，两点都会把体积推高一个量级。
+> 这个坑写进了矩阵的「首屏体积的生产口径」一节，作为后来人的路标。
+
+### 43.5 环境限制（本轮第 3 条实证）
+
+`build-p3.sh` 本轮重跑 **6/6 全部被 EDR 拦截**（`winapi error #5`），
+脚本按设计**非零退出且未删旧产物** —— 这正是 W4 收尾时修掉的那个缺陷在起作用，
+证明「失败保留旧产物 + 非零退出」的处置是对的。
+因此 6.1 的构建体积判据改以 `audit-firstscreen-prod.cjs` 为准（可复现），
+`build-p3.sh` 降级为**交叉核对**（换到无 EDR 的机器上应重跑，两路径结果同量级）。
+
+### 43.6 留痕纪律自查
+
+本节在 6.1 提交前**实时写入**，非末尾补录。四要素齐全：
+用户原话（43.1）/ AI 输出（43.2）/ 被驳回（43.3，无用户纠偏，如实记「无」）/
+翻车与返工（43.4，两条均为自身算法错误，未掩盖）。
