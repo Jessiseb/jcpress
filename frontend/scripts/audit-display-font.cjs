@@ -1,5 +1,5 @@
 const { chromium } = require('playwright-core')
-const { execFileSync } = require('child_process')
+const { spawn } = require('child_process')
 const fs = require('fs')
 const path = require('path')
 
@@ -27,11 +27,17 @@ const path = require('path')
  *   期望：退出码 1，并报出「展示字缺字」。
  */
 
-const ROUTES = ['/', '/tech', '/algo', '/projects', '/no-such-page']
+// 三期：接入 `/tech/:slug`（详情页展示字来自**文章专用子集**，不是静态 700 子集）
+const ROUTES = ['/', '/tech', '/tech/phase-3-backend-retro', '/algo', '/projects', '/no-such-page']
 const BASE = process.env.FONT_PROBE_BASE || 'http://127.0.0.1:5173'
 const PUBLIC = path.resolve(__dirname, '../public/fonts')
 const FONT_700 = path.join(PUBLIC, 'serif-sc-700.woff2')
 const FONT_500 = path.join(PUBLIC, 'serif-sc-500.woff2')
+// 文章页 700 档（GB2312 一级字，独立 family）。展示字的覆盖判据是**两者的并集**：
+// 静态页的展示字落在静态 700 子集，文章页的展示字落在文章 700 子集。
+const FONT_ARTICLE_700 = path.join(PUBLIC, 'serif-sc-article-700.woff2')
+// 文章页 500 档：展示字（非标记者）在文章页回落到它，所以 500 兜底判据也要并上它。
+const FONT_ARTICLE_500 = path.join(PUBLIC, 'serif-sc-article-500.woff2')
 
 const isCjk = (cp) =>
   (cp >= 0x3000 && cp <= 0x303f) ||
@@ -56,9 +62,27 @@ function cmap(pathname) {
     "text = ''.join(sorted({chr(c) for c in f.getBestCmap()}))",
     "sys.stdout.buffer.write(text.encode('utf-8'))",
   ].join('\n')
-  return execFileSync('python', ['-c', script, pathname], {
-    encoding: 'utf8',
-    env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+  // 用**异步 spawn** 而不是 execFileSync：本机（Windows）上 Node 的同步 spawn 一律
+  // 抛 `EBUSY`（CreateProcess 被拦），异步 spawn 正常。行为完全等价，只是变成 Promise。
+  // `FONT_PROBE_PYTHON` 可指定解释器（本机 fonttools 装在系统 Python 上，
+  // 而 PATH 里的 `python` 可能是没有 fonttools 的那个）。
+  const pythonBin = process.env.FONT_PROBE_PYTHON || 'python'
+  return new Promise((resolve, reject) => {
+    const child = spawn(pythonBin, ['-c', script, pathname], {
+      env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+    })
+    const chunks = []
+    const errChunks = []
+    child.stdout.on('data', (d) => chunks.push(d))
+    child.stderr.on('data', (d) => errChunks.push(d))
+    child.on('error', reject)
+    child.on('close', (code) => {
+      if (code !== 0) {
+        reject(new Error(`python 退出码 ${code}：${Buffer.concat(errChunks).toString('utf8')}`))
+        return
+      }
+      resolve(Buffer.concat(chunks).toString('utf8'))
+    })
   })
 }
 
@@ -69,19 +93,30 @@ const check = (name, pass, detail) => {
 }
 
 ;(async () => {
-  for (const f of [FONT_500, FONT_700]) {
+  for (const f of [FONT_500, FONT_700, FONT_ARTICLE_700, FONT_ARTICLE_500]) {
     if (!fs.existsSync(f)) {
-      console.error(`✘ 字体文件不存在：${f}\n  先跑 npm run fonts:build（500）或 npm run fonts:build:display（700）`)
+      console.error(
+        `✘ 字体文件不存在：${f}\n` +
+          `  先跑 npm run fonts:build（500）/ fonts:build:display（700）/ fonts:build:article（文章页两档）`,
+      )
       process.exit(1)
     }
   }
 
-  const cover700 = new Set(cmap(FONT_700))
-  const cover500 = new Set(cmap(FONT_500))
+  const cover700 = new Set(await cmap(FONT_700))
+  const cover500 = new Set(await cmap(FONT_500))
+  const coverArticle700 = new Set(await cmap(FONT_ARTICLE_700))
+  const coverArticle500 = new Set(await cmap(FONT_ARTICLE_500))
+  /** 500 兜底判据：静态 500 ∪ 文章 500 */
+  const coveredBy500Union = (c) => cover500.has(c) || coverArticle500.has(c)
+  /** 展示字被并集覆盖即可（静态 700 ∪ 文章 700） */
+  const coveredBy700Union = (c) => cover700.has(c) || coverArticle700.has(c)
   console.log(
-    `700 子集字符数 ${cover700.size} / 500 子集字符数 ${cover500.size}（${(
+    `700 子集字符数 ${cover700.size} / 500 子集字符数 ${cover500.size} / 文章 700 子集字符数 ${coverArticle700.size}（${(
       fs.statSync(FONT_700).size / 1024
-    ).toFixed(1)}KB / ${(fs.statSync(FONT_500).size / 1024).toFixed(1)}KB）\n`,
+    ).toFixed(1)}KB / ${(fs.statSync(FONT_500).size / 1024).toFixed(1)}KB / ${(
+      fs.statSync(FONT_ARTICLE_700).size / 1024
+    ).toFixed(1)}KB）\n`,
   )
 
   const inject = process.env.AUDIT_INJECT_CHAR || ''
@@ -240,19 +275,21 @@ const check = (name, pass, detail) => {
     `墨量 500=${ink.ink500} / 700=${ink.ink700}（+${inkDelta.toFixed(1)}%）`,
   )
 
-  const missing = [...domChars].filter((c) => !cover700.has(c)).sort()
+  // 判据是**并集**：静态页展示字 ∈ 静态 700 子集；文章页展示字 ∈ 文章 700 子集。
+  const missing = [...domChars].filter((c) => !coveredBy700Union(c)).sort()
   check(
-    '展示字字符集被 700 子集完整覆盖',
+    '展示字字符集被 700 子集（静态 ∪ 文章）完整覆盖',
     missing.length === 0,
     missing.length
-      ? `缺 ${missing.length} 个字：${missing.join('')} → 跑 npm run fonts:build:display`
-      : `覆盖 ${domChars.size} 个展示字（子集共 ${cover700.size} 字）`,
+      ? `缺 ${missing.length} 个字：${missing.join('')} → 跑 npm run fonts:build:display 或 fonts:build:article`
+      : `覆盖 ${domChars.size} 个展示字（静态 700 ${cover700.size} 字 ∪ 文章 700 ${coverArticle700.size} 字）`,
   )
 
-  // 附注：500 档必须覆盖展示字（回落时的兜底），不然缺字会直接掉到系统宋体
-  const notIn500 = [...domChars].filter((c) => !cover500.has(c))
+  // 附注：500 档必须覆盖展示字（回落时的兜底），不然缺字会直接掉到系统宋体。
+  // 判据是并集：静态页展示字兜底落静态 500；文章页展示字兜底落文章 500（独立 family）。
+  const notIn500 = [...domChars].filter((c) => !coveredBy500Union(c))
   check(
-    '500 档也覆盖展示字（兜底不回落到系统字体）',
+    '500 档也覆盖展示字（静态 ∪ 文章，兜底不回落到系统字体）',
     notIn500.length === 0,
     notIn500.length ? `缺 ${notIn500.join('')}` : `ok`,
   )

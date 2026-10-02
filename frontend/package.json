@@ -11,6 +11,8 @@
     "test:watch": "vitest",
     "fonts:chars": "node scripts/collect-charset.cjs",
     "fonts:chars:display": "node scripts/collect-display-charset.cjs",
+    "fonts:chars:article": "node scripts/gen-article-charset.cjs",
+    "fonts:build:article": "node scripts/gen-article-charset.cjs && node scripts/build-font-subset.cjs --weight=500 --chars=.tmp/fonts/chars-article.txt --collect=none --out=serif-sc-article-500.woff2 && node scripts/build-font-subset.cjs --weight=700 --chars=.tmp/fonts/chars-article.txt --collect=none --out=serif-sc-article-700.woff2",
     "fonts:build": "node scripts/build-font-subset.cjs",
     "fonts:build:display": "node scripts/build-font-subset.cjs --weight=700 --chars=.tmp/fonts/chars-display.txt --collect=collect-display-charset.cjs",
     "textures:moon": "node scripts/gen-moon-texture.cjs"

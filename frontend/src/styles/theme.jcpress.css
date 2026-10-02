@@ -81,6 +81,15 @@
   --ds-font-display: Georgia, 'Times New Roman', 'JCPress Serif SC', 'Source Han Serif SC',
     'Noto Serif SC', 'Songti SC', STSong, SimSun, serif;
 
+  /* ---- 三期：文章页专用衬线（design-tech-module.md D7）----
+     文章正文/标题是后台随时写的，静态 531 字子集追不上，因此文章页改用独立的
+     「GB2312 一级字库全覆盖」子集（3755 字，独立 family 名 `JCPress Serif SC Article`）。
+     Latin 仍走 Georgia —— 与静态两档同一策略（Georgia 无 CJK 字形，中文自然落下一档）。
+     这两个令牌**只被 /tech/:slug 引用**，其对应的 @font-face 在 fonts-article.css 里，
+     由 ArticleDetailPage 单独 import，因此不会进首屏包、也不会在首页下载字体文件。 */
+  --ds-font-article: Georgia, 'JCPress Serif SC Article', 'Songti SC', STSong, SimSun, serif;
+  --ds-font-article-display: Georgia, 'JCPress Serif SC Article', 'Songti SC', STSong, SimSun, serif;
+
   /* ---- 基线里写死了其他主色的硬编码值，换主色时必须跟随 ---- */
   --ds-shadow-accent: 0 8px 18px rgb(9 111 220 / 18%);
 

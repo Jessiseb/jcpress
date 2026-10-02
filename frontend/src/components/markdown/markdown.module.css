@@ -27,7 +27,8 @@
 .prose h2 {
   counter-increment: section;
   margin: 2.4em 0 0.9em;
-  font-family: var(--ds-font-display);
+  /* 文章页专用子集（GB2312 一级字全覆盖）—— 正文/标题由后台写，静态子集覆盖不到 */
+  font-family: var(--ds-font-article-display);
   font-size: 1.5em;
   line-height: 1.4;
 }
@@ -42,7 +43,7 @@
 
 .prose h3 {
   margin: 1.9em 0 0.7em;
-  font-family: var(--ds-font-display);
+  font-family: var(--ds-font-article-display);
   font-size: 1.18em;
   line-height: 1.5;
 }

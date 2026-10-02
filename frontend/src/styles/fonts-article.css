@@ -1,0 +1,25 @@
+/* 文章页专用子集（三期，design-tech-module.md D7）
+   只有 /tech/:slug 会引用这个 family，所以这份 ~1.3MB 的字体**不会**在首页下载。
+   @font-face 本身不触发下载：浏览器只在这些字形真正被用到时才取文件。
+
+   为什么文章页要独立一套：一期那套静态子集是从**渲染后的 DOM** 收集的 531 字，
+   而文章正文与标题是后台随时写的 —— 任何表外汉字都会回落到系统宋体，同一段里出现两款字。
+   动态内容追不上字符表，所以文章页改用「GB2312 一级字库（3755 字）全覆盖」的独立子集。
+   用了**独立 family 名**，因此不存在 README 警告的「同一字符被两个 face 抢」的问题
+   （两个 face 的 unicode-range 不重叠时本就无碍，独立 family 是更彻底的做法）。 */
+@font-face {
+  font-family: 'JCPress Serif SC Article';
+  src: url('/fonts/serif-sc-article-500.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+  /* 与 theme.jcpress.css 里两个静态 face 的 unicode-range 逐字一致 */
+  unicode-range: U+3000-303F, U+4E00-9FFF, U+FF00-FFEF, U+2018-201D, U+2026;
+}
+
+@font-face {
+  font-family: 'JCPress Serif SC Article';
+  src: url('/fonts/serif-sc-article-700.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+  unicode-range: U+3000-303F, U+4E00-9FFF, U+FF00-FFEF, U+2018-201D, U+2026;
+}

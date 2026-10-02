@@ -1978,3 +1978,47 @@ scene 7 天体矩形 x=77   y=65  w=230  压字 0 处
 ### 39.5 环境限制（延续）
 
 `vitest` 仍被 esbuild 磁盘读取拒绝挡在门外（`Cannot read file "package.json": winapi error #5`）。故 `AdminArticleEditPage.test.tsx`（两条：中文标题拦截、保存带 id）**已写完并通过 `tsc --noEmit`，但本机跑不了**；改用 `probe-admin.cjs` 的浏览器全链路验收覆盖同等语义。留待环境允许时补跑单测。
+
+## 阶段 40 · W4 文章页字体子集（task 5.9）· 2026-10-02
+
+### 40.1 我这一步发的关键原话
+
+「继续完成未完成的第三期开发」（承接阶段 39）。
+
+### 40.2 AI 关键产出
+
+| 文件 | 说明 |
+| --- | --- |
+| `frontend/scripts/gen-article-charset.cjs` | 生成文章页字符表（**零依赖**，Node 自带 full-icu 的 `TextDecoder('gbk')`） |
+| `frontend/package.json` | 加 `fonts:chars:article`、`fonts:build:article` 两个脚本 |
+| `frontend/public/fonts/serif-sc-article-{500,700}.woff2` | 文章页专用子集（845KB + 860KB） |
+| `frontend/src/styles/fonts-article.css` | 独立 family `JCPress Serif SC Article` 两个 @font-face |
+| `frontend/src/styles/theme.jcpress.css` | 加 `--ds-font-article` / `--ds-font-article-display` 两个令牌 |
+| `frontend/src/pages/tech/ArticleDetailPage.tsx` + `.module.css`、`frontend/src/components/markdown/markdown.module.css` | 详情页 import 该 CSS；标题/h2/h3 改用文章令牌 |
+| `frontend/scripts/audit-display-font.cjs` | 判据改为**并集**（静态 ∪ 文章），路由加 `/tech/:slug`；`cmap` 由 `execFileSync` 改为异步 `spawn` |
+
+**字体审计实测：`合计 8 项，通过 8，失败 0`**（全部 ✔）。
+
+**「只在详情页下载」实测**（Playwright 抓网络请求）：
+
+```
+/                          → 文章字体请求: (无)
+/tech                      → 文章字体请求: (无)
+/tech/phase-3-backend-retro → 文章字体请求: /fonts/serif-sc-article-700.woff2
+```
+
+### 40.3 被驳回 / 纠偏
+
+无用户纠偏。但**计划本身有一处缺陷，被我实测挖出来并修正**（见 40.4 ①）。
+
+### 40.4 翻车与返工（三条，第①条是计划级缺陷）
+
+| # | 现象 | 归因 | 处置 |
+| --- | --- | --- | --- |
+| ① | 字体审计报「缺 4 个字：`、「」：`」—— 文章 H1 里的中文标点没被覆盖 | **计划原文只写了「一级字库 3755 字」（0xB0A1–0xD7F9），而一级字库只有汉字、不含标点**。GB2312 的标点/符号在**区 1–9**（high 字节 0xA1–0xA9）。缺了它们，`、「」：` 会在文章页回落到系统宋体 —— 正是这套子集要解决的问题本身 | `gen-article-charset.cjs` 扩成「区 1–9 + 区 16–55」：**4601 字（3755 汉字 + 846 符号）**；重建后文章子集 cmap 含全部目标标点 |
+| ② | 字体审计用 `execFileSync('python', …)` 一律 `EBUSY` | 本机 Node 的**同步** spawn（`execFileSync`/`spawnSync`）一律失败，**异步 `spawn` 正常**（实测：`git`/`echo`/`python` 全中招；异步 `spawn('python')` 返回 42 正常） | 把 `cmap` 的 `execFileSync` 换成异步 `spawn` + Promise；并加 `FONT_PROBE_PYTHON` 环境变量指定带 fonttools 的解释器（本机 fonttools 装在系统 Python 上） |
+| ③ | 500 档兜底判据误报失败（缺 24 字，全是文章 H2） | 判据只比静态 500 子集，而文章页展示字（独立 family）兜底应落**文章 500** | 判据同样改为并集：静态 500 ∪ 文章 500 |
+
+### 40.5 环境限制（新增一条，重要）
+
+本机 Node **同步**子进程调用（`execFileSync` / `spawnSync`）**一律抛 `EBUSY`**，与目标程序无关（`git`/`echo`/`python.exe`/绝对路径全试过）。异步 `spawn` 正常。这一条比「esbuild 磁盘读取被拒」更宽 —— 它解释了为什么 `build-font-subset.cjs`、`audit-display-font.cjs` 这类用同步 spawn 的脚本全跑不动。**处置纪律：凡是报告里要用到同步子进程的脚本，都改为异步 spawn，或在工作流里直接调用底层命令。** 本次 `fonts:build:article` 的 npm 脚本虽已写好（供环境正常时用），但本机是用等价的 `python -m fontTools.subset …` 直接生成产物的。

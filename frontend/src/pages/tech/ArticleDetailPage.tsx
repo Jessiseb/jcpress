@@ -6,6 +6,10 @@ import MarkdownBody from '@/components/markdown/MarkdownBody'
 import Toc from '@/components/markdown/Toc'
 import type { TocItem } from '@/components/markdown/rehypeCollectHeadings'
 import { useArticleDetail } from '@/hooks/useArticleDetail'
+// 文章页专用字体子集（GB2312 一级字，独立 family）。放在**详情页** import，
+// Vite 会把它并进详情页 chunk —— 首页既不加载这份 CSS，也不下载那两个字体文件。
+// @font-face 本身不触发下载，浏览器只在字形真正被用到时才取。
+import '@/styles/fonts-article.css'
 import styles from './ArticleDetailPage.module.css'
 
 const formatDate = (value: string) => value.slice(0, 10).replace(/-/g, '.')

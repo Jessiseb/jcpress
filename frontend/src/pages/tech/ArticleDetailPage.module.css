@@ -32,7 +32,8 @@
 
 .title {
   margin: 0.6rem 0 0.9rem;
-  font-family: var(--ds-font-display);
+  /* 文章页专用子集（GB2312 一级字全覆盖）：标题是后台写的，静态 531 字子集追不上 */
+  font-family: var(--ds-font-article-display);
   font-size: clamp(1.7rem, 4vw, 2.5rem);
   font-weight: var(--ds-fw-display-strong);
   line-height: 1.35;
@@ -133,7 +134,7 @@
 }
 
 .adjacentTitle {
-  font-family: var(--ds-font-display);
+  font-family: var(--ds-font-article-display);
   font-size: 0.98rem;
   line-height: 1.5;
 }
