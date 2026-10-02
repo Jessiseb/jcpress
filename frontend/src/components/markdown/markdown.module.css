@@ -1,0 +1,206 @@
+/**
+ * 正文排版（护眼阅读档位）。
+ *
+ * 档位是**写死的**，来自设计 D7：正文 17px / 行高 1.9 / 栏宽 68ch / 段间距 1.15em / 代码 14px·1.7。
+ * 效果矩阵里的 V2/V3/V4 就是量这里的值，所以别在别处覆盖它们。
+ *
+ * 栏宽用已有的 `--ds-measure-prose`（36rem）而不是再写一个 68ch：17px 下 68ch ≈ 578px ≈ 36rem，
+ * 两者落点一致，**但页面上只该有一个「正文栏宽」的定义**。
+ *
+ * 语法高亮不引 highlight.js 主题，而是把 token 类名映射到 `--ds-syn-*`（亮暗各一套，实测过 AA）。
+ */
+
+.prose {
+  max-width: var(--ds-measure-prose);
+  font-size: 17px;
+  line-height: 1.9;
+  color: var(--ds-c-text);
+  /* 章节自动编号的计数器 */
+  counter-reset: section;
+}
+
+.prose p {
+  margin: 0 0 1.15em;
+}
+
+/* h2 前面的 01 / 02：编号不写进 Markdown 源 —— 改标题、插章节时都不会漏改编号 */
+.prose h2 {
+  counter-increment: section;
+  margin: 2.4em 0 0.9em;
+  font-family: var(--ds-font-display);
+  font-size: 1.5em;
+  line-height: 1.4;
+}
+
+.prose h2::before {
+  content: counter(section, decimal-leading-zero);
+  margin-right: 0.6em;
+  font-size: 0.72em;
+  color: var(--ds-c-accent);
+  letter-spacing: 0.08em;
+}
+
+.prose h3 {
+  margin: 1.9em 0 0.7em;
+  font-family: var(--ds-font-display);
+  font-size: 1.18em;
+  line-height: 1.5;
+}
+
+.prose ul,
+.prose ol {
+  margin: 0 0 1.15em;
+  padding-left: 1.4em;
+}
+
+.prose li {
+  margin: 0.35em 0;
+}
+
+.prose li::marker {
+  color: var(--ds-c-accent);
+}
+
+.prose blockquote {
+  margin: 1.6em 0;
+  padding: 0.2em 0 0.2em 1.1em;
+  border-left: 2px solid var(--ds-c-accent);
+  color: var(--ds-c-text-mute);
+}
+
+.prose hr {
+  margin: 2.4em 0;
+  border: 0;
+  border-top: 1px solid var(--ds-c-hairline);
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--ds-radius-lg);
+}
+
+/* 行内代码（代码块里的 code 由下面 .codeWrap 的规则覆盖） */
+.prose code {
+  font-family: var(--ds-font-mono);
+  font-size: 0.88em;
+  padding: 0.12em 0.36em;
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-c-bg-alt);
+}
+
+.codeWrap {
+  position: relative;
+  margin: 1.6em 0;
+}
+
+.codeWrap pre {
+  margin: 0;
+  padding: 1.05em 1.2em;
+  /* 代码横向滚动、不换行 —— 长行撑破版面是最常见的破版来源 */
+  overflow-x: auto;
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-c-bg-alt);
+  border: 1px solid var(--ds-c-hairline);
+}
+
+.codeWrap pre code {
+  background: none;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre;
+}
+
+.copyBtn {
+  position: absolute;
+  top: 0.6em;
+  right: 0.6em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  padding: 0.3em 0.55em;
+  font-size: 12px;
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid var(--ds-c-hairline);
+  background: var(--ds-c-glass);
+  color: var(--ds-c-text-mute);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 140ms var(--ds-ease-out);
+}
+
+/* 键盘用户也要看得见：:focus-visible 时显形 */
+.codeWrap:hover .copyBtn,
+.copyBtn:focus-visible {
+  opacity: 1;
+}
+
+.copyBtn:focus-visible {
+  outline: 2px solid var(--ds-c-accent);
+  outline-offset: 2px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  margin: 1.6em 0;
+}
+
+.prose table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.94em;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid var(--ds-c-hairline);
+  padding: 0.5em 0.7em;
+  text-align: left;
+}
+
+.prose th {
+  background: var(--ds-c-bg-alt);
+  font-weight: var(--ds-fw-semibold);
+}
+
+/* highlight.js 的 token 类名 → 本站 token（亮暗同一套变量名，值随主题切换） */
+.prose :global(.hljs-comment),
+.prose :global(.hljs-quote) {
+  color: var(--ds-c-text-subtle);
+  font-style: italic;
+}
+
+.prose :global(.hljs-keyword),
+.prose :global(.hljs-selector-tag),
+.prose :global(.hljs-meta) {
+  color: var(--ds-syn-keyword);
+}
+
+.prose :global(.hljs-string),
+.prose :global(.hljs-attr),
+.prose :global(.hljs-regexp) {
+  color: var(--ds-syn-string);
+}
+
+.prose :global(.hljs-number),
+.prose :global(.hljs-literal) {
+  color: var(--ds-syn-number);
+}
+
+.prose :global(.hljs-title),
+.prose :global(.hljs-function) {
+  color: var(--ds-syn-function);
+}
+
+.prose :global(.hljs-type),
+.prose :global(.hljs-built_in),
+.prose :global(.hljs-variable) {
+  color: var(--ds-syn-type);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copyBtn {
+    transition: none;
+  }
+}

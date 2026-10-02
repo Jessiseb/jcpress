@@ -19,8 +19,7 @@
 
 .title {
   font-size: 2.5rem;
-  /* 二期：h1 走 700 真字重（与 global.css 的标题规则一致）——
-     页面标题是「一眼看到重点」里最该被先看到的那个层级 */
+  /* 二期：h1 走 700 真字重（与 global.css 的标题规则一致） */
   font-weight: var(--ds-fw-display-strong);
 }
 
@@ -31,75 +30,46 @@
   font-size: var(--ds-fs-lead);
 }
 
-/* 计数：弱化小字，与表头同一档，不抢标题。
-   r2：**去掉等宽** —— 「共 5 篇 · 更新至 …」含中文，等宽栈无 CJK 字形（decisions #41）。 */
+/* 计数：弱化小字，不抢标题。含中文 → 不走等宽栈（decisions #41） */
 .count {
-  margin-top: var(--ds-space-5);
+  margin: var(--ds-space-5) 0 var(--ds-space-3);
   font-size: var(--ds-fs-xs);
+  letter-spacing: 0.05em;
   color: var(--ds-c-text-subtle);
 }
 
-.table {
-  margin-top: var(--ds-space-3);
-  border-top: 1px solid var(--ds-c-hairline);
-}
-
-.head,
-.row {
+/* ── 卡片栅格：桌面 2 栏、≥1200px 3 栏、≤719px 单栏；首篇跨栏做头版 ── */
+.grid {
   display: grid;
-  grid-template-columns: 6.5rem minmax(0, 1fr) 7rem 5rem;
-  gap: var(--ds-space-4);
-  align-items: baseline;
+  gap: 1.1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.head {
-  padding-block: var(--ds-space-2);
-  border-bottom: 1px solid var(--ds-c-hairline);
-  /* r2：表头是中文（日期 / 标题 / 分类 / 阅读），不走等宽栈（decisions #41） */
-  font-size: var(--ds-fs-xs);
-  letter-spacing: 0.12em;
-  color: var(--ds-c-text-subtle);
+.grid > :first-child {
+  grid-column: 1 / -1;
 }
 
-.row {
-  padding-block: var(--ds-space-3);
-  border-bottom: 1px solid var(--ds-c-hairline);
-  transition: box-shadow var(--ds-t-color);
-}
-
-@media (hover: hover) {
-  .row:hover {
-    box-shadow: inset 2px 0 0 var(--ds-c-accent);
+@media (min-width: 1200px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-/* 日期列是纯数字 → 保留等宽；「9 分钟」与标签（Spring AI / 并发）含中文 → r2 改无衬线 */
-.date {
-  font-family: var(--ds-font-mono);
+@media (max-width: 719px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.state {
+  margin-top: var(--ds-space-5);
+  color: var(--ds-c-text-mute);
+}
+
+.more {
+  margin-top: var(--ds-space-4);
   font-size: var(--ds-fs-xs);
   color: var(--ds-c-text-subtle);
-}
-
-.reading {
-  text-align: right;
-}
-
-.titleCell {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.articleTitle {
-  font-family: var(--ds-font-display);
-  font-size: var(--ds-fs-h3);
-  font-weight: var(--ds-fw-display);
-  color: var(--ds-c-text);
-}
-
-.category {
-  font-size: var(--ds-fs-sm);
-  color: var(--ds-c-text-mute);
 }
 
 .empty {
@@ -122,32 +92,5 @@
 @media (max-width: 719px) {
   .title {
     font-size: 2rem;
-  }
-
-  /* 窄屏：四列压成两栏 —— 日期与阅读时长一行，标题与分类各占一行 */
-  .head {
-    display: none;
-  }
-
-  .row {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: var(--ds-space-1) var(--ds-space-3);
-  }
-
-  .date {
-    grid-column: 1;
-  }
-
-  .reading {
-    grid-column: 2;
-  }
-
-  .titleCell,
-  .category {
-    grid-column: 1 / -1;
-  }
-
-  .articleTitle {
-    font-size: 1.1rem;
   }
 }

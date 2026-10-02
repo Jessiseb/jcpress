@@ -1,42 +1,32 @@
 import { Link } from 'react-router-dom'
 
-import type { ArticleVO } from '@/data/articles'
+import type { ArticleCardVO } from '@/api/types'
 import { useArticles } from '@/hooks/useArticles'
 import { useSpotlight } from '@/hooks/useSpotlight'
 import spot from '@/styles/spotlight.module.css'
+import ArticleCard from './ArticleCard'
 import styles from './TechListPage.module.css'
 
-/** 把 YYYY-MM-DD 显示成 YYYY.MM.DD（等宽字下点号比短横线更好对齐） */
-function formatDate(value: string): string {
-  return value.replace(/-/g, '.')
-}
+/** 一期就定下的页大小；超过一页时本期只提示，不做分页器（留给下一期） */
+const PAGE_SIZE = 20
 
-/** 单行：自带指针聚光（与项目经历表格同一套交互语言）。 */
-function ArticleRow({ article }: { article: ArticleVO }) {
-  const ref = useSpotlight<HTMLDivElement>()
-
-  return (
-    <div ref={ref} className={`${spot.host} ${styles.row}`}>
-      <span className={styles.date}>{formatDate(article.publishedAt)}</span>
-      <span className={styles.titleCell}>
-        <span className={styles.articleTitle}>{article.title}</span>
-        <span className={styles.tags}>{article.tags.join(' / ')}</span>
-      </span>
-      <span className={styles.category}>{article.category}</span>
-      <span className={styles.reading}>{article.readingMinutes} 分钟</span>
-    </div>
-  )
-}
+const formatDate = (value: string) => value.slice(0, 10).replace(/-/g, '.')
 
 /**
- * 技术分享列表页（M3 的前端外壳）。
+ * 技术分享列表页（三期：卡片博客风）。
  *
- * 本期只做列表：详情页、Markdown 渲染、浏览量、分页都属 M3 剩余部分。
- * 因此列表项**不设链接** —— 没有详情页就跳过去只能是 404，不如先不给死链。
+ * 四种状态齐全，且**错误态不许伪装成空态** —— 接口挂了要明说，不能显示"还没有文章"
+ * （Agent.md：依赖缺失应表现为失败，不得降级为假内容）。
  */
 export default function TechListPage() {
-  const articles = useArticles()
-  const latest = articles.reduce((max, a) => (a.publishedAt > max ? a.publishedAt : max), '')
+  const { data, isPending, isError, error } = useArticles({
+    type: 'TECH',
+    page: 1,
+    size: PAGE_SIZE,
+  })
+  const ref = useSpotlight<HTMLDivElement>()
+  const articles: ArticleCardVO[] = data?.list ?? []
+  const latest = articles.reduce((max, item) => (item.publishTime > max ? item.publishTime : max), '')
 
   return (
     <section className={`container section ${styles.wrap}`} aria-labelledby="tech-title">
@@ -47,34 +37,42 @@ export default function TechListPage() {
       </h1>
       <p className={styles.lead}>把踩过的坑写清楚：Java 后端、AI Agent 工程、数据库与中间件。</p>
 
-      {articles.length === 0 ? (
+      {isPending && <p className={styles.state}>正在取文章…</p>}
+
+      {isError && (
+        <div className={styles.empty} role="alert">
+          <p>文章列表没取回来：{error instanceof Error ? error.message : '未知错误'}</p>
+          <p className={styles.emptyHint}>后端没起来或是接口出错 —— 这里不会拿假数据凑数。</p>
+        </div>
+      )}
+
+      {!isPending && !isError && articles.length === 0 && (
         <div className={styles.empty}>
-          <p>列表接口还没接通，这一页暂时是空的。</p>
+          <p>还没有发布的文章。</p>
           <p className={styles.emptyHint}>
-            先看首页的项目与实习经历 —— 那边已经把两个自研项目的取舍写得比较细。
+            去后台写第一篇，或先用导入器把 content/ 下的 Markdown 灌进来。
           </p>
           <Link to="/" className="btn btnSolid">
             回到首页
           </Link>
         </div>
-      ) : (
+      )}
+
+      {articles.length > 0 && (
         <>
           <p className={styles.count}>
-            共 {articles.length} 篇 · 更新至 {formatDate(latest)}
+            共 {data?.total ?? articles.length} 篇 · 更新至 {formatDate(latest)}
           </p>
 
-          <div className={styles.table}>
-            <div className={styles.head} aria-hidden="true">
-              <span>日期</span>
-              <span>标题</span>
-              <span>分类</span>
-              <span>阅读</span>
-            </div>
-
-            {articles.map((a) => (
-              <ArticleRow key={a.slug} article={a} />
+          <div ref={ref} className={`${spot.host} ${styles.grid}`}>
+            {articles.map((article, index) => (
+              <ArticleCard key={article.slug} article={article} featured={index === 0} />
             ))}
           </div>
+
+          {(data?.total ?? 0) > PAGE_SIZE && (
+            <p className={styles.more}>还有 {data!.total - PAGE_SIZE} 篇 —— 分页与筛选留给下一期。</p>
+          )}
         </>
       )}
     </section>

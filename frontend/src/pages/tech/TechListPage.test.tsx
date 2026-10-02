@@ -1,45 +1,83 @@
-import { render, screen } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { articleData } from '@/data/articles'
+import type { ArticleCardVO, PageResult } from '@/api/types'
 import TechListPage from './TechListPage'
 
-function renderPage() {
-  return render(
-    <MemoryRouter>
-      <TechListPage />
-    </MemoryRouter>,
+const fetchArticles = vi.fn()
+vi.mock('@/api/articles', () => ({
+  fetchArticles: (...args: unknown[]) => fetchArticles(...args),
+}))
+
+const card = (slug: string, title: string): ArticleCardVO => ({
+  id: '1',
+  title,
+  slug,
+  summary: '摘要',
+  coverUrl: null,
+  categoryName: 'Java 后端',
+  categorySlug: 'java-backend',
+  tags: [{ name: 'Redis', slug: 'redis' }],
+  readingMinutes: 7,
+  viewCount: 3,
+  top: 0,
+  publishTime: '2026-10-02 09:00:00',
+})
+
+const page = (list: ArticleCardVO[]): PageResult<ArticleCardVO> => ({
+  list,
+  page: 1,
+  size: 20,
+  total: list.length,
+  pages: list.length > 0 ? 1 : 0,
+})
+
+const renderPage = () =>
+  render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <MemoryRouter>
+        <TechListPage />
+      </MemoryRouter>
+    </QueryClientProvider>,
   )
-}
 
 describe('TechListPage', () => {
-  it('页面只有一个 h1，内容是频道名', () => {
+  beforeEach(() => fetchArticles.mockReset())
+
+  it('每篇文章一张卡，且卡片指向详情路由', async () => {
+    fetchArticles.mockResolvedValue(page([card('a', '第一篇'), card('b', '第二篇')]))
     renderPage()
 
-    const h1 = screen.getAllByRole('heading', { level: 1 })
-    expect(h1).toHaveLength(1)
-    expect(h1[0]).toHaveTextContent('技术分享')
+    const link = await screen.findByRole('link', { name: /第一篇/ })
+    expect(link).toHaveAttribute('href', '/tech/a')
+    // 计数取自接口的 total，不是数据长度
+    expect(screen.getByText(/共 2 篇/)).toBeInTheDocument()
   })
 
-  it('计数取自数据长度，不是写死的数字', () => {
+  it('接口失败时显示错误态，而不是伪装成空态', async () => {
+    fetchArticles.mockRejectedValue(new Error('后端没起来'))
     renderPage()
 
-    expect(screen.getByText(new RegExp(`共 ${articleData.length} 篇`))).toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent('后端没起来')
+    expect(screen.queryByText(/还没有发布的文章/)).toBeNull()
   })
 
-  it('每条文章渲染标题与分类', () => {
+  it('后端返回空列表时显示空态', async () => {
+    fetchArticles.mockResolvedValue(page([]))
     renderPage()
 
-    articleData.forEach((a) => {
-      expect(screen.getByText(a.title)).toBeInTheDocument()
-    })
+    await waitFor(() => expect(screen.getByText(/还没有发布的文章/)).toBeInTheDocument())
   })
 
-  it('列表项不设链接（详情页未建，避免死链）', () => {
+  it('首篇卡片通栏（featured），其余不带', async () => {
+    fetchArticles.mockResolvedValue(page([card('a', '第一篇'), card('b', '第二篇')]))
     renderPage()
 
-    // 有数据时不渲染空态，页面上一个链接都不该有
-    expect(screen.queryAllByRole('link')).toHaveLength(0)
+    const first = await screen.findByRole('link', { name: /第一篇/ })
+    const second = screen.getByRole('link', { name: /第二篇/ })
+    expect(first.className).toMatch(/featured/)
+    expect(second.className).not.toMatch(/featured/)
   })
 })

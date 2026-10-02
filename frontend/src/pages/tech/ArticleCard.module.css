@@ -1,0 +1,165 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   三期视觉破例（design-tech-module.md D6）
+   卡片、圆角 >8px、阴影、封面头图 **只允许出现在 /tech 列表页与文章详情页**；
+   首页其它区块与全站 token 不动。理由：用户明确要「现代卡片博客风」。
+   范围到此为止 —— 首页新区块（LatestArticles）与后台 /admin 都不许引本文件。
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.card {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 1.1rem;
+  padding: 1.1rem;
+  border: 1px solid var(--ds-c-hairline);
+  border-radius: 14px;
+  background: var(--ds-c-bg-elv);
+  box-shadow: 0 1px 2px rgb(9 111 220 / 6%);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ds-shadow-accent);
+  border-color: var(--ds-c-accent);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--ds-c-accent);
+  outline-offset: 2px;
+}
+
+.cover {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  aspect-ratio: 4 / 3;
+  /* 无封面时的「字体封面」底：品牌渐变，不依赖外部图片、不闪 */
+  background: linear-gradient(135deg, var(--ds-c-accent-bg) 0%, var(--ds-c-accent) 100%);
+}
+
+.cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.coverGlyph {
+  font-family: var(--ds-font-display);
+  font-size: 2.4rem;
+  font-weight: var(--ds-fw-display-strong);
+  color: #fff;
+  opacity: 0.94;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.category {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--ds-c-accent);
+}
+
+.title {
+  margin-top: 0.35rem;
+  font-family: var(--ds-font-display);
+  font-size: 1.12rem;
+  font-weight: var(--ds-fw-display);
+  line-height: 1.5;
+  color: var(--ds-c-text);
+}
+
+.summary {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 0.45rem;
+  color: var(--ds-c-text-mute);
+  font-size: 0.94rem;
+  line-height: 1.7;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: auto;
+  padding-top: 0.7rem;
+  font-size: 12px;
+  color: var(--ds-c-text-subtle);
+}
+
+.tags {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 头版：桌面端封面横置、标题更大；通栏本身由 TechListPage 的 .grid 负责 ── */
+.featured {
+  grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+  gap: 1.4rem;
+  padding: 1.4rem;
+}
+
+.featured .cover {
+  aspect-ratio: 16 / 10;
+}
+
+.featured .coverGlyph {
+  font-size: 3.4rem;
+}
+
+.featured .title {
+  font-size: 1.4rem;
+}
+
+@media (max-width: 1023px) {
+  .featured {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .featured .cover {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+@media (max-width: 719px) {
+  .card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cover {
+    aspect-ratio: 16 / 9;
+  }
+
+  .coverGlyph {
+    font-size: 2rem;
+  }
+
+  .featured .title {
+    font-size: 1.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+
+  .card:hover {
+    transform: none;
+  }
+}

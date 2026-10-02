@@ -106,6 +106,17 @@
      半透明线才能让环透过线继续读得到（见 docs/design-visual-language.md §3）。 */
   --ds-c-hairline: rgb(20 22 26 / 12%);
 
+  /* ---- 代码语法色（三期新增）----
+     highlight.js 的 token 类名映射到这一组，**不引第三方主题**：引主题会带进一整套亮/暗配色，
+     与品牌色打架，还会多出两套主题切换。
+     取值标准有两条：① 五个色相互相分得开（紫/绿/琥珀/蓝/青），② 在**代码块底色**上仍过 AA。
+     实测（底 #f6f6f7）：keyword 6.31 / string 4.70 / number 4.65 / function 6.64 / type 4.96 —— 均 ≥ 4.5 ✔ */
+  --ds-syn-keyword: #7a3ea8;
+  --ds-syn-string: #1a7f37;
+  --ds-syn-number: #b45309;
+  --ds-syn-function: #0756ab;
+  --ds-syn-type: #0e7490;
+
   /* ---- 玻璃层（新增）----
      顶栏、复制按钮、展开按钮、发邮件按钮共用。亮色 72% 白，暗色 62% 近黑。
      与基线的 --ds-c-bg-soft（90% 不透明）分开：那个给通栏顶栏，这个给浮起的小面积控件。 */
@@ -348,6 +359,14 @@
      激活态导航项因此不达标。提到 #4d9bff 后：药丸底上 5.38:1 ✔、纯底上 6.10:1 ✔。
      暗色主题本来就需要更亮的强调色，这属于基线的疏漏而非风格改动。 */
   --ds-c-accent: #4d9bff;
+
+  /* 代码语法色（暗色）：相序与亮色一致，整体提亮。
+     实测（底 #161618）：keyword 7.51 / string 11.76 / number 9.73 / function 9.29 / type 10.20 —— 均远超 AA ✔ */
+  --ds-syn-keyword: #c792ea;
+  --ds-syn-string: #7ee787;
+  --ds-syn-number: #ffab70;
+  --ds-syn-function: #79c0ff;
+  --ds-syn-type: #56d4dd;
 
   /* 暗色下氛围层要提亮，否则压在 #1b1b1f 上完全看不见 */
   --ds-atmosphere-1: rgb(35 136 246 / 10%);
