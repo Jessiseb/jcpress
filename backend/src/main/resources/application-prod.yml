@@ -11,10 +11,13 @@ spring:
     password: ${DB_PASSWORD}
   data:
     redis:
-      host: 119.91.227.162
-      port: 6379
+      # 后端与 Redis 同机，用本机回环地址，不暴露到公网
+      host: 127.0.0.1
+      port: 6338
       database: 0
       timeout: 5000
+      # Redis 已启用 requirepass，必须传密码（从 .env 的 REDIS_PASSWORD 注入，不写死）
+      password: ${REDIS_PASSWORD}
   flyway:
     # 生产库严禁 clean（防止误删数据）
     clean-disabled: true
