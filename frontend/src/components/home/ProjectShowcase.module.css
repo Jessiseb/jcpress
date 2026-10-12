@@ -31,6 +31,10 @@
   grid-template-columns: 3rem minmax(0, 1.6fr) minmax(0, 1fr) 5rem;
   gap: var(--ds-space-4);
   align-items: baseline;
+  /* 表格两侧各留一条 gutter。没有它，「展开/收起」胶囊的右缘会正好压在内容区右缘上
+     （实测差 1px），看起来像被卡片边框切了一角；顺带让 hover 蓝条与文字之间也有呼吸。
+     border 画在 padding 之外，所以表头/行的分隔线宽度不受影响，仍与卡片同宽。 */
+  padding-inline: var(--ds-space-2);
 }
 
 .head {
@@ -85,8 +89,12 @@
   justify-self: end;
 }
 
+/* 展开面板：从**第 2 列**起，与项目名同一条左基线。
+   原来是 1 / -1（从 ID 列起），结果是正文比它所属的项目名往左凸出 64px ——
+   展开的内容看起来像掉到了行号下面，与标题脱节。窄屏本来就写的是 2 / -1，
+   这里改成一致后，宽窄屏的从属关系是同一个：正文挂在项目名下面，不挂在编号下面。 */
 .panel {
-  grid-column: 1 / -1;
+  grid-column: 2 / -1;
   display: flex;
   flex-direction: column;
   gap: var(--ds-space-3);
@@ -102,6 +110,9 @@
 .summary {
   max-width: var(--ds-measure-prose);
   font-size: var(--ds-fs-sm);
+  /* 与下方 highlight 列表同一条行高。原来用继承值（更紧），于是「概述」和「要点」
+     两段同样字号却疏密不同，展开区读起来忽紧忽松。 */
+  line-height: 1.75;
   color: var(--ds-c-text-mute);
 }
 
@@ -136,6 +147,9 @@
 }
 
 .tech {
+  /* 与技术栈文字同宽，跟上面两段保持同一条右边界 —— 否则它是面板里唯一拉满整宽的
+     元素（实测 778px，另两段 576px），右边界忽近忽远。 */
+  max-width: var(--ds-measure-prose);
   font-family: var(--ds-font-mono);
   font-size: var(--ds-fs-xs);
   color: var(--ds-c-text-subtle);

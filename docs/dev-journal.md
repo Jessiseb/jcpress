@@ -2551,3 +2551,69 @@ curl http://127.0.0.1:8099/api/health   → {"code":0,...,"db":"UP","redis":"UP"
 
 本节实时写入。四要素齐全：用户原话（47.1）/ AI 输出（47.2）/
 被驳回（47.3，无用户纠偏，另记一处自我前提纠错）/ 翻车与返工（47.4，4 条）。
+
+## 阶段 48：首页「项目经历」展开态排版修正
+
+### 48.1 用户原话
+
+> 「项目经历的展示, 点击展开的时候排版有点丑,而且右对齐直接贴边了」
+
+### 48.2 AI 关键输出
+
+**① 先把「丑」量成数字，再动手。** 新建两个取证工具（都在 `.tmp/tools/`，属验收工具链）：
+
+- `shot-project.cjs`：折叠态 / 展开态两张截图 + 关键矩形（可 `VIEWPORT_W` 指定视口）
+- `diag-project.cjs`：细查 —— 文本首字符位置、按钮贴边距离、面板内容宽度分布、3x 放大图
+
+三次测量把用户的「有点丑」拆成三条可证伪的缺陷：
+
+| 症状 | 实测（1440 视口） | 性质 |
+| --- | --- | --- |
+| 「收起」按钮贴边 | 按钮右缘 1251，卡片内容区右缘 1252 → **只剩 1px** | 用户原话「右对齐直接贴边」对应此条 |
+| 展开内容错位 | panel 从 x=473（第 1 列 / ID 列）起，项目名从 x=545（第 2 列）起 → **正文比它所属的标题左凸 72px** | 「排版有点丑」的主因 |
+| 右边界不齐 | `summary`/`highlights` 宽 576，`tech` 宽 **778**（满宽） | 面板里唯一拉满整宽的元素 |
+
+**② 四条改动**（全在 `ProjectShowcase.module.css`，不动 TSX）：
+
+1. `.panel` 的 `grid-column` 由 `1 / -1` 改成 `2 / -1` —— 从 ID 列改到项目名列，正文挂在项目名下面而不是行号下面。窄屏本来就写的 `2 / -1`，改后宽窄屏从属关系统一。
+2. `.head, .row` 加 `padding-inline: var(--ds-space-2)` —— 表格两侧留 gutter，按钮右缘从 1px 变成 9px。**关键判断：border 画在 padding 之外，所以表头/行的分隔线宽度不受影响**（实测表头分隔线仍 778px，与卡片同宽，没有因此变短一截）。
+3. `.tech` 加 `max-width: var(--ds-measure-prose)` —— 与另两段同右边界。
+4. `.summary` 加 `line-height: 1.75` —— 原来用继承值，导致「概述」比「要点」疏密不同。
+
+**③ 修复后实测：**
+
+```
+panel_vs_name（panel 左缘 − 项目名左缘）  1440/768/375 三视口全部 = 0
+toggleGapToInnerRight                     1px → 9px（三视口一致）
+表头分隔线宽度                            778px（未被 padding 带歪）
+```
+
+**④ 回归（改动之后跑的）：**
+
+```
+npx tsc --noEmit                     → 0 错误
+audit-behavior.cjs                   → 82/82（含第 1343 行「列表符号是看得见的短横线」，
+                                        该项点名的就是「项目经历展开面板」）
+audit-contrast.cjs                   → 12 组合计未达标 0（home 227 处文本 × 亮暗）
+shot-final.cjs                       → 16 格无横向溢出；入场序列 4 视口未揭示 0
+probe-docking.cjs                    → 8 场景压字 0 处
+```
+
+顺带核实：`HomePage.test.tsx` 确有本区块的用例（默认收起、`aria-expanded`/`aria-controls`），但它属阶段 47 已实证的 baseline 红（`No QueryClient set`），因此本轮的凭据落在 `audit-behavior` + 浏览器实测上，而不是拿一个本来就红的测试交差。
+
+### 48.3 被驳回 / 纠偏
+
+无用户纠偏。有一处**自我前提修正**：初看截图怀疑是聚光伪元素盖住了面板左侧文字，读 `spotlight.module.css` 后排除（伪元素是 `z-index: -1`，且宿主 `isolation: isolate`，退在内容之下）。
+
+### 48.4 翻车与返工
+
+| # | 翻车 | 根因 | 处置 |
+| --- | --- | --- | --- |
+| ① | 首版 `diag-project.cjs` 的 `page.screenshot({clip})` 报 `Clipped area is either empty or outside the resulting image` | `boundingBox()` 给的是**视口坐标**，而 `clip` 要的是**文档坐标**，需要补 `window.scrollY`；横向滚动同理 | 不去补坐标，改成**对元素本身截图**（`locator.screenshot()`）+ `deviceScaleFactor: 3` 出清晰图，少一处坐标系容易错的地方 |
+| ② | 一度认为面板左侧文字被裁掉了（缩略图里「基于」像只剩「于」） | 用缩略图判断 1–2px 级裁切 —— 图被缩放后字形边缘糊在一起，**根本不足以支撑这个结论** | 用 `Range` 量首字符的 `getBoundingClientRect().left`：`summary`/`tech` 都是 473，与 panel 左缘一致 → **没有裁切，是看图的错觉**。教训：像素级结论必须量，不能看缩略图 |
+| ③ | 改完先怀疑「padding-inline 会让表头分隔线比卡片短 16px」 | 对 border 的绘制位置没把握 | 先测再改：断言 `headBorderWidth = 778` = row 宽 → 确认 border 画在 padding 之外，改动安全。**这条判断写进了 CSS 注释**，免得后人再疑一遍 |
+
+### 48.5 留痕纪律自查
+
+本节实时写入。四要素齐全：用户原话（48.1）/ AI 输出（48.2）/
+被驳回（48.3，无用户纠偏，另记一处自我前提修正）/ 翻车与返工（48.4，3 条）。
