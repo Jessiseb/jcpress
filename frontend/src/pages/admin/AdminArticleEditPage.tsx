@@ -46,8 +46,11 @@ export default function AdminArticleEditPage() {
   const isNew = id === 'new'
   const navigate = useNavigate()
 
-  const { data: article, isPending: loadingArticle, isError: articleError } =
-    useAdminArticle(id)
+  const {
+    data: article,
+    isPending: loadingArticle,
+    isError: articleError,
+  } = useAdminArticle(id)
   const { data: categories } = useCategories()
   const save = useSaveAdminArticle()
 
@@ -69,7 +72,7 @@ export default function AdminArticleEditPage() {
     })
   }, [article])
 
-  const patch = (partial: Partial<FormState>) => setForm((prev) => ({ ...prev, ...partial }))
+  const patch = (partial: Partial<FormState>) => setForm((previous) => ({ ...previous, ...partial }))
 
   /** 返回错误信息（null = 通过）。中文标题 + 空 slug 是本地特判。 */
   const validateSlug = (): string | null => {
@@ -125,7 +128,7 @@ export default function AdminArticleEditPage() {
   if (!isNew && articleError) {
     return (
       <AdminLayout>
-        <p className={`${styles.state} ${styles.stateError}`}>
+        <p className={`${styles.stateBox} ${styles.stateError}`}>
           加载文章失败：{save.error instanceof ApiError ? save.error.message : '请返回列表重试'}
         </p>
       </AdminLayout>
@@ -140,95 +143,121 @@ export default function AdminArticleEditPage() {
     <AdminLayout>
       <div className={styles.editHead}>
         <h1 className={styles.editTitle}>{isNew ? '新建文章' : '编辑文章'}</h1>
+        {!isNew && article && <span className={styles.editMeta}>#{article.id}</span>}
       </div>
 
-      <div className={styles.row}>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="article-title">
-            标题
-          </label>
-          <input
-            id="article-title"
-            className={styles.input}
-            value={form.title}
-            onChange={(e) => patch({ title: e.target.value })}
-          />
+      <div className={styles.card}>
+        <div className={styles.cardHead}>基本信息</div>
+        <div className={styles.cardBody}>
+          <div className={styles.formRow}>
+            <label className={styles.formLabel} htmlFor="article-title">
+              标题
+            </label>
+            <div className={styles.formControl}>
+              <input
+                id="article-title"
+                className={styles.input}
+                value={form.title}
+                onChange={(event) => patch({ title: event.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className={styles.formRow}>
+            <label className={styles.formLabel} htmlFor="article-slug">
+              slug（URL 短名）
+            </label>
+            <div className={styles.formControl}>
+              <input
+                id="article-slug"
+                className={styles.input}
+                value={form.slug}
+                placeholder="留空则用英文标题自动生成"
+                onBlur={() => setSlugError(validateSlug())}
+                onChange={(event) => patch({ slug: event.target.value })}
+              />
+              {slugError && <p className={styles.fieldError}>{slugError}</p>}
+            </div>
+          </div>
+
+          <div className={styles.formRow}>
+            <label className={styles.formLabel} htmlFor="article-category">
+              分类
+            </label>
+            <div className={styles.formControl}>
+              <select
+                id="article-category"
+                className={styles.select}
+                value={form.categoryId}
+                onChange={(event) => patch({ categoryId: event.target.value })}
+              >
+                <option value="">请选择分类</option>
+                {categories?.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className={styles.formRow}>
+            <label className={styles.formLabel} htmlFor="article-cover">
+              封面 URL
+            </label>
+            <div className={styles.formControl}>
+              <input
+                id="article-cover"
+                className={styles.input}
+                placeholder="选填，如 /api/uploads/xxx.png"
+                value={form.coverUrl}
+                onChange={(event) => patch({ coverUrl: event.target.value })}
+              />
+            </div>
+          </div>
         </div>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="article-slug">
-            slug（URL 短名）
-          </label>
-          <input
-            id="article-slug"
-            className={styles.input}
-            value={form.slug}
-            placeholder="留空则用英文标题自动生成"
-            onBlur={() => setSlugError(validateSlug())}
-            onChange={(e) => patch({ slug: e.target.value })}
-          />
-          {slugError && <p className={styles.fieldError}>{slugError}</p>}
+      </div>
+
+      <div className={styles.card}>
+        <div className={styles.cardHead}>摘要与标签</div>
+        <div className={styles.cardBody}>
+          <div className={styles.formRow}>
+            <label className={styles.formLabel} htmlFor="article-summary">
+              摘要
+            </label>
+            <div className={styles.formControl}>
+              <textarea
+                id="article-summary"
+                className={styles.textarea}
+                placeholder="选填，列表页会用它做导语"
+                value={form.summary}
+                onChange={(event) => patch({ summary: event.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className={styles.formRow}>
+            <label className={styles.formLabel} htmlFor="article-tags">
+              标签
+            </label>
+            <div className={styles.formControl}>
+              <input
+                id="article-tags"
+                className={styles.input}
+                placeholder="选填，逗号分隔，如 Redis, 并发"
+                value={form.tags}
+                onChange={(event) => patch({ tags: event.target.value })}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className={styles.row}>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="article-category">
-            分类
-          </label>
-          <select
-            id="article-category"
-            className={styles.select}
-            value={form.categoryId}
-            onChange={(e) => patch({ categoryId: e.target.value })}
-          >
-            <option value="">请选择分类</option>
-            {categories?.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
+      <div className={styles.card}>
+        <div className={styles.cardHead}>正文（Markdown）</div>
+        <div className={styles.cardBody}>
+          <MarkdownEditor value={form.contentMd} onChange={(next) => patch({ contentMd: next })} />
         </div>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="article-cover">
-            封面 URL（选填）
-          </label>
-          <input
-            id="article-cover"
-            className={styles.input}
-            value={form.coverUrl}
-            onChange={(e) => patch({ coverUrl: e.target.value })}
-          />
-        </div>
-      </div>
-
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="article-summary">
-          摘要
-        </label>
-        <textarea
-          id="article-summary"
-          className={styles.textarea}
-          value={form.summary}
-          onChange={(e) => patch({ summary: e.target.value })}
-        />
-      </div>
-
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="article-tags">
-          标签（逗号分隔，选填）
-        </label>
-        <input
-          id="article-tags"
-          className={styles.input}
-          value={form.tags}
-          onChange={(e) => patch({ tags: e.target.value })}
-        />
-      </div>
-
-      <div className={styles.field}>
-        <span className={styles.label}>正文</span>
-        <MarkdownEditor value={form.contentMd} onChange={(next) => patch({ contentMd: next })} />
       </div>
 
       {saveError && <p className={styles.fieldError}>{saveError}</p>}
@@ -250,7 +279,14 @@ export default function AdminArticleEditPage() {
         >
           保存草稿
         </button>
-        <span className={styles.saveBarSpacer} />
+        <button
+          className={styles.btn}
+          type="button"
+          onClick={() => navigate('/admin/articles')}
+        >
+          取消
+        </button>
+        <span className={styles.spacer} />
         {savedAt !== null && <span className={styles.savedHint}>已保存</span>}
       </div>
     </AdminLayout>

@@ -94,9 +94,9 @@ bash .tmp/tools/build-p3.sh && node .tmp/tools/build-probe.cjs
 | V4 | 代码可复制 | 复制按钮存在；点击后文案变「已复制」 | audit-behavior #7 | ✔ 按钮=1 |
 | V5 | 目录可用 | TOC 锚点全部命中；滚动高亮 | audit-behavior #8 + 肉眼 | ✔ TOC=10 全命中=true |
 | V6 | 首页入口 | 新区块 3 卡可点；区块数 8 | audit-behavior #9–10 | ✔ 条目=1（库内仅 1 篇已发布）+ 查看全部=true；区块=8 |
-| V7 | 双主题对比度 | 四条路由 × 亮暗，未达标 0 | audit-contrast | ✔ 8 组（home/tech/detail/admin-login × light/dark）合计未达标 **0**；覆盖 227/28/166/4 处文本 |
+| V7 | 双主题对比度 | 四条路由 × 亮暗，未达标 0 | audit-contrast | ✔ 8 组（home/tech/detail/admin-login × light/dark）合计未达标 **0**；覆盖 227/28/166/4 处文本<br>⚠️ 2026-10-12 后台改版后 `admin-login` 一列**待复测**（登录页重做，文本覆盖数必然变动；判据「未达标 0」未变） |
 | V8 | 天体不压字 | 8 个 scene 全部「压字 0 处」 | probe-docking | ✔ 8 scene 全部压字 0 处；区块数=scene 数=8 |
-| V9 | 四视口无溢出 | 四条路由 × 四视口 `overflow=no` | shot-final | ✔ 16 格全 `no`（home/tech/detail/admin-login × 1280/768/390/375） |
+| V9 | 四视口无溢出 | 四条路由 × 四视口 `overflow=no` | shot-final | ✔ 16 格全 `no`（home/tech/detail/admin-login × 1280/768/390/375）<br>⚠️ 2026-10-12 后台改版后 `admin-login` 那 4 格**待复测**（登录页重做） |
 | V10 | 首屏体积 | ① 首屏不含编辑器/Markdown/文章字体（运行时请求）② 首屏 gzip ≤200KB | **①** audit-firstscreen.cjs（可复现）**②** audit-firstscreen-prod.cjs（可复现；build-p3.sh 为交叉核对，本机受 EDR 限制） | **① ✔ 全绿**（首屏请求中零命中；详情页/后台反向对照均命中）**② ✔ 161.6 KB gzip**（零子进程实测：L1 业务 101.9 + L2 生产版依赖 57.8 + L3 lucide 实算图标 1.9） |
 | V11 | 字体不混款 | 展示字 ⊆ 静态 700 ∪ 文章 700 | audit-display-font | ✔ 8/8；覆盖 104 个展示字（静态 700 的 60 字 ∪ 文章 700 的 4485 字） |
 

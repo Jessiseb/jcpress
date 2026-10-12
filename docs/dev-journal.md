@@ -2401,3 +2401,89 @@ npm run dev → failed to load config from vite.config.ts
 
 本节实时写入。四要素齐全：用户原话（45.1）/ AI 输出（45.2）/
 被驳回（45.3，无用户纠偏，另记一处自己给错的前提）/ 翻车与返工（45.4，1 条）。
+
+---
+
+## 阶段 46 — 后台管理台按若依排版整体改版
+
+### 46.1 用户原话
+
+- 「三期优化: 后台管理的页面过于简单, 可以参考一下若依的风格, 使用若依的这个页面排版进行整体的页面优化」
+
+### 46.2 AI 关键输出
+
+**① 先做差距分析（每条带文件与行号），再动手**
+
+| # | 区域 | 若依做法 | jcpress 原状（证据） |
+| --- | --- | --- | --- |
+| 1 | 菜单栏 | 左侧固定菜单树，可折叠 | 完全没有；导航只有顶栏两个链接（`AdminLayout.tsx:25-30`） |
+| 2 | 顶栏 | 全宽 + 右侧图标区 / 头像下拉 | 有，但右侧是「用户名 + 退出」纯文本按钮（`AdminLayout.tsx:23-41`） |
+| 3 | 标签页 | 多标签、可关闭 | 没有 |
+| 4 | 面包屑 | 首页 / 分组 / 当前页 | 没有 |
+| 5 | 搜索区 | 横向 inline 表单 + 搜索/重置 | 三个控件**纵向堆叠满行**、无 label（`AdminArticleListPage.tsx:57-96`） |
+| 6 | 工具条 | 表格上方独立工具条 | 「新建文章」塞在筛选区右侧（同文件 93-95） |
+| 7 | 表格 | 斑马纹/hover/表头浅灰/操作列文字链接 | 6 列纯表格；操作列是 3 个方块按钮（`admin.module.css:172-210`） |
+| 8 | 分页 | 共 N 条 / 每页 N 条 / 页码 / 跳页 | **完全没有**，查询写死 `page:1, size:50`（同文件 42-43） |
+| 9 | 空/错误态 | 表格内居中提示 | 有，且三态严格区分（同文件 98-114） |
+
+**② 用户拍板三项**
+
+1. 实现方式 → **自研 CSS 复刻**（不引组件库）
+2. 改造范围 → **三页全改 + 补外壳**
+3. 侧边栏 → **铺完整菜单树，未实现项置灰**
+
+**③ 落地产物**
+
+| 文件 | 动作 |
+| --- | --- |
+| `frontend/src/pages/admin/adminMenu.ts` | 新增：菜单树（内容管理→文章列表/[分类/标签/媒体库 置灰]，系统→[站点设置/操作日志 置灰]）+ `resolveAdminRoute()` 反查标签名/高亮项/面包屑 |
+| `frontend/src/hooks/useAdminTabs.ts` | 新增：标签页（sessionStorage 持久化、形状逐条校验、常驻首页标签、关闭后跳相邻）+ `clearAdminTabs()` |
+| `frontend/src/pages/admin/AdminLayout.tsx` | 重写：深色侧边栏（可折叠，localStorage 记忆）+ 顶栏（折叠键/面包屑/用户下拉）+ 标签页条 + 内容区 |
+| `frontend/src/pages/admin/admin.module.css` | 重写：引入后台专属 `--adm-*` 令牌层（Element 色板）+ 深色主题覆盖 + 全部新组件样式 |
+| `frontend/src/pages/admin/AdminArticleListPage.tsx` | 重排：搜索卡片（label 左置 + 显式 搜索/重置）+ 工具条 + 若依式表格 + 真分页 |
+| `frontend/src/pages/admin/AdminArticleEditPage.tsx` | 重排：label 左置右对齐 + 「基本信息 / 摘要与标签 / 正文」三张分组卡片 + 底部操作条 |
+| `frontend/src/pages/admin/AdminLoginPage.tsx` | 重做：全屏居中卡片 + 品牌 + 副标题 + 底部版本行 |
+| `frontend/src/hooks/useAdminArticles.ts` | 加 `placeholderData: keepPreviousData` —— 翻页/筛选时表格不再先塌成「正在加载」 |
+| `.tmp/tools/probe-admin.cjs` | 断言从 `td:nth-child(n)` 改为 `td[data-col="…"]` |
+
+**④ 唯一一处刻意不照搬若依：表格首列的复选框**
+
+后端只有单条 `DELETE`，没有批量接口。加了复选框就要配一个「批量删除」按钮，那按钮点下去要么什么都不做、要么前端串行发 N 个请求 —— 前者是假 UI，后者是没想清楚的部分失败语义。违反「不做假 UI」的纪律，故不加。等后端有批量接口再补。
+
+**⑤ 改版顺手修掉的一处隔离漏洞**
+
+公开站的氛围（径向渐变 + 视差晕影）是写在全局 `body` 上的、标题字族是写在全局 `h1~h4` 上的。后台只是「不挂 TopNav/Footer」，**这两层一直是漏进来的** —— 旧登录页截图里的衬线标题与背景渐变味就是证据。本版在外壳层补上：`.shell` 铺不透明 `--adm-bg` 盖掉氛围层；`.adminScope h1~h4` 把字族重置回无衬线。
+
+**⑥ 自检（可做的都做了）**
+
+```
+cd frontend && npx tsc --noEmit            → 0 错误 ✔
+类名交叉核对（styles.X ↔ CSS 定义）        → 两侧全命中、零死类 ✔
+断言契约静态核对（16 条）                  → 全 PASS ✔
+  含：登录页无 <table> / 无 <header>；外壳无 <header>/<footer>；
+      #admin-username/#admin-password/button[type=submit]；
+      #article-{title,slug,cover,category,summary,tags}；
+      fieldError 类名；「保存草稿」「发布」按钮文本；表格内 <a>编辑链接
+```
+
+### 46.3 被驳回 / 纠偏
+
+无用户纠偏。
+
+### 46.4 翻车与返工（三条）
+
+| # | 现象 | 归因 | 处置 |
+| --- | --- | --- | --- |
+| ① | `styles.userName` 在 `admin.module.css` 里**根本没定义** | CSS Modules 用错类名不会编译报错，只会把 `className` 变成 `undefined` —— `tsc` 也查不出来（`*.module.css` 被声明为 `Record<string,string>`，任意键都合法） | 靠「`styles.X` 全集 ↔ CSS 类名全集」的交叉核对抓出来的。**教训：CSS Modules 的类名错拼是静默失败，必须用集合比对兜，不能指望类型检查** |
+| ② | `probe-admin.cjs` 用 `td:nth-child(1/2)` 读标题与状态 | 位置语义对表格结构过于敏感：本次虽未加复选框列，但已加「分类」列，位置一变就会**静默读错**（探针仍绿，读到的却是别的列） | 改为 `td[data-col="title" / "status"]`，并给列表页所有 `<td>` 补 `data-col`。位置语义 → 语义语义 |
+| ③ | 若依表格首列的复选框没做 | 后端无批量接口 | 不加（见 ②-④），并**主动在交付说明里点明这一处未照搬**，避免被当成漏做 |
+
+### 46.5 环境限制（本轮第 5 条实证）
+
+**后台的浏览器验收与截图我这边跑不了**：`probe-admin.cjs` / `shot-admin.cjs` / `audit-contrast.cjs` / `shot-final.cjs` 都要求 dev server 在 8099 上跑着，而 `npm run dev` 被 EDR 拦（阶段 45 已实证，非沙箱模式同样失败）。
+连带后果：`docs/phase3-effect-matrix.md` 的 **V7（对比度）与 V9（四视口无溢出）** 含 `admin-login` 一列，登录页重做后其**实测值已过期** —— 已在矩阵里就地标注「待复测」，**不保留绿的 ✔**。
+
+### 46.6 留痕纪律自查
+
+本节实时写入。四要素齐全：用户原话（46.1）/ AI 输出（46.2）/
+被驳回（46.3，无用户纠偏，如实记「无」）/ 翻车与返工（46.4，3 条）。

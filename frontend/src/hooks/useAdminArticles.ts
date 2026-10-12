@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
   deleteAdminArticle,
@@ -15,6 +15,8 @@ export function useAdminArticles(query: AdminArticleQuery = {}) {
   return useQuery({
     queryKey: ['admin', 'articles', query],
     queryFn: () => fetchAdminArticles(query),
+    // 换 key 时留住上一页的数据：否则每次翻页 / 改筛选，表格都会先塌成「正在加载」再长回来
+    placeholderData: keepPreviousData,
     // 列表页本身是「看一眼再进编辑」，切回来会重取；retry 关掉免得 401 反复重试
     retry: false,
   })

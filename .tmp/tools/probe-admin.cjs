@@ -29,10 +29,15 @@ const { chromium } = require('playwright-core')
   log('② 登录后 →', new URL(page.url()).pathname)
 
   // 3. 列表：抓第一行的标题与状态
+  //    按 `data-col` 取列，不按 td:nth-child(n) —— 后者一旦表格加列就会**静默读错**，
+  //    探针还是绿的，但读的已经是另一列了。
   const rows = await page.evaluate(() =>
     Array.from(document.querySelectorAll('table tbody tr')).map((tr) => {
-      const cells = Array.from(tr.querySelectorAll('td')).map((td) => td.textContent.trim())
-      return { title: cells[0], status: cells[1] }
+      const cell = (name) => {
+        const el = tr.querySelector(`td[data-col="${name}"]`)
+        return el ? el.textContent.trim() : ''
+      }
+      return { title: cell('title'), status: cell('status') }
     }),
   )
   log(`③ 列表行数 = ${rows.length}`)
@@ -86,8 +91,8 @@ const { chromium } = require('playwright-core')
     if (!tr) return null
     const btn = Array.from(tr.querySelectorAll('button')).find((b) => b.textContent.trim() === '发布')
     if (btn) btn.click()
-    const st = tr.querySelector('td:nth-child(2)').textContent.trim()
-    return { status: st, clicked: !!btn }
+    const st = tr.querySelector('td[data-col="status"]')
+    return { status: st ? st.textContent.trim() : '', clicked: !!btn }
   }, newTitle)
   log('⑥ 列表中找到改后文章:', JSON.stringify(pubRow))
   // 等状态徽标变成「已发布」（发布请求是异步的）
@@ -97,7 +102,9 @@ const { chromium } = require('playwright-core')
         const tr = Array.from(document.querySelectorAll('table tbody tr')).find((t) =>
           t.textContent.includes(needle),
         )
-        return tr && tr.querySelector('td:nth-child(2)').textContent.includes('已发布')
+        if (!tr) return false
+        const st = tr.querySelector('td[data-col="status"]')
+        return st !== null && st.textContent.includes('已发布')
       },
       newTitle,
       { timeout: 10000 },
