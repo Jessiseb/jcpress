@@ -19,7 +19,7 @@ const check = (name, pass, detail) => {
  * 覆盖：卡片列表 / 详情页（护眼档位、章节编号、代码复制、TOC 锚点）/ 首页新区块 / 后台登录守卫。
  */
 async function auditPhase3(browser) {
-  const BASE = 'http://127.0.0.1:5173'
+  const BASE = 'http://127.0.0.1:8099'
 
   // ---- 1. /tech 卡片列表 ----
   {
@@ -170,7 +170,7 @@ async function auditPhase3(browser) {
     if (m.type() === 'error') consoleErrors.push(m.text())
   })
   page.on('pageerror', (e) => consoleErrors.push(`pageerror: ${e.message}`))
-  await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle', timeout: 60000 })
+  await page.goto('http://127.0.0.1:8099/', { waitUntil: 'networkidle', timeout: 60000 })
   await page.waitForTimeout(700)
 
   // ---- 对应 HomePage.test.tsx 的 9 条 ----
@@ -361,7 +361,7 @@ async function auditPhase3(browser) {
     reducedMotion: 'reduce',
   })
   const rmPage = await rmCtx.newPage()
-  await rmPage.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle', timeout: 60000 })
+  await rmPage.goto('http://127.0.0.1:8099/', { waitUntil: 'networkidle', timeout: 60000 })
   await rmPage.waitForTimeout(600)
   const rm = await rmPage.evaluate(() => {
     const nodes = Array.from(document.querySelectorAll('[data-reveal]'))
@@ -576,7 +576,7 @@ async function auditPhase3(browser) {
   const flowPathsAt = async (width) => {
     const c = await browser.newContext({ viewport: { width, height: 900 } })
     const p = await c.newPage()
-    await p.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle', timeout: 60000 })
+    await p.goto('http://127.0.0.1:8099/', { waitUntil: 'networkidle', timeout: 60000 })
     await p.waitForTimeout(400)
     const n = await p.evaluate(() => document.querySelectorAll('[data-flow] path').length)
     await c.close()
@@ -1435,7 +1435,7 @@ async function auditPhase3(browser) {
   // 窄屏塌回单列：标题与正文左边缘对齐（手机上不许出现一窄一宽）
   const narrowCtx = await browser.newContext({ viewport: { width: 390, height: 844 } })
   const narrowPage = await narrowCtx.newPage()
-  await narrowPage.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle', timeout: 60000 })
+  await narrowPage.goto('http://127.0.0.1:8099/', { waitUntil: 'networkidle', timeout: 60000 })
   await narrowPage.waitForTimeout(400)
   const narrowGrid = await narrowPage.evaluate(() => {
     const out = []
@@ -1467,7 +1467,7 @@ async function auditPhase3(browser) {
     colorScheme: 'dark',
   })
   const darkPage = await darkCtx.newPage()
-  await darkPage.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle', timeout: 60000 })
+  await darkPage.goto('http://127.0.0.1:8099/', { waitUntil: 'networkidle', timeout: 60000 })
   await darkPage.waitForTimeout(500)
   const darkHome = await darkPage.evaluate(() => {    const qa = (s) => Array.from(document.querySelectorAll(s))
     const labels = qa('*')
@@ -1556,7 +1556,7 @@ async function auditPhase3(browser) {
   // 用暗色上下文顺便确认暗色主题下这一页也成立
   const techCtx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'dark' })
   const techPage = await techCtx.newPage()
-  await techPage.goto('http://127.0.0.1:5173/tech', { waitUntil: 'networkidle', timeout: 60000 })
+  await techPage.goto('http://127.0.0.1:8099/tech', { waitUntil: 'networkidle', timeout: 60000 })
   await techPage.waitForTimeout(500)
 
   const tech = await techPage.evaluate(() => {
@@ -1588,7 +1588,7 @@ async function auditPhase3(browser) {
   // ---- 占位页外壳：/algo 与 404 ----
   const pageCtx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'light' })
   const walkPage = await pageCtx.newPage()
-  await walkPage.goto('http://127.0.0.1:5173/algo', { waitUntil: 'networkidle', timeout: 60000 })
+  await walkPage.goto('http://127.0.0.1:8099/algo', { waitUntil: 'networkidle', timeout: 60000 })
   const algo = await walkPage.evaluate(() => ({
     h1: document.querySelector('h1') ? document.querySelector('h1').textContent.trim() : null,
     hasLead: document.body.innerText.includes('按专题整理的题解'),
@@ -1603,7 +1603,7 @@ async function auditPhase3(browser) {
     JSON.stringify(algo),
   )
 
-  await walkPage.goto('http://127.0.0.1:5173/no-such-page', { waitUntil: 'networkidle', timeout: 60000 })
+  await walkPage.goto('http://127.0.0.1:8099/no-such-page', { waitUntil: 'networkidle', timeout: 60000 })
   const notFound = await walkPage.evaluate(() => ({
     h1: document.querySelector('h1') ? document.querySelector('h1').textContent.trim() : null,
     text: document.body.innerText.slice(0, 200),

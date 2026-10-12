@@ -89,7 +89,7 @@ const KEYS = [
   for (const theme of ['light', 'dark']) {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
     const page = await ctx.newPage()
-    await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle', timeout: 60000 })
+    await page.goto('http://127.0.0.1:8099/', { waitUntil: 'networkidle', timeout: 60000 })
     await page.evaluate((t) => document.documentElement.setAttribute('data-theme', t), theme)
 
     const values = await page.evaluate((keys) => {

@@ -7,12 +7,12 @@ const { chromium } = require('playwright-core')
  * 改版式（新增/删除区块、调 rhythm）之后必须跑一次 —— 见 decisions.md #97 / #98。
  *
  * 用法：node .tmp/tools/probe-docking.cjs
- * 前置：dev server 在 5173 上跑着
+ * 前置：dev server 在 8099 上跑着
  */
 ;(async () => {
   const browser = await chromium.launch({ channel: 'msedge', args: ['--no-sandbox'] })
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } })
-  await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle', timeout: 60000 })
+  await page.goto('http://127.0.0.1:8099/', { waitUntil: 'networkidle', timeout: 60000 })
   // 关掉入场动画，避免元素还在位移时量矩形
   await page.evaluate(() => document.documentElement.removeAttribute('data-reveal-armed'))
   await page.waitForTimeout(600)

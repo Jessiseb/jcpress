@@ -113,7 +113,7 @@ const PAGES = [
     for (const scheme of ['light', 'dark']) {
       const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: scheme })
       const page = await ctx.newPage()
-      await page.goto(`http://127.0.0.1:5173${target.path}`, { waitUntil: 'networkidle', timeout: 60000 })
+      await page.goto(`http://127.0.0.1:8099${target.path}`, { waitUntil: 'networkidle', timeout: 60000 })
       await page.waitForTimeout(600)
       await page.evaluate(() => document.documentElement.removeAttribute('data-reveal-armed'))
       await page.waitForTimeout(200)

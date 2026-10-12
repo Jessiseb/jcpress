@@ -2,7 +2,7 @@ const { chromium } = require('playwright-core')
 ;(async () => {
   const b = await chromium.launch({ channel: 'msedge', args: ['--no-sandbox'] })
   const p = await (await b.newContext({ viewport: { width: 1280, height: 900 } })).newPage()
-  await p.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle' })
+  await p.goto('http://127.0.0.1:8099/', { waitUntil: 'networkidle' })
   await p.waitForTimeout(600)
   const r = await p.evaluate(() => {
     const h1 = document.querySelector('h1')

@@ -30,7 +30,7 @@ const CANDIDATES = [
 ;(async () => {
   const browser = await chromium.launch({ channel: 'msedge', args: ['--no-sandbox'] })
   const page = await browser.newPage()
-  await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle', timeout: 60000 })
+  await page.goto('http://127.0.0.1:8099/', { waitUntil: 'networkidle', timeout: 60000 })
 
   const result = await page.evaluate((candidates) => {
     const SAMPLE = '庄家希 AI 应用开发工程师'

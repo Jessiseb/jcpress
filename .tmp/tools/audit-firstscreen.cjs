@@ -16,7 +16,7 @@ const { chromium } = require('playwright-core')
  *     （否则说明它们压根没接上，①② 是假绿）。
  */
 
-const ORIGIN = 'http://127.0.0.1:5173'
+const ORIGIN = 'http://127.0.0.1:8099'
 
 const FORBIDDEN_IN_FIRST_SCREEN = [
   { label: 'react-markdown', re: /react-markdown/i },

@@ -2308,3 +2308,96 @@ grep -n "mvnw" README.md                                          → 验收章�
 
 本节在 6.2 提交前**实时写入**。四要素齐全：用户原话（44.1）/ AI 输出（44.2）/
 被驳回（44.3，无用户纠偏，如实记「无」）/ 翻车与返工（44.4，1 条）。
+
+---
+
+## 阶段 45 — 拉取同步与端口口径统一（`git pull` 故障 + 8091/8099 落地）
+
+> 触发：`git pull` 报 `Failed to connect to 127.0.0.1 port 65446: Connection refused`。
+> 本阶段不属于 `phase-3-tech-module` 任务书条目，是三期完结后的本机环境收尾。
+
+### 45.1 用户原话
+
+- 「PS C:\Users\O\Desktop\myproject\jcpress> git pull / fatal: unable to access 'https://github.com/Jessiseb/jcpress.git/': Failed to connect to 127.0.0.1 port 65446 after 2063 ms: Connection refused」
+- 「继续」
+
+### 45.2 AI 关键输出
+
+**① 故障定位（先查后动，不猜）**
+
+| 检查项 | 结果 |
+| --- | --- |
+| `git config --get http.proxy` | `http://127.0.0.1:65446`（**已失效**） |
+| 环境变量 `http_proxy` | `http://127.0.0.1:65165`（**也已失效**；且 git 本来就不读它） |
+| `netstat` 实际在听的代理 | 只有 `127.0.0.1:7890`（Clash） |
+| curl 直连 github | **200，0.55s**（比走 7890 的 0.62s 更快） |
+| git 本体直连 `ls-remote` | 成功 |
+
+→ 结论：**本仓库不再需要代理，直连即可**。处置：`git config --unset http.proxy` / `--unset https.proxy`（仅本仓库）。
+
+**② 远端新提交与合并方式**
+
+从 `0b99da9` 分叉：远端多 2 个提交（另一台机器的部署件）、本地多 1 个提交（`RUNBOOK.md`）。
+两边改动文件**零重叠** → 选 `git pull --rebase`（项目历史一直是线性的），无冲突，
+本地提交重写为 `65bd385` 后推送成功（`399ff6b..65bd385`）。
+
+| 提交 | 内容 |
+| --- | --- |
+| `f13d47e` | 密码改环境变量注入；新增 `application-prod.yml`、`deploy/deploy-backend.sh`、`deploy/init_schema.sql` |
+| `399ff6b`（提交信息就是 "1"） | 新增 `deploy/deploy-frontend.sh`；改 `vite.config.ts`、`application-prod.yml` |
+
+**③ 顺带查出的真问题：端口口径被远端改掉了**
+
+拉进来的 `vite.config.ts` 把 dev/preview 端口 `5173 → 8099`、`/api` 代理目标 `8080 → 8091`。
+查 `deploy/` 脚本确认这是另一台机器确立的**部署约定**（后端 8091 靠 `--server.port` 运行时覆盖，
+`application.yml` 里仍是 8080；前端 `vite preview` 起在 8099）。
+而 `.tmp/tools/` 下 **30 个验收脚本把 `5173` 写死（34 处）+ `8080` 写死（1 处）** —— 不同步的话整套验收工具链直接失效。
+
+用户拍板选 **A：本地后端也跑 8091（不改代码）**。
+
+**④ 落地清单**
+
+| 文件 | 改动 |
+| --- | --- |
+| `RUNBOOK.md` | 端口 8080/5173 → 8091/8099；起后端命令补 `-Dspring-boot.run.arguments="--server.port=8091"`；顶部加端口约定说明；「git 代理」段重写为「当前直连」；已知坑表把「前端起不来」并入 EDR 那条 |
+| `README.md` | 验收章节加端口约定引用块；后端起服务/curl 改 8091；两处「dev server 必须在 5173」→ 8099 |
+| `.tmp/tools/*.cjs`（24 个） | `5173 → 8099`（34 处）、`127.0.0.1:8080 → 127.0.0.1:8091`（1 处）、`shot-admin.cjs` 注释同步 |
+
+**⑤ 实测验证**
+
+```
+# 后端（真实启动，非推断）
+export JAVA_HOME="/c/Program Files/Java/jdk-17"
+cd backend && ./mvnw -q spring-boot:run -Dspring-boot.run.arguments="--server.port=8091"
+→ Tomcat started on port 8091 (http) with context path '/api'
+  （profile dev；Flyway 校验 2 个迁移，schema 已最新）
+→ curl http://127.0.0.1:8091/api/health
+  {"code":0,"message":"ok","data":{"db":"UP","redis":"UP"},"traceId":"2379f11e"}   ✔
+
+# 前端：未能验证
+npm run dev → failed to load config from vite.config.ts
+              X [ERROR] Cannot read file "package.json": winapi error #5
+```
+
+### 45.3 被驳回 / 纠偏
+
+无用户纠偏。但有一处**我自己先前给错的前提**：给方案 A 时的措辞是「不改任何代码」，
+实测发现 `.tmp/tools/` 下 30 个脚本需同步端口，否则验收工具链失效 ——
+这是 A 方案的必然连带，已如实补做并在此记录。
+
+### 45.4 翻车与返工（一条）
+
+| # | 现象 | 归因 | 处置 |
+| --- | --- | --- | --- |
+| ① | 沙箱内 `npm run dev` 失败（`winapi error #5`），加 `dangerouslyDisableSandbox` 重试**仍失败** | 不是 harness 沙箱限制，是本机 **EDR** 拦 esbuild 子进程读文件（与 `vitest run` / `vite build` 同源） | 前端链路**如实标注「未能验证」**，不写「应当可用」这类推断性结论。后端链路有真实启动日志与 health 响应兜底 |
+
+### 45.5 环境限制（本轮第 4 条实证）
+
+本机 EDR 拦 esbuild 子进程读文件的范围比上一轮记录的更大：**不止 `vitest run` / `vite build`，
+`vite dev`（加载 `vite.config.ts` 就已被拦）同样起不来**，且非沙箱模式也无解。
+即「AI 侧起不了前端 dev server」，前端相关验收只能由用户在普通终端里跑。
+
+### 45.6 留痕纪律自查
+
+本节实时写入。四要素齐全：用户原话（45.1）/ AI 输出（45.2）/
+被驳回（45.3，无用户纠偏，另记一处自己给错的前提）/ 翻车与返工（45.4，1 条）。

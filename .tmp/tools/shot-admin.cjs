@@ -5,13 +5,13 @@
  * 这个是**截图取证**（产出 PNG）。两者都真实登录，不重复。
  *
  * 用法：node .tmp/tools/shot-admin.cjs [输出目录]   默认 .tmp/shots-admin
- * 前置：dev server 在 5173、后端在 8080。
+ * 前置：dev server 在 8099、后端在 8091。
  */
 const path = require('node:path')
 const fs = require('node:fs')
 const { chromium } = require('playwright-core')
 
-const ORIGIN = 'http://127.0.0.1:5173'
+const ORIGIN = 'http://127.0.0.1:8099'
 const OUT = process.argv[2] || '.tmp/shots-admin'
 const USER = 'admin'
 const PASS = 'jcpress@2026'

@@ -41,7 +41,7 @@ const WASM_ROOT = process.env.WASM_NODE_PATH || 'C:/Users/O/node_modules'
 const FRONT = path.resolve(__dirname, '../../frontend')
 const esbuild = require(path.join(WASM_ROOT, 'esbuild-wasm/lib/browser.js'))
 
-const ORIGIN = 'http://127.0.0.1:5173'
+const ORIGIN = 'http://127.0.0.1:8099'
 const LIMIT_KB = 200
 const gzip = (s) => zlib.gzipSync(Buffer.isBuffer(s) ? s : Buffer.from(s, 'utf8'), { level: 9 }).length
 const kb = (n) => (n / 1024).toFixed(1)

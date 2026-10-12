@@ -11,7 +11,7 @@ const { chromium } = require('playwright-core')
   const browser = await chromium.launch({ channel: 'msedge', args: ['--no-sandbox'] })
   const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, colorScheme: scheme })
   const page = await ctx.newPage()
-  await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle', timeout: 60000 })
+  await page.goto('http://127.0.0.1:8099/', { waitUntil: 'networkidle', timeout: 60000 })
   await page.waitForTimeout(700)
 
   await page.evaluate(async () => {

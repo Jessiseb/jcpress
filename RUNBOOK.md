@@ -2,6 +2,10 @@
 
 > 本文件是**本机环境专属**的运行手册 —— 记的是这台机器上踩过的坑与确切命令。
 > 通用规划见 `docs/项目前期规划.md`，验收判据见 `docs/phase3-effect-matrix.md`。
+>
+> **端口约定：后端 8091 / 前端 8099。** 这套口径来自 `deploy/` 下的部署脚本（服务器上后端靠
+> `--server.port=8091` 覆盖，前端 `vite preview` 起在 8099），`vite.config.ts` 的
+> `server.port` / `preview.port` 与 `/api` 代理目标都已按这套口径对齐，**本地照抄即可，别用 8080/5173**。
 
 ## 0. 前置依赖（本机已装好，通常不用管）
 
@@ -20,7 +24,7 @@ netstat -ano | grep LISTENING | grep -E ":3306|:6379"
 
 数据库没建过也不用管：后端启动时 Flyway 会自动跑 `V1__init_schema.sql` + `V2__seed_data.sql`。
 
-## 1. 起后端（端口 8080）
+## 1. 起后端（端口 8091）
 
 ```bash
 # ⚠️ 关键：必须显式指定 JDK 17。本机默认 JAVA_HOME 是 corretto-1.8.0_452（JDK 8），
@@ -29,17 +33,18 @@ export JAVA_HOME="/c/Program Files/Java/jdk-17"
 export PATH="$JAVA_HOME/bin:$PATH"
 
 cd backend
-./mvnw spring-boot:run
+# 端口是运行时覆盖：application.yml 里写的是 8080，但前端 vite 代理指向 8091，必须对齐
+./mvnw spring-boot:run -Dspring-boot.run.arguments="--server.port=8091"
 ```
 
 验证：
 
 ```bash
-curl -s http://127.0.0.1:8080/api/health
+curl -s http://127.0.0.1:8091/api/health
 # 期望：{"code":0,"message":"ok","data":{"db":"UP","redis":"UP"},...}
 ```
 
-## 2. 起前端（端口 5173）
+## 2. 起前端（端口 8099）
 
 **另开一个终端**：
 
@@ -49,21 +54,21 @@ npm install        # 首次或依赖变动后
 npm run dev
 ```
 
-前端通过 Vite 的 `/api` proxy 把请求转给 8080（见 `vite.config.ts`），所以只访问 5173 即可。
+前端通过 Vite 的 `/api` proxy 把请求转给 8091（见 `vite.config.ts`），所以只访问 8099 即可。
 
 ## 3. 打开页面
 
 | 地址 | 页面 |
 | --- | --- |
-| http://localhost:5173/ | 首页（关于我） |
-| http://localhost:5173/tech | 技术分享列表 |
-| http://localhost:5173/tech/phase-3-backend-retro | 文章详情 |
-| **http://localhost:5173/admin** | **后台入口**（自动跳 `/admin/articles`） |
-| http://localhost:5173/admin/login | 后台登录页 |
+| http://localhost:8099/ | 首页（关于我） |
+| http://localhost:8099/tech | 技术分享列表 |
+| http://localhost:8099/tech/phase-3-backend-retro | 文章详情 |
+| **http://localhost:8099/admin** | **后台入口**（自动跳 `/admin/articles`） |
+| http://localhost:8099/admin/login | 后台登录页 |
 
 **后台账号**：`admin` / `jcpress@2026`
 
-> 注意：直接访问 `localhost:8080/admin` **打不开** —— 后端只有 `/api/**`，没有页面。
+> 注意：直接访问 `localhost:8091/admin` **打不开** —— 后端只有 `/api/**`，没有页面。
 
 ## 4. 跑测试
 
@@ -75,7 +80,7 @@ cd backend && ./mvnw -q -B test
 # 前端类型检查
 cd frontend && npx tsc --noEmit
 
-# 前端浏览器验收（需要 5173 与 8080 都起着）
+# 前端浏览器验收（需要 8099 与 8091 都起着）
 cd ..   # 回到仓库根
 node .tmp/tools/audit-behavior.cjs      # 82 项
 node .tmp/tools/audit-contrast.cjs      # 对比度
@@ -102,22 +107,23 @@ cd backend
 | 坑 | 现象 | 处置 |
 | --- | --- | --- |
 | **JDK 版本** | `mvnw` 以 JDK 8 启动、编译失败 | `export JAVA_HOME="/c/Program Files/Java/jdk-17"` |
-| **git 不走代理** | `git push/fetch` 报 `Connection reset` / `Empty reply` | git **不读** `http_proxy` 环境变量，要单独配：见下 |
+| **git 代理** | `git pull/push` 报 `Failed to connect to 127.0.0.1 port <旧端口>: Connection refused` | git 里配过写死的代理端口，会话间会失效。**本仓库已改为直连**（本机直连 github 实测通且更快），若再遇到就 `git config --unset http.proxy && git config --unset https.proxy` |
 | **凭据助手名过时** | `git: 'credential-manager-core' is not a git command` | `git config --global credential.helper manager`（已修） |
-| **vitest / vite build 跑不动** | esbuild 子进程被 EDR 拦（`winapi error #5`） | 用 `.tmp/tools/` 下的浏览器审计替代；**别用 `esbuild --version` 判断环境可用性**（它不读文件所以永远成功） |
+| **前端 dev server / 测试跑不动** | `npm run dev`、`vitest run`、`vite build` 报 `failed to load config` + `Cannot read file ...: winapi error #5` | 本机 EDR 拦 esbuild 子进程读文件，**与代理无关**。普通终端里 `npm run dev` 通常能起（历史上 5173 那个 dev server 就是外部窗口起的）；`vitest run` / `vite build` 无解，改用 `.tmp/tools/` 下的浏览器审计替代。**别用 `esbuild --version` 判断环境可用性**（它不读文件所以永远成功） |
 | **上传 URL 404** | 正文图片打不开 | 对外 URL 带 `/api` 前缀（`/api/uploads/...`），与静态映射路径 `/uploads` 是两个配置项 |
 
-### git 代理
+### git 代理（当前：直连）
 
-环境提供的本地代理端口**每次会话会变**，所以：
+本仓库**不配代理**，直接用直连。本机实测直连 github 通且比走代理更快（2026-10-12 验证）。
 
 ```bash
-# 1) 拿当前端口
-env | grep -i proxy
-
-# 2) 配到 git（仅当前仓库）
+# 若哪天直连不通、必须走代理：环境提供的本地代理端口每次会话会变
+env | grep -i proxy           # 拿当前端口（注意环境变量里的端口也可能过期）
+netstat -ano | grep LISTENING | grep -E ":(7890|7897|10809)\b"   # 找真正在听的端口
 git config http.proxy  http://127.0.0.1:<端口>
 git config https.proxy http://127.0.0.1:<端口>
+# 用完记得清掉，否则下次会话端口一变又连不上：
+git config --unset http.proxy && git config --unset https.proxy
 ```
 
 彻底摆脱这件事的办法：改用 SSH key，或把 remote 换成 `gh` 管理的地址。

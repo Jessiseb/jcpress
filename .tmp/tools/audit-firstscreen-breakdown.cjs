@@ -17,7 +17,7 @@ const zlib = require('node:zlib')
  *
  * 输出三类各自 gzip 体积，供矩阵填写时逐条引用。
  */
-const ORIGIN = 'http://127.0.0.1:5173'
+const ORIGIN = 'http://127.0.0.1:8099'
 const KB = 1024
 
 const classify = (url) => {

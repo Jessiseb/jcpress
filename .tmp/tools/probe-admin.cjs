@@ -10,7 +10,7 @@ const { chromium } = require('playwright-core')
   const log = (...a) => console.log(...a)
 
   // 1. 未登录访问 /admin/articles 必须被弹到 /admin/login
-  await page.goto('http://127.0.0.1:5173/admin/articles', { waitUntil: 'networkidle', timeout: 60000 })
+  await page.goto('http://127.0.0.1:8099/admin/articles', { waitUntil: 'networkidle', timeout: 60000 })
   await page.waitForTimeout(400)
   log('① 未登录访问 /admin/articles →', new URL(page.url()).pathname)
   const isolation = await page.evaluate(() => ({
@@ -78,7 +78,7 @@ const { chromium } = require('playwright-core')
 
   // 6. 前台刷新看是否可见（先发布）
   //    回到列表，找到刚改的那篇点「发布」（若已是发布态则跳过）
-  await page.goto('http://127.0.0.1:5173/admin/articles', { waitUntil: 'networkidle' })
+  await page.goto('http://127.0.0.1:8099/admin/articles', { waitUntil: 'networkidle' })
   await page.waitForTimeout(800)
   const pubRow = await page.evaluate((needle) => {
     const trs = Array.from(document.querySelectorAll('table tbody tr'))
@@ -106,7 +106,7 @@ const { chromium } = require('playwright-core')
   await page.waitForTimeout(800)
 
   // 7. 前台 /tech 刷新，确认标题出现
-  await page.goto('http://127.0.0.1:5173/tech', { waitUntil: 'networkidle', timeout: 60000 })
+  await page.goto('http://127.0.0.1:8099/tech', { waitUntil: 'networkidle', timeout: 60000 })
   await page.waitForTimeout(1500)
   const visible = await page.evaluate(
     (needle) => document.body.innerText.includes(needle),

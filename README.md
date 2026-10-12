@@ -59,6 +59,10 @@
 与 [`docs/phase2-effect-matrix.md`](docs/phase2-effect-matrix.md)（二期，视觉修订）。
 两者都是「评估集」：每条效果的判据 + 复核命令 + 实测结果。
 
+> **端口约定：后端 8091 / 前端 8099。** 与 `deploy/` 部署脚本、`frontend/vite.config.ts`
+> （`server.port`、`preview.port`、`/api` 代理目标）以及 `.tmp/tools/` 下验收脚本里写死的 URL 一致。
+> 后端 8091 是**运行时覆盖**（`application.yml` 里仍是 8080），本地起服务必须带上 `--server.port=8091`。
+
 ### 后端
 
 ```bash
@@ -68,8 +72,8 @@ export JAVA_HOME="<path-to-jdk-17>"
 cd backend
 ./mvnw -q -B test                          # 全量测试：111 run / 0 fail / 0 error
 ./mvnw -q -DskipTests compile              # 只编译
-./mvnw -q spring-boot:run                  # 起服务（默认 8080）
-curl -s http://127.0.0.1:8080/api/health   # 期望 code=0 且 db=UP、redis=UP
+./mvnw -q spring-boot:run -Dspring-boot.run.arguments="--server.port=8091"   # 起服务（端口 8091）
+curl -s http://127.0.0.1:8091/api/health   # 期望 code=0 且 db=UP、redis=UP
 
 # Markdown 导入器（CLI，非 web 模式；--dry-run 只打印将处理的清单）
 ./mvnw -q spring-boot:run -Dspring-boot.run.profiles=importer -Dspring-boot.run.arguments="--dry-run"
@@ -80,7 +84,7 @@ curl -s http://127.0.0.1:8080/api/health   # 期望 code=0 且 db=UP、redis=UP
 ### 前端
 
 ```bash
-# 前置：dev server 必须在 5173 上跑着（截图与浏览器断言里的 URL 是硬编码的）
+# 前置：dev server 必须在 8099 上跑着（截图与浏览器断言里的 URL 是硬编码的）
 cd frontend && npm run dev
 
 # 类型检查（本机可用）
@@ -135,7 +139,7 @@ node .tmp/tools/shot-final.cjs .tmp/shots-p3
 
 ```bash
 cd frontend
-npm run dev                  # 前置：dev server 必须在 5173 上跑着（收集字符要开浏览器）
+npm run dev                  # 前置：dev server 必须在 8099 上跑着（收集字符要开浏览器）
 npm run fonts:build          # 500 档
 npm run fonts:build:display  # 700 档（自动跑「只收展示字」的字符表收集）
 ```

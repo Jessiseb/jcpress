@@ -1,6 +1,6 @@
 const { chromium } = require('playwright-core')
 
-const ORIGIN = 'http://127.0.0.1:5173'
+const ORIGIN = 'http://127.0.0.1:8099'
 // 输出目录（第一个位置参数）；缺省落到 .tmp/shots-p3
 const OUT = process.argv[2] || '.tmp/shots-p3'
 

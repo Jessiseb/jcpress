@@ -20,7 +20,7 @@ const zlib = require('node:zlib')
  *  并且**显式排除** react-markdown / codemirror / 文章字体 —— 这三样是三期新引入的、
  *  最可能被误打包进首屏的依赖，必须单独确认它们在首屏窗口内**零请求**。
  */
-const ORIGIN = 'http://127.0.0.1:5173'
+const ORIGIN = 'http://127.0.0.1:8099'
 const LIMIT_KB = 200
 
 const mustBeAbsent = [

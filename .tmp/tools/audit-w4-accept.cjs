@@ -13,7 +13,7 @@ const { chromium } = require('playwright-core')
  *  - 删除是**内联二次确认**：点「删除」→ 出现「确认删除？」→ 再点「删除」或「取消」
  *    （不是 window.confirm）
  */
-const ORIGIN = 'http://127.0.0.1:5173'
+const ORIGIN = 'http://127.0.0.1:8099'
 const USER = 'admin'
 const PASS = 'jcpress@2026'
 
@@ -419,7 +419,7 @@ function pageLum(c) {
       // 图片可访问
       if (m) {
         const url = m[0].match(/\(([^)]+)\)/)[1]
-        const full = url.startsWith('/api') ? `http://127.0.0.1:8080${url}` : `${ORIGIN}${url}`
+        const full = url.startsWith('/api') ? `http://127.0.0.1:8091${url}` : `${ORIGIN}${url}`
         const res = await ctx.request.get(full)
         check('上传的图片可访问', res.ok(), `${res.status()} ${url}`)
       }
