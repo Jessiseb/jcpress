@@ -51,7 +51,10 @@ curl -s http://127.0.0.1:8091/api/health
 ```bash
 cd frontend
 npm install        # 首次或依赖变动后
-npm run dev
+
+# 关键：带 --configLoader runner。本机 EDR 拦 esbuild 子进程，而 vite 默认要用
+# esbuild 去编译 vite.config.ts，于是普通 `npm run dev` 直接启动失败（winapi error #5）。
+npm run dev -- --configLoader runner
 ```
 
 前端通过 Vite 的 `/api` proxy 把请求转给 8091（见 `vite.config.ts`），所以只访问 8099 即可。
@@ -80,15 +83,22 @@ cd backend && ./mvnw -q -B test
 # 前端类型检查
 cd frontend && npx tsc --noEmit
 
+# 前端单测（origin 配置加载会被 EDR 拦，同样要加 runner 模式）
+cd frontend && npx vitest run --configLoader runner
+
 # 前端浏览器验收（需要 8099 与 8091 都起着）
 cd ..   # 回到仓库根
 node .tmp/tools/audit-behavior.cjs      # 82 项
-node .tmp/tools/audit-contrast.cjs      # 对比度
+node .tmp/tools/audit-contrast.cjs      # 对比度（12 组，含后台两页）
 node .tmp/tools/probe-docking.cjs       # 天体停靠
 node .tmp/tools/shot-final.cjs .tmp/shots-p3
+node .tmp/tools/probe-admin.cjs         # 后台全链路（登录→列表→编辑→发布→前台可见）
+node .tmp/tools/shot-admin.cjs          # 后台三页截图
 ```
 
-> `vitest run` / `vite build` 在本机跑不动（EDR 拦 esbuild 子进程读文件，`winapi error #5`）。
+> 浏览器脚本需要 `playwright-core`，它装在用户级 `C:/Users/O/node_modules`（不在项目里）：
+> 跑之前 `export NODE_PATH=C:/Users/O/node_modules`。
+> `vite build` 在本机原样仍受 EDR 影响，未验证。
 > 替代覆盖见 `docs/phase3-effect-matrix.md` 的「构建口子的说明」。
 
 ## 5. Markdown 导入器（CLI，非 web 模式）
@@ -109,7 +119,7 @@ cd backend
 | **JDK 版本** | `mvnw` 以 JDK 8 启动、编译失败 | `export JAVA_HOME="/c/Program Files/Java/jdk-17"` |
 | **git 代理** | `git pull/push` 报 `Failed to connect to 127.0.0.1 port <旧端口>: Connection refused` | git 里配过写死的代理端口，会话间会失效。**本仓库已改为直连**（本机直连 github 实测通且更快），若再遇到就 `git config --unset http.proxy && git config --unset https.proxy` |
 | **凭据助手名过时** | `git: 'credential-manager-core' is not a git command` | `git config --global credential.helper manager`（已修） |
-| **前端 dev server / 测试跑不动** | `npm run dev`、`vitest run`、`vite build` 报 `failed to load config` + `Cannot read file ...: winapi error #5` | 本机 EDR 拦 esbuild 子进程读文件，**与代理无关**。普通终端里 `npm run dev` 通常能起（历史上 5173 那个 dev server 就是外部窗口起的）；`vitest run` / `vite build` 无解，改用 `.tmp/tools/` 下的浏览器审计替代。**别用 `esbuild --version` 判断环境可用性**（它不读文件所以永远成功） |
+| **前端 dev server / 测试报 `winapi error #5`** | `npm run dev`、`vitest run` 报 `failed to load config from vite.config.ts` + `Cannot read file "package.json": winapi error #5` | 本机 EDR 拦 **esbuild 子进程**读文件，**与代理无关**。但根因只有一环：vite 默认 `configLoader: bundle`，会用 esbuild 去编译 `vite.config.ts`。换成 runner 模式（Node 原生加载）即可绕开：<br>`npx vite --configLoader runner`（≈ `npm run dev -- --configLoader runner`）<br>`npx vitest run --configLoader runner`<br>**两者已于 2026-10-12 实测跑通**（dev server 起在 8099、模块转换与依赖预构建均正常，vitest 全量 42 例可跑）。`vite build` 未验证。<br>**别用 `esbuild --version` 判断环境可用性**（它不读文件所以永远成功） |
 | **上传 URL 404** | 正文图片打不开 | 对外 URL 带 `/api` 前缀（`/api/uploads/...`），与静态映射路径 `/uploads` 是两个配置项 |
 
 ### git 代理（当前：直连）

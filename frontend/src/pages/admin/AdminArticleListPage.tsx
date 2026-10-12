@@ -262,9 +262,7 @@ export default function AdminArticleListPage() {
                     <Link className={styles.linkAction} to={`/admin/articles/${article.id}`}>
                       编辑
                     </Link>
-                    <span className={styles.actionSplit} aria-hidden="true">
-                      |
-                    </span>
+                    <span className={styles.actionSplit} aria-hidden="true" />
                     <button
                       className={styles.linkAction}
                       type="button"
@@ -273,9 +271,7 @@ export default function AdminArticleListPage() {
                     >
                       {article.status === 1 ? '撤回' : '发布'}
                     </button>
-                    <span className={styles.actionSplit} aria-hidden="true">
-                      |
-                    </span>
+                    <span className={styles.actionSplit} aria-hidden="true" />
                     {pendingDelete === article.id ? (
                       <span className={styles.confirmRow}>
                         <span className={styles.confirmText}>确认删除？</span>

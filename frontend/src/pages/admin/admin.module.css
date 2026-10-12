@@ -20,25 +20,39 @@
   --adm-border-strong: #dcdfe6;
   --adm-text: #303133;
   --adm-text-2: #606266;
-  --adm-text-3: #909399;
-  --adm-text-4: #c0c4cc;
+  /* 下面两档比 Element 原色（#909399 / #c0c4cc）深得多，看着不如原来"轻"，
+     但那是被对比度逼的：#909399 在白底上只有 3.08:1、#c0c4cc 只有 1.75:1，
+     都过不了 AA 的 4.5:1。11~12px 的小字不享受 large text 豁免，只能压深。 */
+  --adm-text-3: #5e636b;
+  --adm-text-4: #6b7280;
 
-  /* ---- 语义色（Element UI 一套，若依用的就是它） ---- */
-  --adm-primary: #409eff;
-  --adm-primary-hover: #66b1ff;
+  /* ---- 语义色 ----
+     这里刻意**没有**照抄 Element 的色值，分了两组，原因是它们在两种场景下
+     要往相反方向走，同一个 token 兼不了：
+       · 作「前景」时（浅底上的文字/图标），越暗越达标；
+       · 作「实底」时（配白字），背景越暗越达标，而深色主题下又要求它变亮。
+     所以 --adm-primary/success/warning/danger 是前景色（随主题反转明暗），
+     --adm-solid 是实底专用（两个主题下都是深蓝，因为上面永远压白字）。 */
+  --adm-primary: #1a6fc4;
+  --adm-primary-hover: #1557a0;
   --adm-primary-soft: #ecf5ff;
-  --adm-success: #67c23a;
+  --adm-success: #2f7d32;
   --adm-success-soft: #f0f9eb;
-  --adm-warning: #e6a23c;
+  --adm-warning: #8a5a12;
   --adm-warning-soft: #fdf6ec;
-  --adm-danger: #f56c6c;
+  --adm-danger: #c0392b;
   --adm-danger-soft: #fef0f0;
+
+  /* ---- 实底（上面永远压白字，故不随主题变亮） ---- */
+  --adm-solid: #1a6fc4;
+  --adm-solid-hover: #1557a0;
 
   /* ---- 侧边栏（若依标志性的深色栏） ---- */
   --adm-side-bg: #304156;
   --adm-side-text: #bfcbd9;
   --adm-side-hover: #263445;
-  --adm-side-group: #8492a6;
+  /* 原 #8492a6 在 #304156 侧栏底上只有 3.30:1，分组标签「内容管理」这类小字过不了 AA */
+  --adm-side-group: #a8b6c9;
   --adm-side-w: 200px;
   --adm-side-w-min: 56px;
 
@@ -77,6 +91,12 @@
   --adm-text-2: #cfd3dc;
   --adm-text-3: #a3a6ad;
   --adm-text-4: #8d9095;
+  /* 前景语义色在深底上要反过来往亮走，否则红字/绿字在深色卡片上糊成一团 */
+  --adm-primary: #79bbff;
+  --adm-primary-hover: #a0cfff;
+  --adm-success: #86c96a;
+  --adm-warning: #e8b768;
+  --adm-danger: #f89898;
   --adm-primary-soft: #18222c;
   --adm-success-soft: #1c2518;
   --adm-warning-soft: #292218;
@@ -160,7 +180,7 @@
   height: 26px;
   flex: none;
   border-radius: var(--adm-r);
-  background: var(--adm-primary);
+  background: var(--adm-solid);
   color: #fff;
   font-size: 0.75rem;
   letter-spacing: 0.02em;
@@ -235,20 +255,22 @@
 
 /* 未实现项：置灰、不可点、标「开发中」。后端没接口就不给能点的入口。 */
 .sideItemOff {
-  color: rgb(191 203 217 / 45%);
+  color: var(--adm-side-group);
   cursor: not-allowed;
 }
 
 .sideItemOff:hover {
   background: none;
-  color: rgb(191 203 217 / 45%);
+  color: var(--adm-side-group);
 }
 
 .sideItemTag {
   flex: none;
   padding: 0 4px;
   border-radius: 2px;
-  background: rgb(255 255 255 / 10%);
+  /* 原来是 10% 白底：底色被抬亮后，同样的字色只剩 3.76:1。压成 30% 黑底既保住了
+     「标签」的观感，又让字色回到 6.69:1。 */
+  background: rgb(0 0 0 / 30%);
   color: var(--adm-side-group);
   font-size: 0.625rem;
   line-height: 16px;
@@ -481,8 +503,8 @@
 }
 
 .tabActive {
-  border-color: var(--adm-primary);
-  background: var(--adm-primary);
+  border-color: var(--adm-solid);
+  background: var(--adm-solid);
 }
 
 .tabLink {
@@ -598,14 +620,14 @@
 }
 
 .btnPrimary {
-  border-color: var(--adm-primary);
-  background: var(--adm-primary);
+  border-color: var(--adm-solid);
+  background: var(--adm-solid);
   color: #fff;
 }
 
 .btnPrimary:hover:not(:disabled) {
-  border-color: var(--adm-primary-hover);
-  background: var(--adm-primary-hover);
+  border-color: var(--adm-solid-hover);
+  background: var(--adm-solid-hover);
   color: #fff;
 }
 
@@ -798,9 +820,16 @@
   color: #f78989;
 }
 
+/* 操作列的分隔竖线。**不能用 "|" 这个字符** —— 它是纯装饰（已 aria-hidden），
+   写成文本就会被无障碍对比度审计当成正文来查，而装饰线本来就不该有对比度要求。
+   用 CSS 画线，两边都干净。 */
 .actionSplit {
+  display: inline-block;
+  width: 1px;
+  height: 12px;
   margin-inline: var(--ds-space-2);
-  color: var(--adm-border-strong);
+  background: var(--adm-border-strong);
+  vertical-align: middle;
 }
 
 .confirmRow {
@@ -903,8 +932,8 @@
 
 .pagerBtnActive,
 .pagerBtnActive:hover:not(:disabled) {
-  border-color: var(--adm-primary);
-  background: var(--adm-primary);
+  border-color: var(--adm-solid);
+  background: var(--adm-solid);
   color: #fff;
 }
 
@@ -1046,7 +1075,7 @@
   width: 30px;
   height: 30px;
   border-radius: var(--adm-r);
-  background: var(--adm-primary);
+  background: var(--adm-solid);
   color: #fff;
   font-size: 0.8125rem;
 }

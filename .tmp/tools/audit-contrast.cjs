@@ -99,12 +99,32 @@ const AUDIT = () => {
 }
 
 // 三期：参数化路由（原来写死 `goto('/')`）。AUDIT 函数与判定逻辑一个字都没改。
+// 后台两页要登录态：`auth: true` 的会先拿 token 塞进 sessionStorage 再导航。
 const PAGES = [
   { name: 'home', path: '/' },
   { name: 'tech', path: '/tech' },
   { name: 'detail', path: '/tech/phase-3-backend-retro' },
   { name: 'admin-login', path: '/admin/login' },
+  { name: 'admin-list', path: '/admin/articles', auth: true },
+  { name: 'admin-edit', path: '/admin/articles/1', auth: true },
 ]
+
+let cachedToken = null
+/** 后台页面必须先登录：走一次真实登录接口，把 token 交给 addInitScript。 */
+async function getAdminToken(browser) {
+  if (cachedToken) return cachedToken
+  const ctx = await browser.newContext()
+  const page = await ctx.newPage()
+  const res = await page.request.post('http://127.0.0.1:8099/api/v1/admin/auth/login', {
+    data: { username: 'admin', password: 'jcpress@2026' },
+  })
+  const body = await res.json().catch(() => ({}))
+  await ctx.close()
+  const token = body?.data?.token ?? body?.token
+  if (!token) throw new Error(`登录失败，拿不到 token：${JSON.stringify(body).slice(0, 140)}`)
+  cachedToken = token
+  return token
+}
 
 ;(async () => {
   const browser = await chromium.launch({ channel: 'msedge', args: ['--no-sandbox'] })
@@ -112,6 +132,10 @@ const PAGES = [
   for (const target of PAGES) {
     for (const scheme of ['light', 'dark']) {
       const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: scheme })
+      if (target.auth) {
+        const token = await getAdminToken(browser)
+        await ctx.addInitScript((t) => sessionStorage.setItem('jcpress.admin.token', t), token)
+      }
       const page = await ctx.newPage()
       await page.goto(`http://127.0.0.1:8099${target.path}`, { waitUntil: 'networkidle', timeout: 60000 })
       await page.waitForTimeout(600)
