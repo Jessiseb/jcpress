@@ -1,459 +1,284 @@
-/* 实习经历：整幅「左图 + 右文」特写（区块带 data-full，正文通栏，见 styles/global.css）。
-   顶部是三段式切换条，底部是进度点 + 左右箭头，两处驱动同一个 activeIndex。 */
+/* 实习经历：竖向时间轴（第三版）。
+   --------------------------------------------------------------------------
+   前两版都是「一次只显示一段」+ 顶部切换条 + 左图右文大卡。共用三个毛病：
+   ① 三段内容量差 2.5 倍（7 / 4 / 3 条要点），卡片被最长那段钉成固定高度，
+      用友、粤建底下各空 300 多 px；② 不点切换只看得见 1/3 的经历，
+      而「三段实习」本身就是卖点；③ 期间与地点在左侧信息板和正文 metaBar 各写一遍。
+   现在三段全部铺开、每段按自己的内容定高，期间只出现在左侧轴上。
 
-/* 切换条：三段等宽，撑满卡片宽度 —— 卡片是通栏的，切换条也跟着通栏，左右边缘对齐 */
-.experienceTabs {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
-  margin-top: var(--ds-space-6);
-}
+   列宽与圆点几何**沿用 EducationAwards 的时间轴约定**（--stamp-w / --node-w /
+   --row-gap / --dot-center 同名同值）。页面上已经有一条奖项时间轴，
+   两处必须像同一个人画的：轴的位置、圆点直径、首尾收线的做法都一致。 */
 
-/* 三段切换：简称在上、期间在下，三列左对齐。
-   原来是 `row + space-between`，日期被推到每列最右边 —— 等宽列下看着像三个互不相干
-   的标签，中间空一大片。改成两行左对齐后，三列的起点在同一条竖线上。 */
-.tab {
+.timeline {
+  --stamp-w: 8.5rem;
+  --node-w: 3rem;
+  --node-x: calc(var(--stamp-w) + var(--node-w) / 2);
+  --row-gap: var(--ds-space-6);
+  /* 圆点几何：0.22rem 顶偏移 + 0.68rem 直径 + 两侧各 2px 描边 → 圆心距行顶的距离 */
+  --dot-top: 0.22rem;
+  --dot-size: 0.68rem;
+  --dot-center: calc(var(--dot-top) + var(--dot-size) / 2 + 2px);
+
   display: flex;
-  min-width: 0;
   flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 0.15rem;
-  padding: 0.8rem 1.15rem;
-  border: 1px solid transparent;
-  border-radius: 0.85rem;
-  background: transparent;
-  color: var(--ds-c-text-subtle);
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background 300ms ease,
-    color 300ms ease,
-    border-color 300ms ease,
-    box-shadow 300ms ease;
+  gap: var(--row-gap);
+  margin-top: var(--ds-space-5);
+  padding: 0;
+  list-style: none;
 }
 
-.tab span {
-  overflow: hidden;
-  font-size: 1rem;
+.item {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--stamp-w) var(--node-w) minmax(0, 1fr);
+  align-items: start;
+}
+
+/* 竖轴画在**每一行**上，而不是整条 timeline 上：行高逐行不同，
+   画在容器上没法让线正好停在第一个/最后一个圆点。
+   每行上下各向外延伸半个行距，把行间隙补上，看上去仍是一条连续的轴。
+   颜色比发丝线深一档（22% vs 12%）：轴线是结构本身，1px 的 12% 黑在白底上
+   几乎看不见，读起来就只剩几个孤零零的圆点。奖项时间轴已同步改成同一档。 */
+.item::before {
+  position: absolute;
+  top: calc(var(--row-gap) / -2);
+  bottom: calc(var(--row-gap) / -2);
+  left: var(--node-x);
+  width: 1px;
+  background: color-mix(in srgb, var(--ds-c-text) 22%, transparent);
+  content: '';
+}
+
+/* 首行从第一个圆点起，末行到最后一个圆点止 —— 轴不冒头、不拖尾 */
+.item:first-child::before {
+  top: var(--dot-center);
+}
+
+.item:last-child::before {
+  bottom: auto;
+  height: calc(var(--row-gap) / 2 + var(--dot-center));
+}
+
+/* 期间列：右对齐，像目录里的页码。0.8125rem 是这一列能放下
+   「2025.04 - 2025.10」（17 字，约 117px）的上限，再大就要折行。 */
+.axis {
+  grid-column: 1;
+  grid-row: 1;
+  padding-right: var(--ds-space-3);
+  color: var(--ds-c-text);
+  font-size: 0.8125rem;
   font-weight: var(--ds-fw-semibold);
-  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  text-align: right;
   white-space: nowrap;
 }
 
-.tab small {
-  flex: 0 0 auto;
-  font-size: var(--ds-fs-xs);
-  font-variant-numeric: tabular-nums;
-}
-
-.tab:hover,
-.tabActive {
-  border-color: var(--ds-c-hairline);
-  background: var(--ds-c-bg-elv);
-  color: var(--ds-c-text);
-}
-
-.tabActive {
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--ds-c-text) 6%, transparent);
-}
-
-.switcher {
-  display: grid;
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-  min-height: 30rem;
-  margin-top: var(--ds-space-4);
-  overflow: hidden;
-  border: 1px solid var(--ds-c-hairline);
-  border-radius: 1.75rem;
-  background: var(--ds-c-bg-elv);
-  /* 投影收窄：1095×844 的大元素上，60px 模糊半径的阴影在移动端要额外栅格化一层，
-     而观感差别很小（原来是想做「浮起来」的层次，实际靠边框已经够了）。 */
-  box-shadow: 0 10px 28px color-mix(in srgb, var(--ds-c-text) 7%, transparent);
-}
-
-/* 左栏：图片区（按比例）+ 信息板（吃掉剩余高度）。
-   2026-10-21 改版：原来是 `align-self: start` + 整个左栏 5/7 定比例，
-   结果图片只有 660px 高、右栏正文 1015px，卡片左下空掉 354px —— 观感就是「没对齐」。
-   现在左栏跟右栏等高，图片盒子按比例定高（保住 logo 不被裁），剩下的交给 .plate。 */
-.visual {
+/* 圆点：轴线在 --node-x，节点列中心与之重合，所以 `left: 50%` 就落在轴上。
+   底色用页面底而不是透明 —— 透明会让竖轴从圆点中间穿过去。 */
+.node {
+  grid-column: 2;
+  grid-row: 1;
   position: relative;
-  display: grid;
-  grid-template-rows: auto 1fr;
-  min-height: 30rem;
-  overflow: hidden;
-  background: #0b1418; /* 图没加载出来时的兜底底色，避免闪一块白 */
-  color: white;
+  height: 1.15rem;
 }
 
-/* 图片盒子的宽高比决定**水平**裁切：`.visualPhoto` 是 absolute inset:0 铺满这里。
-   2/3 时可见的原图横条恒为 x 180–900，而那排 logo 实测占 x 180–876 —— 左缘正好贴边；
-   5/7 之后可见横条变为 x 155–925，左右余量 25 / 49px。
-   数字来源：`.tmp/tools/probe-logo-bounds.cjs` + `probe-photo-margins.cjs`。 */
-.visualPhotoBox {
-  position: relative;
-  aspect-ratio: 5 / 7;
-  overflow: hidden;
-  background: #0b1418;
-}
-
-.visualPhoto {
+.node::before {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* 给照片降亮度的功能性遮罩。用**实色**而不是渐变：渐变宿主是登记制
-   （audit-behavior「渐变只出现在流线 / 面板 / 环装置 / 姓名 / 顶栏遮罩 / 聚光宿主上」），
-   这里没资格占一个名额。 */
-.visualShade {
-  position: absolute;
-  inset: 0;
-  background: rgb(8 18 24 / 34%);
-}
-
-/* 信息板：占满图片下方到卡片底边的全部高度，内容贴底 ——
-   这样「WORK EXPERIENCE / 01」与右侧的进度点/箭头落在同一条水平线上。
-   浅色主题下这块是深色，与照片连成一体，视觉上像杂志左栏。 */
-.plate {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  gap: 0.45rem;
-  padding: var(--ds-space-5) var(--ds-space-7) var(--ds-space-7);
-  background: #0b1418;
-}
-
-.platePeriod {
-  font-family: var(--ds-font-display);
-  font-size: clamp(1.35rem, 1.8vw, 1.75rem);
-  font-weight: var(--ds-fw-display);
-  letter-spacing: 0.01em;
-  line-height: 1.15;
-  font-variant-numeric: tabular-nums;
-}
-
-.plateMeta {
-  color: rgb(255 255 255 / 66%);
-  font-size: var(--ds-fs-xs);
-}
-
-/* 装饰环：只留一圈描边，不再叠两层大 spread 的 box-shadow（外扩 5rem 的阴影
-   在 4× 降速的移动端上是纯负担，肉眼几乎看不出差别）。 */
-.visualGlow {
-  position: absolute;
-  top: 10%;
-  right: -22%;
-  width: 80%;
-  aspect-ratio: 1;
-  border: 1px solid currentColor;
+  top: var(--dot-top);
+  left: 50%;
+  width: var(--dot-size);
+  height: var(--dot-size);
+  border: 2px solid var(--ds-c-text);
   border-radius: 50%;
-  opacity: 0.28;
+  background: var(--ds-c-bg);
+  transform: translateX(-50%);
+  content: '';
 }
 
-.visualCaption {
-  /* 编号贴在图片下沿（信息板顶部），期间与地点贴底 —— 中间留白是刻意的，
-     否则三行字挤在块底、上面空出一大片纯黑更难看。 */
-  margin-bottom: auto;
-  font-size: var(--ds-fs-xs);
-  font-weight: var(--ds-fw-semibold);
-  letter-spacing: 0.16em;
-  color: rgb(255 255 255 / 66%);
-}
-
-/* 三家的品牌色只用于左栏装饰环与切换时的色感，不影响正文对比度 */
-.cvte {
-  color: #7fd8d0;
-}
-.yonyou {
-  color: #c9a6e0;
-}
-.yuejian {
-  color: #e6b98a;
-}
-
-.body {
-  display: flex;
+/* 正文列限宽 48rem（768px，与详情页正文同一条度量，约 48 汉字/行）。
+   不限的话这一列有 928px，一句话横跨 58 字，眼睛要来回扫。 */
+.entry {
+  grid-column: 3;
+  grid-row: 1;
   min-width: 0;
-  flex-direction: column;
-  gap: var(--ds-space-3);
-  padding: clamp(2rem, 3.2vw, 3.25rem);
-  background: var(--ds-c-bg-elv);
+  max-width: 48rem;
 }
 
-.companyHeading {
+.head {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: var(--ds-space-4);
 }
 
-.eyebrow {
-  display: block;
-  margin-bottom: var(--ds-space-2);
-  color: var(--ds-c-accent);
-  font-size: var(--ds-fs-xs);
-  font-weight: var(--ds-fw-semibold);
-  letter-spacing: 0.12em;
+/* 1:1 缩略图。CVTE 那张原图就是 1080×1080 方图，同比例框不裁任何边，
+   那排 logo 完整落在里面 —— 换成横条比例就会把左右两端切掉。 */
+.thumb {
+  width: 5.5rem;
+  height: 5.5rem;
+  flex: 0 0 auto;
+  border-radius: 0.95rem;
+  background: #0b1418;
+  object-fit: cover;
 }
 
+.headText {
+  min-width: 0;
+}
+
+/* 公司名是每一段的锚点，字号要给足：20.8px 的宋体在两行正文之间不够压场，
+   25px 左右才撑得住一行。宋体在 500 字重下笔画偏细，所以这里用 700。 */
 .company {
   font-family: var(--ds-font-display);
-  font-size: clamp(1.5rem, 2.4vw, 2.25rem);
-  font-weight: var(--ds-fw-display);
-  line-height: 1.2;
+  font-size: clamp(1.4rem, 1.9vw, 1.85rem);
+  font-weight: var(--ds-fw-display-strong);
+  line-height: 1.25;
   text-wrap: balance;
 }
 
 .position {
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
   color: var(--ds-c-text-mute);
-  font-size: 1.05rem;
+  font-size: 1rem;
 }
 
-.roleIcon {
-  display: grid;
-  width: 2.75rem;
-  height: 2.75rem;
-  place-items: center;
-  flex: 0 0 auto;
-  border-radius: 0.85rem;
-  background: color-mix(in srgb, var(--ds-c-accent) 12%, transparent);
-  color: var(--ds-c-accent);
-}
-
-.metaBar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ds-space-4);
-  padding-block: var(--ds-space-2);
-  border-block: 1px solid var(--ds-c-hairline);
-}
-
-.periodRow,
-.metaRow {
+/* 只放地点与部门：期间已经在左轴上了，这里再写一遍就是重复 */
+.meta {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-}
-
-.periodRow {
-  color: var(--ds-c-text);
-}
-
-.metaRow {
+  gap: 0.35rem;
+  margin-top: 0.3rem;
   color: var(--ds-c-text-subtle);
-}
-
-.periodRow svg {
-  color: var(--ds-c-accent);
-}
-
-.period {
-  font-size: 0.9375rem;
-  font-weight: var(--ds-fw-medium);
-  font-variant-numeric: tabular-nums;
-}
-
-.meta {
-  font-size: 0.9375rem;
+  font-size: var(--ds-fs-xs);
 }
 
 .project {
   max-width: none;
+  margin-top: var(--ds-space-4);
   color: var(--ds-c-text-mute);
-  font-size: 1.05rem;
+  font-size: 1rem;
   line-height: 1.7;
 }
 
 .projectName {
   display: block;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.2rem;
   color: var(--ds-c-text);
   font-weight: var(--ds-fw-semibold);
 }
 
-.highlights {
+.points {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
-  margin: 0;
+  gap: 0.55rem;
+  margin: var(--ds-space-3) 0 0;
 }
 
-/* 项目符号：一条**看得见**的短横线（就是 Markdown 的 `-`），刻意不用彩色圆点。
-   r2 之前是 8×1px 的发丝线：1px 高在 1 倍屏上几乎不可见，于是条目读起来像普通段落。
-   颜色用**正文级**而不是 accent —— 用户的反馈是「内容列点的 - 没有以 markdown 的形式展示出来」；
-   与项目经历展开面板共用同一套规则，两处必须一致。 */
-.highlight {
+/* 项目符号：一条看得见的短横线（就是 Markdown 的 `-`），刻意不用彩色圆点。
+   颜色取正文级而非 accent —— 它与项目经历展开面板共用同一套规则，两处必须一致。 */
+.point {
   position: relative;
-  max-width: none;
-  padding-left: 1.25rem;
+  padding-left: 1.15rem;
   color: var(--ds-c-text-mute);
-  font-size: 1.05rem;
+  font-size: 1rem;
   line-height: 1.65;
 }
 
-.highlight::before {
+.point::before {
   position: absolute;
-  top: 0.75em;
+  top: 0.72em;
   left: 0;
-  width: 0.65rem;
+  width: 0.6rem;
   height: 2px;
   border-radius: 2px;
   background: var(--ds-c-text-mute);
   content: '';
 }
 
-.plateTech {
-  margin-top: 0.3rem;
-  color: rgb(255 255 255 / 66%);
+.more {
+  margin-top: 0.35rem;
+}
+
+/* 触摸目标 44px 是硬约束（audit-behavior 会查），靠 min-height 撑着。
+   视觉上只是一行小字，所以不加按钮样式、不加边框。 */
+.more > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ds-c-accent);
+  font-size: 0.9375rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.more[open] .moreOpen {
+  display: none;
+}
+
+.more:not([open]) .moreClose {
+  display: none;
+}
+
+.techStack {
+  margin-top: var(--ds-space-3);
+  color: var(--ds-c-text-subtle);
   font-size: var(--ds-fs-xs);
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
-.controls {
-  display: flex;
-  /* 技术栈挪到左栏之后，右栏底部少了一行，这里兜住「内容比卡片矮」的情况
-     （用友 / 粤建那段正文较短），保证进度点与箭头仍贴在卡片底边。 */
-  margin-top: auto;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ds-space-4);
-  padding-top: var(--ds-space-2);
-}
-
-.dots,
-.arrows {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-}
-
-/* 进度点：可见的是一条短横条，但**命中区是 44×44**（规划 §2.8 的触摸目标硬约束）。
-   做法是按钮撑到 44px、条用 ::before 画在中间 —— 直接把按钮压成 4px 高的话，
-   audit-behavior 的「交互元素触摸目标 ≥44px」会亮红（用户实测也点不中）。 */
-.dot {
-  position: relative;
-  width: 2.75rem;
-  height: 2.75rem;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-}
-
-.dot::before {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 100%;
-  height: 0.25rem;
-  border-radius: 99px;
-  background: var(--ds-c-hairline);
-  transform: translateY(-50%);
-  transition:
-    background 300ms ease,
-    height 300ms ease;
-  content: '';
-}
-
-.dot:hover::before {
-  background: var(--ds-c-text-subtle);
-}
-
-.dotActive::before {
-  height: 0.375rem;
-  background: var(--ds-c-accent);
-}
-
-.arrow {
-  display: grid;
-  width: 2.75rem;
-  height: 2.75rem;
-  place-items: center;
-  border: 1px solid var(--ds-c-hairline);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--ds-c-text);
-  cursor: pointer;
-  transition:
-    transform 250ms ease,
-    background 250ms ease,
-    color 250ms ease;
-}
-
-.arrow:hover {
-  transform: translateY(-2px);
-  background: var(--ds-c-accent);
-  color: var(--ds-c-accent-text);
-}
-
-/* 断点从 899 提到 1023：两栏布局下右栏正文会随宽度变窄而变长（900px 时 1182px 高），
-   而左栏照片高度受宽度限制（5/7 比例，保住 logo 不被裁），
-   结果信息板被撑到占左栏 58%（900px）/ 50%（960px），整块黑压压的很难看。
-   ≥1024 时占比 35–43%，可接受；更窄就走单列（照片横条在上、正文在下）。 */
-@media (max-width: 1023px) {
-  .switcher {
-    grid-template-columns: minmax(0, 1fr);
-    min-height: 0;
+/* 单列：期间挪到每段上方，竖轴收起 —— 窄屏留不出两条列，
+   硬留会把正文压到 40 字以下。
+   断点 899（而不是旧卡片的 1023）：时间轴的左列只占 8.5rem + 3rem ≈ 184px，
+   900px 视口下正文仍有约 41 字/行，没必要提前塌成一列。 */
+@media (max-width: 899px) {
+  .item {
+    grid-template-columns: 1.15rem minmax(0, 1fr);
   }
 
-  .visual {
-    min-height: 0;
+  .item::before {
+    display: none;
   }
 
-  /* 单列时图片横跨整行（768 视口下 718px 宽）。原来的 14rem(224px) 横条
-     比例高达 3.2，1:1 照片塞进去只剩中间 31% 高 —— 实测 CVTE 被切掉上半，
-     整排 logo 基本全丢。4/3 不是随手取的：底部还有那条信息板压在上面，
-     可见部分只有上半。4/3 时可见区是原图 y 135–864，
-     那排 logo（y 285–545）完整落在里面，左右还各有 185 / 205px 余量 ——
-     横条框只裁**上下**、不裁左右，所以窄屏这边从来不存在切字风险。
-     数字来自 `.tmp/tools/probe-photo-margins.cjs`。 */
-  .visualPhotoBox {
-    aspect-ratio: 4 / 3;
+  .node {
+    grid-column: 1;
   }
 
-  .plate {
-    padding: var(--ds-space-4) var(--ds-space-5);
+  .axis {
+    grid-column: 2;
+    grid-row: 1;
+    padding-right: 0;
+    text-align: left;
   }
 
-  .body {
-    padding: var(--ds-space-5);
+  .entry {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin-top: var(--ds-space-3);
+  }
+
+  .thumb {
+    width: 4.5rem;
+    height: 4.5rem;
   }
 }
 
 @media (max-width: 719px) {
-  .experienceTabs {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.35rem;
-    margin-top: var(--ds-space-5);
-  }
-
-  .tab {
-    padding: 0.75rem 1rem;
-  }
-
-  .switcher {
-    margin-top: var(--ds-space-3);
-    border-radius: 1.25rem;
+  .head {
+    gap: var(--ds-space-3);
   }
 
   .company {
-    font-size: 1.4rem;
+    font-size: 1.15rem;
   }
 
   .position,
   .project,
-  .highlight {
-    font-size: 1rem;
-  }
-
-  .arrow {
-    width: 2.75rem;
-    height: 2.75rem;
+  .point {
+    font-size: 0.9375rem;
   }
 }

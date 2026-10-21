@@ -216,9 +216,12 @@ async function auditPhase3(browser) {
       companies: ['广州视源电子科技股份有限公司', '广东用友网络有限公司', '广东粤建三和软件有限公司'].map((c) =>
         document.body.innerText.includes(c),
       ),
-      // 实习经历 r3 起是切换器：三段的全名挂在 tab 的可访问名（aria-label）上，
-      // 正文里一次只展开一段 —— 所以「三段都在」要查 tab，不能只查 innerText。
-      companyTabs: qa('[role="tab"]').map((el) => el.getAttribute('aria-label') || el.textContent.trim()),
+      // 实习经历已改成竖向时间轴：三段正文同时在 DOM 里，直接数 h3 就行。
+      // （旧版是切换器，一次只展开一段，所以当时只能查 tab 的 aria-label。）
+      experienceH3: sectionOf('实习经历') ? sectionOf('实习经历').querySelectorAll('h3').length : -1,
+      experienceTabs: qa('[role="tab"]').length,
+      // 每段默认露 3 条要点，其余折叠在 details 里
+      experienceFolds: sectionOf('实习经历') ? sectionOf('实习经历').querySelectorAll('details').length : -1,
       highlightLabels: ['接口响应下降', '知识库检索准确率', '慢查询耗时', '异常订单自动修复率'].map((l) =>
         document.body.innerText.includes(l),
       ),
@@ -272,13 +275,9 @@ async function auditPhase3(browser) {
     `h1="${dom.h1Text}"`,
   )
   check(
-    '三个实习经历都在切换条里（一次展开一段）',
-    dom.companyTabs.length === 3 &&
-      ['广州视源电子科技股份有限公司', '广东用友网络有限公司', '广东粤建三和软件有限公司'].every((c) =>
-        dom.companyTabs.some((l) => l.includes(c)),
-      ) &&
-      dom.companies[0],
-    `tab=${dom.companyTabs.length} 条；正文展开的是第 1 段=${dom.companies[0]}`,
+    '三段实习经历同时铺开（竖向时间轴，无切换器）',
+    dom.experienceH3 === 3 && dom.experienceTabs === 0 && dom.companies.every(Boolean),
+    `h3=${dom.experienceH3} 段；切换器 tab=${dom.experienceTabs} 个；折叠段=${dom.experienceFolds}`,
   )
   check('四个关键数字都有标签', dom.highlightLabels.every(Boolean))
   check('简历下载入口指向 /resume.pdf', dom.resumeHref === '/resume.pdf', `href=${dom.resumeHref}`)
@@ -1208,7 +1207,9 @@ async function auditPhase3(browser) {
             checked: bodies.length,
           }
         }),
-      // 整幅特写：允许**一块**面带底色 / 投影（左图右文的那张卡），多一块就是「每个区块都包卡片」的复发
+      // 整幅特写：允许**最多一块**面带底色 / 投影，多一块就是「每个区块都包卡片」的复发。
+      // 改成竖向时间轴后这一块也没有了（每段不套卡片），所以判据是 surfaced <= 1
+      // 而不是 == 1 —— 护栏守的是「不许冒出第二块面」，不是「必须有一块面」。
       feature: Array.from(document.querySelectorAll('main .section[data-full]')).map((s) => {
         const bodies = Array.from(
           s.querySelectorAll(':scope > *:not(.sectionTitle):not(.sectionLead)'),
@@ -1239,9 +1240,9 @@ async function auditPhase3(browser) {
       .join(' / '),
   )
   check(
-    '整幅特写（data-full）只许一块面，且正文真的通栏到第 1 列',
+    '整幅特写（data-full）最多一块面，且正文真的通栏到第 1 列',
     panels.feature.length === 1 &&
-      panels.feature.every((f) => f.total === 2 && f.surfaced === 1 && f.flushLeft),
+      panels.feature.every((f) => f.total >= 1 && f.surfaced <= 1 && f.flushLeft),
     panels.feature
       .map((f) => `${f.name} 正文${f.total} 块 / 带面${f.surfaced} 块 / 左边缘对齐=${f.flushLeft}`)
       .join(' / ') || 'missing',

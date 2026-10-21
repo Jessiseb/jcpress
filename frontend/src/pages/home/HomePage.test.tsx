@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -41,35 +41,35 @@ describe('HomePage', () => {
     expect(within(h1).getByText('AI 应用开发工程师')).toBeInTheDocument()
   })
 
-  it('三段实习经历都在切换条里，且当前一段的正文可见', () => {
+  it('三段实习经历同时铺开，不需要点击切换', () => {
     renderHome()
 
-    // r3 起实习经历是「一次只展开一段」的切换器，三段全名挂在 tab 的可访问名上
-    const tabs = screen.getAllByRole('tab')
-    expect(tabs).toHaveLength(3)
-
-    const names = ['广州视源电子科技股份有限公司', '广东用友网络有限公司', '广东粤建三和软件有限公司']
-    names.forEach((name) => {
-      expect(screen.getByRole('tab', { name: new RegExp(name) })).toBeInTheDocument()
-    })
-
-    // 默认展开第一段：它的公司全名同时出现在正文标题里
-    // （h3 里带简称后缀「（CVTE）」，所以用正则而不是精确名）
     const section = sectionOf('实习经历')
-    expect(
-      within(section).getByRole('heading', { level: 3, name: new RegExp(names[0]) }),
-    ).toBeInTheDocument()
+    const names = ['广州视源电子科技股份有限公司', '广东用友网络有限公司', '广东粤建三和软件有限公司']
+
+    // 竖向时间轴：三段正文都在 DOM 里（旧版是一次只展开一段的切换器）
+    names.forEach((name) => {
+      expect(
+        within(section).getByRole('heading', { level: 3, name: new RegExp(name) }),
+      ).toBeInTheDocument()
+    })
+    expect(within(section).queryAllByRole('tab')).toHaveLength(0)
+    expect(section.querySelectorAll('ol > li')).toHaveLength(3)
   })
 
-  it('点击切换条能换到另一段实习经历', () => {
+  it('每段默认露出 3 条要点，其余折叠进 details', () => {
     renderHome()
 
-    const target = screen.getByRole('tab', { name: /广东用友网络有限公司/ })
-    fireEvent.click(target)
+    const first = sectionOf('实习经历').querySelector('ol > li') as HTMLElement
+    const lists = first.querySelectorAll('ul')
 
-    expect(target).toHaveAttribute('aria-selected', 'true')
-    const section = sectionOf('实习经历')
-    expect(within(section).getByRole('heading', { level: 3, name: '广东用友网络有限公司' })).toBeInTheDocument()
+    // CVTE 那段共 7 条：可见 3 条，折叠 4 条
+    expect(lists[0].querySelectorAll('li')).toHaveLength(3)
+    expect(lists[1].querySelectorAll('li')).toHaveLength(4)
+
+    const details = first.querySelector('details') as HTMLDetailsElement
+    expect(details.open).toBe(false)
+    expect(details.querySelector('summary')).toHaveTextContent('展开其余 4 条')
   })
 
   it('四个关键数字都有标签与出处', () => {

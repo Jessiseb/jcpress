@@ -88,7 +88,9 @@
   bottom: calc(var(--row-gap) / -2);
   left: var(--node-x);
   width: 1px;
-  background: var(--ds-c-hairline);
+  /* 比发丝线深一档：轴线是结构本身，12% 黑在 1px 宽度下基本看不见。
+     实习经历那条时间轴用同一档颜色，两处必须一致。 */
+  background: color-mix(in srgb, var(--ds-c-text) 22%, transparent);
   content: '';
 }
 
