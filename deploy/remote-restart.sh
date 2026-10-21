@@ -52,6 +52,8 @@ if [ -n "$DIST_TAR" ]; then
   [ -f "${DIST_SRC}/index.html" ] || die "产物里没有 index.html，构建可能没成功"
 
   info "同步前端到 ${WEB_ROOT}"
+  # 目标目录可能还不存在（首次部署），rsync 不会自己建父目录
+  mkdir -p "$WEB_ROOT"
   # rsync --delete 才能删掉上一版残留的旧 hash 文件；没有 rsync 就整体换目录
   if command -v rsync >/dev/null 2>&1; then
     rsync -a --delete "${DIST_SRC}/" "${WEB_ROOT}/"
