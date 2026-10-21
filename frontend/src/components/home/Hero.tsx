@@ -35,8 +35,10 @@ export default function Hero({ profile }: Props) {
 
   return (
     <section className={`container ${styles.hero}`} aria-labelledby="hero-title">
+      {/* 眉题只有城市，不再拼「· AI 应用开发」——
+          方向信息在下面 h1 的第二行（AI 应用开发工程师），这里重复一遍没有增量。 */}
       <p className={styles.kicker} data-reveal style={stagger(1)}>
-        {profile.location} · AI 应用开发
+        {profile.location}
       </p>
 
       <h1 id="hero-title" className={styles.name} data-reveal style={stagger(2)}>

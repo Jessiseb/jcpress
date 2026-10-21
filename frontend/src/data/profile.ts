@@ -114,7 +114,8 @@ export const profileData: ProfileAggregateVO = {
     avatarUrl: null,
     summary:
       '在 CVTE 做 AI 运维 Agent，在用友与粤建三和做企业级 Java 后端。习惯先把架构想清楚再动手，也习惯把踩过的坑写下来——CSDN 累计 17 篇技术文、访问 1w+，Gitee 上还有智能体、API 开放平台等自研项目。',
-    location: '广州',
+    /** 期望工作城市，首屏眉题原样铺这一串 */
+    location: '广州、深圳、杭州',
     email: '2750685367@qq.com',
     githubUrl: 'https://github.com/Jessiseb',
     blogUrl: 'https://www.yuque.com/u42163082/chengshenbj',
