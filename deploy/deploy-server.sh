@@ -112,8 +112,9 @@ if [ "$DO_FRONTEND" -eq 1 ]; then
     fi
 
     info "构建前端（NODE_OPTIONS=${NODE_OPTIONS}）"
-    if npx tsc -b >> "$ROOT/.tmp/build-frontend.log" 2>&1 \
-       && npx vite build >> "$ROOT/.tmp/build-frontend.log" 2>&1; then
+    # 直接用 node_modules/.bin，不依赖 npx：RPM 装的 node 常常没带 npx
+    if ./node_modules/.bin/tsc -b >> "$ROOT/.tmp/build-frontend.log" 2>&1 \
+       && ./node_modules/.bin/vite build >> "$ROOT/.tmp/build-frontend.log" 2>&1; then
       info "前端构建完成"
     else
       echo "--- 构建日志最后 40 行 ---" >&2
