@@ -50,7 +50,9 @@ cd "$ROOT"
 export JAVA_HOME="${JAVA_HOME:-/usr/lib/jvm/jdk-17}"
 export PATH="$JAVA_HOME/bin:$PATH"
 export MAVEN_OPTS="${MAVEN_OPTS:--Xmx512m -Xms256m}"
-export NODE_OPTIONS="${NODE_OPTIONS:--max-old-space-size=768}"
+# 这里不能写 ${NODE_OPTIONS:--max-old-space-size=768}：`:-` 会吃掉一个横线，
+# 展开成单横线的 -max-old-space-size，node 报 "is not allowed in NODE_OPTIONS"
+[ -n "${NODE_OPTIONS:-}" ] || export NODE_OPTIONS="--max-old-space-size=768"
 [ -x "${JAVA_HOME}/bin/javac" ] || die "找不到 ${JAVA_HOME}/bin/javac，先跑 deploy/server-init.sh"
 
 [ -f "$ENV_FILE" ] || warn "${ENV_FILE} 不存在，后端可能因缺 DB_PASSWORD / REDIS_PASSWORD 起不来"
