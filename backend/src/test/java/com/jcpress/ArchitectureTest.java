@@ -52,10 +52,14 @@ class ArchitectureTest {
      * `saveLogin` 更不像话。所以这里**显式列白名单**，而不是放宽整条命名规则
      * （放宽会让 `handle()` / `process()` 这类名字也过闸）。
      *
+     * `format` 同理：`formatArticle` 是把正文交给模型做**格式整理**并抽取元信息，
+     * 它不读也不写本站任何数据 —— 结果只回给前端做对比，落库仍走文章保存接口。
+     * 套 `update` 会让人以为它改了正文，套 `get` 又掩盖了"这是外部调用、会花钱"这回事。
+     *
      * 新增条目必须同样在注释里说明"为什么没有 CRUD 对应词"，并同步 docs/decisions.md。
      */
     private static final Set<String> ACTION_PREFIXES =
-            Set.of("login", "logout");
+            Set.of("login", "logout", "format");
     private static final Set<String> OBJECT_METHODS =
             Set.of("equals", "hashCode", "toString", "clone", "finalize", "canEqual");
 

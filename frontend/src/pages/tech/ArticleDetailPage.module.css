@@ -1,6 +1,20 @@
 .wrap {
-  /* 详情页整页允许更宽：正文由 .prose 的 36rem 收窄，这里给右侧目录留位置 */
-  max-width: 1180px;
+  /* 宽度交给外壳的「左栏 200px + 内容栏」决定，这里只保证 grid 子项能被压缩
+     （否则正文里的长表格会把内容栏顶出横向滚动） */
+  min-width: 0;
+}
+
+/* 只有左栏真的挂出来（≥1080px，与 TechShell 的断点同一个数）之后，正文才放开度量。
+   这个条件不能省：窄屏没有左栏，正文本来就独占整条容器，放开到 `none` 会变成
+   1024 视口下 976px = 57 汉字/行（实测），比加宽前更难读。 */
+@media (min-width: 1080px) {
+  .wrap {
+    /* 正文不再受 40rem 约束：页内目录已经挪到左栏（TechShell 的 .railPageToc），
+       内容栏 828px 整条都是正文的。2026-10-20 用户两次说「不够宽」——
+       第一次只把度量从 36rem 调到 40rem（632px ≈ 37 汉字/行），仍然窄，
+       因为 176px 的目录栏还占着；把目录栏搬走之后才真正放开到 828px（≈ 48 字/行）。 */
+    --prose-measure: none;
+  }
 }
 
 .state {
@@ -51,53 +65,8 @@
   color: var(--ds-c-accent);
 }
 
-/* ── 版式：单栏 → ≥1024px 变成「正文 68ch + 右侧目录 220px」 ── */
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 2.5rem;
-}
-
-.main {
-  min-width: 0;
-}
-
-.mobileToc {
-  margin-bottom: 1.4rem;
-  border: 1px solid var(--ds-c-hairline);
-  border-radius: var(--ds-radius-lg);
-  padding: 0.8rem 1rem;
-}
-
-.mobileToc > summary {
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--ds-c-text-mute);
-}
-
-.mobileToc[open] > summary {
-  margin-bottom: 0.6rem;
-}
-
-.aside {
-  display: none;
-}
-
-@media (min-width: 1024px) {
-  .layout {
-    /* 正文栏宽仍由 .prose 定义；这里只决定两栏的相对位置 */
-    grid-template-columns: minmax(0, 1fr) 220px;
-    justify-content: center;
-  }
-
-  .mobileToc {
-    display: none;
-  }
-
-  .aside {
-    display: block;
-  }
-}
+/* 版式相关的类（.layout / .main / .aside / .mobileToc）在 2026-10-20 全部删掉：
+   正文不再分栏，页内目录搬进外壳左栏。留着的空壳只会让人以为还能调。 */
 
 /* ── 上下篇 ── */
 .adjacent {

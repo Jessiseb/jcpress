@@ -1,6 +1,14 @@
 /* 后台 Markdown 编辑器：左编辑 / 右预览的两栏工作台。
    视觉**故意**与公开站隔离（规划 §10.4）：无衬线、无圆角卡片、无天体贴图背景，
-   只用中性令牌与硬边框 —— 让人一眼看出「这是后台，不是自己的网站」。 */
+   只用中性令牌与硬边框 —— 让人一眼看出「这是后台，不是自己的网站」。
+
+   AI 排版的按钮与报错条用的是外壳那层 `--adm-*` 令牌（本组件在 .adminScope 内部，
+   可继承）；面板自身的样式在 AiFormatPanel.module.css。 */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+}
 
 .editor {
   display: grid;
@@ -66,10 +74,152 @@
   line-height: 1.7;
 }
 
+/* CodeMirror 内部件的颜色来自它自带的默认主题，不认我们的令牌 —— 暗色后台下
+   最显眼的是行号栏那条**白竖条**（2026-10-20 截图发现；与它同批的还有
+   audit-contrast 报的 admin-edit · dark 30 处，都属于「后台暗色没覆盖到编辑器内部」）。
+   这里只接回能看见的四样，不引 CodeMirror 的 theme 扩展，也不用再写一套
+   [data-theme='dark'] 分支 —— 令牌本身就随主题变。 */
+.cmHost :global(.cm-gutters) {
+  background: var(--adm-bg);
+  border-right: 1px solid var(--adm-border);
+  color: var(--adm-text-3);
+}
+
+.cmHost :global(.cm-activeLineGutter) {
+  background: var(--adm-border);
+  color: var(--adm-text);
+}
+
+/* 当前行底纹：默认那层浅灰在暗色下等于没有，换成随主题反色的淡叠加 */
+.cmHost :global(.cm-activeLine) {
+  background: color-mix(in srgb, var(--adm-text) 6%, transparent);
+}
+
+.cmHost :global(.cm-cursor) {
+  border-left-color: var(--adm-text);
+}
+
 .preview {
   flex: 1;
   padding: var(--ds-space-4);
   overflow: auto;
   /* 预览里是文章正文，沿用正文排版；容器本身仍是后台的中性外观 */
   color: var(--ds-c-text);
+}
+
+/* ---- 格式工具条（2026-10-20）----
+   按钮用图标不写字，一行放得下 13 个；窄屏换行（flex-wrap），不做横向滚动 ——
+   横向滚动条在这么矮的一条里几乎点不到。按下态用后台自己的 `--adm-primary`
+   （与「AI 排版」按钮同一套语义色），不借公开站的强调色。 */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1px;
+  padding: 3px var(--ds-space-2);
+  border-bottom: 1px solid var(--ds-c-border-soft);
+  background: var(--ds-c-bg);
+}
+
+.toolbarItem {
+  display: inline-flex;
+  align-items: center;
+}
+
+.toolbarSep {
+  width: 1px;
+  height: 14px;
+  margin: 0 5px;
+  background: var(--ds-c-border-soft);
+}
+
+.toolBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--adm-r, 4px);
+  background: none;
+  color: var(--ds-c-text-mute);
+  cursor: pointer;
+}
+
+.toolBtn:hover {
+  background: var(--ds-c-bg-alt);
+  color: var(--ds-c-text);
+}
+
+/* 当前选区已经是这个格式：底色 + 边框同时变，只靠颜色深浅区分不够明确 */
+.toolBtn[data-active='on'] {
+  border-color: var(--adm-primary, #1a6fc4);
+  background: var(--adm-primary-soft, #ecf5ff);
+  color: var(--adm-primary, #1a6fc4);
+}
+
+.toolBtn:focus-visible {
+  outline: 2px solid var(--adm-primary, #1a6fc4);
+  outline-offset: 1px;
+}
+
+/* ---- AI 排版 ---- */
+
+.aiBtn {
+  margin-left: auto;
+  padding: 3px 12px;
+  border: 1px solid var(--adm-solid);
+  border-radius: var(--adm-r);
+  background: var(--adm-solid);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: var(--ds-fw-medium);
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.aiBtn:hover:not(:disabled) {
+  border-color: var(--adm-solid-hover);
+  background: var(--adm-solid-hover);
+}
+
+/* 禁用态用半透明：WCAG 的对比度门槛不适用于 disabled 控件，
+   所以这里不去为了凑比值把按钮做成一个和正常态一样扎眼的深蓝块。 */
+.aiBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.aiError {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  margin: 0 0 var(--ds-space-3);
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border: 1px solid var(--adm-danger);
+  border-radius: var(--adm-r);
+  background: var(--adm-danger-soft);
+  color: var(--adm-danger);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+}
+
+.aiErrorClose {
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 2px 10px;
+  border: 1px solid var(--adm-danger);
+  border-radius: var(--adm-r);
+  background: none;
+  color: var(--adm-danger);
+  font-family: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.aiErrorClose:hover {
+  background: var(--adm-danger);
+  color: #fff;
 }

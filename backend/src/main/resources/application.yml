@@ -52,6 +52,15 @@ jcpress:
     # 两者写成同一个值 → 正文里的图片地址会 404
     public-prefix: /api/uploads
     max-bytes: 5242880
+  ai:
+    # 走 OpenAI 兼容协议（POST {base-url}/chat/completions），换服务商只改这里两行
+    base-url: ${JCPRESS_AI_BASE_URL:https://api.deepseek.com}
+    model: ${JCPRESS_AI_MODEL:deepseek-flash}
+    # key 只从环境变量进 —— 不写进仓库、不进日志、不回显给前端
+    api-key: ${JCPRESS_AI_API_KEY:}
+    # 实测 3400 字正文约 41s（模型会先产出一大段思考内容再给 JSON），超时给足
+    timeout-seconds: 120
+    json-mode: true
 
 knife4j:
   # 只在 dev 打开（见 application-dev.yml）。默认关掉的原因不只是"没必要"：

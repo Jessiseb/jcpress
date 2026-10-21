@@ -1,14 +1,20 @@
 package com.jcpress.importer;
 
+import com.jcpress.common.util.SlugUtils;
 import com.jcpress.common.util.WordCountUtils;
 import com.jcpress.domain.dataobject.ArticleContentDO;
 import com.jcpress.domain.dataobject.ArticleDO;
+import com.jcpress.domain.dataobject.ArticleTagDO;
 import com.jcpress.domain.dataobject.CategoryDO;
+import com.jcpress.domain.dataobject.TagDO;
 import com.jcpress.repository.ArticleContentMapper;
 import com.jcpress.repository.ArticleMapper;
+import com.jcpress.repository.ArticleTagMapper;
 import com.jcpress.repository.CategoryMapper;
+import com.jcpress.repository.TagMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +53,8 @@ public class MarkdownImporter {
     private final ArticleMapper articleMapper;
     private final ArticleContentMapper articleContentMapper;
     private final CategoryMapper categoryMapper;
+    private final TagMapper tagMapper;
+    private final ArticleTagMapper articleTagMapper;
 
     /** 第一段：只读准备。任何输入问题都在这里抛出，此时尚未写库 */
     public List<ImportItem> prepare(Path directory) throws IOException {
@@ -116,6 +124,8 @@ public class MarkdownImporter {
         content.setArticleId(article.getId());
         content.setContentMd(item.body());
         articleContentMapper.insert(content);
+
+        writeTags(article.getId(), item.frontMatter().getTags());
     }
 
     private void updateExisting(ImportItem item) {
@@ -134,6 +144,49 @@ public class MarkdownImporter {
             articleContentMapper.insert(content);
         } else {
             articleContentMapper.updateById(content);
+        }
+
+        // 标签以文件为准：先清后写，重复导入才不会累积重复关联
+        articleTagMapper.deleteByArticleId(item.existing().getId());
+        writeTags(item.existing().getId(), item.frontMatter().getTags());
+    }
+
+    /**
+     * 把 front-matter 的标签名落成「标签 + 关联」两行。
+     *
+     * 2026-10-20 补：此前 front-matter 里的 `tags` 只被解析、从没写库 ——
+     * 导入的文章在详情页标签区永远是空的（接口返回 `[]`），因为后台保存那套逻辑
+     * 走的是 `AdminArticleServiceImpl`，导入器根本没接上。
+     * 名称 → slug 的规则与后台保存保持一致（中文名用 `tag-<hash>` 兜底，唯一索引在 slug 上）。
+     */
+    private void writeTags(Long articleId, List<String> names) {
+        if (names == null || names.isEmpty()) {
+            return;
+        }
+        for (String rawName : names) {
+            String name = rawName == null ? "" : rawName.trim();
+            if (name.isEmpty()) {
+                continue;
+            }
+            String slug = SlugUtils.normalize(name);
+            if (slug == null) {
+                slug = "tag-" + Math.abs(name.hashCode());
+            }
+            TagDO tag = tagMapper.getBySlug(slug);
+            if (tag == null) {
+                tag = new TagDO();
+                tag.setName(name);
+                tag.setSlug(slug);
+                try {
+                    tagMapper.insert(tag);
+                } catch (DuplicateKeyException e) {
+                    tag = tagMapper.getBySlug(slug);
+                }
+            }
+            ArticleTagDO relation = new ArticleTagDO();
+            relation.setArticleId(articleId);
+            relation.setTagId(tag.getId());
+            articleTagMapper.insert(relation);
         }
     }
 

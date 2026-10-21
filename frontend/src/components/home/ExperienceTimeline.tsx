@@ -33,15 +33,23 @@ function companyTone(company: string): string {
 }
 
 /**
- * 公司图片。**占位图**（Unsplash 办公场景），等拿到真实公司照片后替换成
- * `frontend/public/companies/*.webp` 之类的本地资源 —— 远程图会带来两类问题：
+ * 公司图片。
+ *
+ * 视源（CVTE）已是**真实公司照片**（2026-10-16 用户提供前台实拍，本机转 webp：
+ * 源 1280×1280 / 454KB → `public/companies/cvte.webp` 1080×1080 / **68KB**，
+ * 比原来的 Unsplash 占位图还小）。其余两家暂时仍是占位图，等真实照片到位再换。
+ *
+ * 为什么真实照片必须落在本地（原注释里的三条理由，现在兑现了）：
  *  ① 移动端性能：`audit-perf.cjs` 的 4× 降速下，远程大图解码会直接排进长任务；
- *  ② 离线 / 内网环境下会退化成空白。
- * 所以这里主动把尺寸压到左栏实际需要的量级（约 560×840 @2x），并且走 <img loading=lazy>，
- * 不再用 CSS background-image（背景图没法 lazy，也没法 async 解码）。
+ *  ② 离线 / 内网环境下会退化成空白 —— 答辩现场断网就是白板；
+ *  ③ 远程图还会把访客的 IP 送给第三方图床。
+ * 照片本身走 <img loading=lazy decoding=async>，不用 CSS background-image
+ * （背景图没法 lazy，也没法 async 解码）。
  */
 function companyImage(company: string): string {
-  if (company.includes('视源')) return 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=560&h=840&q=70'
+  // 用户提供的实拍（MAXHUB / seewo 希沃 前台墙）。改名换图时记得同步下面 <img> 的
+  // width/height —— 那两个数字是给浏览器算纵横比用的，写错会在加载完成时抖一下。
+  if (company.includes('视源')) return '/companies/cvte.webp'
   if (company.includes('用友')) return 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=560&h=840&q=70'
   return 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=560&h=840&q=70'
 }
@@ -94,17 +102,20 @@ export default function ExperienceTimeline({ experiences }: Props) {
         {/* 图片上不放文字。原因不只是观感：`.tmp/tools/audit-contrast.cjs` 的有效背景
             只能沿祖先链取 background-color（不认 background-image），
             飘在照片上的白字会被算成「白底白字」而必然不达标 —— 而且那个判定是对的，
-            照片任意一帧都可能把文字吃掉。所以公司标识与编号落在底部一块**不透明**的实底上。 */}
+            照片任意一帧都可能把文字吃掉。所以编号落在底部一块**不透明**的实底上。 */}
         <div className={`${styles.visual} ${companyTone(active.company)}`} data-photo="">
           {/* 照片走 <img> 而不是 CSS 背景：能吃到 loading=lazy 与 decoding=async，
               移动端 4× 降速时不会把大图解码排进首屏长任务。
-              width/height 写死成与左栏 1:1.5 的近似比例，避免加载完成时的布局跳动。 */}
+              width/height 写的是**当前这张真实照片**的像素（1080×1080 方形）；
+              另两家仍是 560×840 的占位图 —— 这两个数字对布局没有影响
+              （`.visualPhoto` 是 absolute + 100%/100%，尺寸由 CSS 说了算），
+              它只是给浏览器一个纵横比提示，换图时同步一下即可。 */}
           <img
             className={styles.visualPhoto}
             src={companyImage(active.company)}
             alt={`${active.company} 公司图片`}
-            width={560}
-            height={840}
+            width={1080}
+            height={1080}
             loading="lazy"
             decoding="async"
           />
@@ -113,8 +124,13 @@ export default function ExperienceTimeline({ experiences }: Props) {
               这里只是给照片降亮度的功能性遮罩，没资格占一个渐变名额。 */}
           <span className={styles.visualShade} aria-hidden="true" />
           <span className={styles.visualGlow} aria-hidden="true" />
-          <div className={styles.plate}>
-            <span className={styles.visualMark}>{companyMark(active.company)}</span>
+          {/* 2026-10-16 用户要求去掉底部的公司简称大字（原来这里是 clamp 到 6rem 的
+              「CVTE」）。这个大字是多余的：照片本身就是 CVTE 前台实拍，画面里已经有
+              CVTE / Dream·Future 的 logo，纸面上再印一遍是重复；而且它把底部那块实底
+              撑高了一倍，白占照片的可见区。现在这块底只剩编号一行（实测 70px，原先是
+              大字的字号在占高度）。
+              公司标识不走这里也不丢：顶部切换条、右侧正文的 h3 全名都写着。 */}
+          <div className={styles.plate} data-plate="">
             <span className={styles.visualCaption}>
               WORK EXPERIENCE / {String(activeIndex + 1).padStart(2, '0')}
             </span>

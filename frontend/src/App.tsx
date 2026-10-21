@@ -6,6 +6,7 @@ import Footer from '@/components/layout/Footer'
 import ScrollProgress from '@/components/layout/ScrollProgress'
 import FlowField from '@/components/visual/FlowField'
 import CelestialField from '@/components/visual/CelestialField'
+import TechShell from '@/components/tech/TechShell'
 import HomePage from '@/pages/home/HomePage'
 import ChannelPlaceholder from '@/pages/ChannelPlaceholder'
 import TechListPage from '@/pages/tech/TechListPage'
@@ -51,15 +52,19 @@ export default function App() {
       <main id="main">
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/tech" element={<TechListPage />} />
-          <Route
-            path="/tech/:slug"
-            element={
-              <Suspense fallback={<p className="container section">正在加载…</p>}>
-                <ArticleDetailPage />
-              </Suspense>
-            }
-          />
+          {/* 「技术分享」整段共用一个外壳（左栏目录），列表页与详情页都在它里面。
+              这样从列表点进文章时左栏不重挂载，位置感是连续的。 */}
+          <Route path="/tech" element={<TechShell />}>
+            <Route index element={<TechListPage />} />
+            <Route
+              path=":slug"
+              element={
+                <Suspense fallback={<p className="section">正在加载…</p>}>
+                  <ArticleDetailPage />
+                </Suspense>
+              }
+            />
+          </Route>
           <Route
             path="/algo"
             element={

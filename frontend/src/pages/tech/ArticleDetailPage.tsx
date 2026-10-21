@@ -3,8 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 
 import { reportArticleView } from '@/api/articles'
 import MarkdownBody from '@/components/markdown/MarkdownBody'
-import Toc from '@/components/markdown/Toc'
 import type { TocItem } from '@/components/markdown/rehypeCollectHeadings'
+import { usePublishPageToc } from '@/components/tech/pageTocContext'
 import { useArticleDetail } from '@/hooks/useArticleDetail'
 // 文章页专用字体子集（GB2312 一级字，独立 family）。放在**详情页** import，
 // Vite 会把它并进详情页 chunk —— 首页既不加载这份 CSS，也不下载那两个字体文件。
@@ -15,9 +15,30 @@ import styles from './ArticleDetailPage.module.css'
 const formatDate = (value: string) => value.slice(0, 10).replace(/-/g, '.')
 
 /**
+ * 正文开头的一级标题若与文章标题**同名**，渲染时去掉一个。
+ *
+ * 页头已经渲染了一份 h1（`data.title`），而导入的 Markdown 往往自带 `# 标题`，
+ * 两者叠在一起就是两个一模一样的大标题连着出现（截图确认过的真缺陷）。
+ *
+ * 两条边界：
+ * - **只影响展示**：`data.contentMd` 原样不动 —— 保存接口、AI 排版、后台编辑器
+ *   拿到的都还是带 h1 的原文，不会因为「页面上少了一行」而把正文改短；
+ * - **只在同名时去掉**：标题不同说明正文自有主张（或内容写错了），此时宁可多留一个标题，
+ *   也不要悄悄把一段有信息量的文字吞掉。
+ */
+const stripDuplicateTitle = (markdown: string, title: string) => {
+  const head = markdown.match(/^\s*#\s+(.+?)\s*(?:\r?\n|$)/)
+  if (!head) return markdown
+  const simplify = (text: string) => text.replace(/\s+/g, '').replace(/[：:]/g, ':')
+  return simplify(head[1]) === simplify(title) ? markdown.slice(head[0].length) : markdown
+}
+
+/**
  * 文章详情页（三期）。
  *
- * - 正文走 `MarkdownBody`（护眼档位在它的 CSS 里，本页只管版式与目录栏）；
+ * - 正文走 `MarkdownBody`（护眼档位在它的 CSS 里，本页只管版式与目录数据）；
+ * - 小节清单交给外壳左栏渲染（2026-10-20 起正文右边不再单开目录栏，
+ *   那 176px 还给了正文，见 `pageTocContext.ts`）；
  * - 上下篇来自详情响应**内联**的 prev/next，不再多打一次接口；
  * - 浏览量上报是幂等的（后端按 ip+ua 按天去重），失败不打扰读者、也不改页面。
  */
@@ -25,6 +46,7 @@ export default function ArticleDetailPage() {
   const { slug = '' } = useParams()
   const { data, isPending, isError, error } = useArticleDetail(slug)
   const [headings, setHeadings] = useState<TocItem[]>([])
+  const publishPageToc = usePublishPageToc()
 
   /**
    * 目录数据**在正文渲染完成之后**从 DOM 里读，而不是在渲染期由 rehype 插件回调塞进来。
@@ -39,13 +61,14 @@ export default function ArticleDetailPage() {
    *
    * 从 DOM 读还有一个附带好处：id 由 rehype-slug 生成，读出来的锚点与正文**天然一致**，
    * 不存在两套 slug 规则漂移的问题。依赖 `data.contentMd`：正文换了才重收集。
+   *
+   * 取不到正文时显式清空 —— 换文章的那一刻 `contentMd` 会先变 undefined，
+   * 若此时留着上一篇的小节，左栏会有几十毫秒显示的是**别的文章**的目录。
    */
   useEffect(() => {
-    if (!data?.contentMd) {
-      return
-    }
-    const root = document.querySelector('[data-article-body]')
+    const root = data?.contentMd ? document.querySelector('[data-article-body]') : null
     if (!root) {
+      setHeadings([])
       return
     }
     const items: TocItem[] = Array.from(root.querySelectorAll('h2[id], h3[id]')).map((el) => ({
@@ -57,13 +80,17 @@ export default function ArticleDetailPage() {
   }, [data?.contentMd])
 
   useEffect(() => {
+    publishPageToc?.(headings)
+  }, [headings, publishPageToc])
+
+  useEffect(() => {
     if (!data?.slug) return
     void reportArticleView(data.slug).catch(() => undefined)
   }, [data?.slug])
 
   if (isPending) {
     return (
-      <section className="container section">
+      <section className={styles.wrap}>
         <p className={styles.state}>正在取文章…</p>
       </section>
     )
@@ -71,7 +98,7 @@ export default function ArticleDetailPage() {
 
   if (isError || !data) {
     return (
-      <section className="container section" role="alert">
+      <section className={styles.wrap} role="alert">
         <h1 className={styles.errorTitle}>这篇文章没取回来</h1>
         <p className={styles.state}>{error instanceof Error ? error.message : '未知错误'}</p>
         <Link to="/tech" className="btn btnSolid">
@@ -82,7 +109,7 @@ export default function ArticleDetailPage() {
   }
 
   return (
-    <article className={`container section ${styles.wrap}`}>
+    <article className={styles.wrap}>
       <header className={styles.header}>
         <p className={styles.breadcrumb}>
           <Link to="/tech">技术分享</Link>
@@ -104,20 +131,10 @@ export default function ArticleDetailPage() {
         </p>
       </header>
 
-      <div className={styles.layout}>
-        <div className={styles.main}>
-          {/* 窄屏：目录折叠进正文顶部。桌面由 CSS 隐藏，改用右侧常驻栏 */}
-          <details className={styles.mobileToc}>
-            <summary>目录</summary>
-            <Toc items={headings} />
-          </details>
-          <div data-article-body>
-            <MarkdownBody markdown={data.contentMd} />
-          </div>
-        </div>
-        <aside className={styles.aside}>
-          <Toc items={headings} />
-        </aside>
+      {/* 正文独占内容栏整条宽度：原来右边那 176px 的目录栏已经挪进左栏，
+          正文的最大宽度也放开了（`--prose-measure: none` 在 .wrap 上）。 */}
+      <div data-article-body>
+        <MarkdownBody markdown={stripDuplicateTitle(data.contentMd, data.title)} />
       </div>
 
       <nav className={styles.adjacent} aria-label="相邻文章">

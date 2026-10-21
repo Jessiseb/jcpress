@@ -144,3 +144,17 @@ export interface ArticleSavePayload {
   contentMd: string
   status?: number
 }
+
+export interface AiFormatPayload {
+  contentMd: string
+  /** 给模型判断语境用；不参与产出，只进 prompt */
+  title?: string
+}
+
+/** AI 排版的产出。四项**全部可空**，服务端只保证落在保存接口的校验边界内 */
+export interface AiFormatVO {
+  contentMd: string
+  summary: string | null
+  tags: string[]
+  slug: string | null
+}

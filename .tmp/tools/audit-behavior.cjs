@@ -42,20 +42,22 @@ async function auditPhase3(browser) {
         minCardHeight: cards.length
           ? Math.min(...cards.map((c) => Math.round(c.getBoundingClientRect().height)))
           : 0,
-        firstCardIsFullWidth: (() => {
-          const grid = document.querySelector('[class*="grid"]')
-          if (!grid || !cards[0]) return null
-          const gw = Math.round(grid.getBoundingClientRect().width)
-          const cw = Math.round(cards[0].getBoundingClientRect().width)
-          return cw / gw > 0.9
-        })(),
+        /* 2026-10-16 两次改版：列表页先是从「卡片墙」变成「目录式索引 + 左栏常驻目录」，
+           当天晚些时候又按用户要求**去掉了左栏**（「没有点击具体的文章的那个页面不需要
+           有左侧」）—— 列表页自己就是那份索引，左边再立一条同样的清单，只是把同一份
+           分组念第二遍。所以这里改为断言它**不存在**；
+           「存在且恰好一项当前」的断言搬到了下面的详情页块。 */
+        hasRail: document.querySelector('nav[aria-label="技术分享目录"]') !== null,
+        /* 分组：索引里每个分类一个 h2，h1 仍只有页面标题那一个 */
+        groupCount: document.querySelectorAll('h2[id^="tech-g-"]').length,
       }
     })
     check('三期#1 /tech 每张卡都是链接且指向 /tech/<slug>', t.cardCount > 0 && t.linkCount >= t.cardCount, `卡=${t.cardCount} 链=${t.linkCount}`)
     check('三期#2 每张卡有封面（真图或字体封面）', t.everyCardHasCover, `封面齐=${t.everyCardHasCover}`)
     check('三期#3 /tech 无横向溢出', t.overflow <= 0, `溢出=${t.overflow}px`)
     check('三期#11 卡片可点区域 ≥44px', t.minCardHeight >= 44, `最矮卡=${t.minCardHeight}px`)
-    check('三期（首卡通栏）', t.firstCardIsFullWidth === true, `首卡占栅格比≈1=${t.firstCardIsFullWidth}`)
+    check('三期（列表页不挂左栏目录）', t.hasRail === false, `存在左栏=${t.hasRail}`)
+    check('三期（索引按分类分组）', t.groupCount > 0, `分组=${t.groupCount}`)
     await ctx.close()
   }
 
@@ -71,39 +73,61 @@ async function auditPhase3(browser) {
       const h2 = body ? body.querySelector('h2') : null
       const fs = p ? parseFloat(getComputedStyle(p).fontSize) : 0
       const lh = p ? parseFloat(getComputedStyle(p).lineHeight) : 0
-      const tocLinks = Array.from(document.querySelectorAll('nav[aria-label="文章目录"] a[href^="#"]'))
+      const prose = body ? body.querySelector('[class*="prose"]') : null
+      const wrap = body ? body.parentElement : null
+      // 页内目录 2026-10-20 从正文右边搬进了左栏，aria-label 也跟着从「文章目录」改成「本页目录」
+      const tocNav = document.querySelector('nav[aria-label="本页目录"]')
+      const tocLinks = Array.from((tocNav || document).querySelectorAll('nav[aria-label="本页目录"] a[href^="#"]'))
       const bodyIds = new Set(Array.from(document.querySelectorAll('[data-article-body] [id]')).map((el) => el.id))
       return {
         hasBody: !!body,
         fontSize: fs,
         lineHeightRatio: fs ? lh / fs : 0,
-        // 「栏宽 ≈ 68ch」里的 ch 是 **CSS 的 ch 单位 = 数字 0 的宽度**（17px 字号下 ≈ 8.5px），
-        // 不是汉字宽度（17px）。计划里写的 `clientWidth / fontSize` 是对 ch 的粗略近似，
-        // 但那会得到 33.9（≈汉字数/行），与它自己给的 60–72 区间矛盾 —— 真正对齐的是
-        // 「clientWidth / 一个 '0' 的宽度」。
-        // ⚠️ 用 p 元素本身取 clientWidth（rect 没有 clientWidth，直接用会得 NaN）。
-        proseCh: (() => {
-          if (!p) return 0
-          const probe = document.createElement('span')
-          probe.textContent = '0'.repeat(100)
-          probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap'
-          p.appendChild(probe)
-          const chWidth = probe.getBoundingClientRect().width / 100
-          probe.remove()
-          return chWidth ? p.clientWidth / chWidth : 0
-        })(),
+        /* 判据在 2026-10-20 换过两次尺度。
+           第一次：原来量「≈68ch」—— ch 是 CSS 里数字 0 的宽度（≈8.5px），那是英文排版的惯例；
+           中文正文的可读尺度是**每行多少个汉字**（汉字宽 ≈ 1em = 17px），改成 clientWidth / fontSize。
+           第二次（本条）：加宽到 632px 之后用户仍然说「不够宽」，于是把右边 176px 的目录栏
+           搬进左栏，正文直接吃满内容栏 828px = 48.7 字/行。
+           48.7 已经超出「中文 28–40」的舒适区，这是**拿可读性换宽度**的明确取舍（用户两次要求）。
+           所以判据只留「带宽」这一半，另加一条「正文宽 = 内容栏宽」盯着它别偷偷缩回去。 */
+        charsPerLine: prose ? prose.clientWidth / parseFloat(getComputedStyle(prose).fontSize) : 0,
+        proseFill: prose && wrap && wrap.clientWidth ? prose.clientWidth / wrap.clientWidth : 0,
+        proseW: prose ? Math.round(prose.clientWidth) : 0,
+        wrapW: wrap ? Math.round(wrap.clientWidth) : 0,
         h2Numbered: h2 ? getComputedStyle(h2, '::before').content : null,
         copyButton: document.querySelectorAll('button[aria-label*="复制"]').length,
         tocCount: tocLinks.length,
         tocAllHit: tocLinks.length > 0 && tocLinks.every((a) => bodyIds.has(a.getAttribute('href').slice(1))),
+        // 目录必须在左栏里（不在正文右侧、也不在正文顶部）：这是本次搬家的主张
+        tocInRail: !!(tocNav && tocNav.closest('aside')),
+        /* 左栏目录归详情页（列表页已不挂它）：这里才是它该在的地方 ——
+           进文章后正文之外只剩面包屑，左栏第一次给出「这一区还有哪些、我在哪一篇」。 */
+        rail: (() => {
+          const el = document.querySelector('nav[aria-label="技术分享目录"]')
+          if (!el) return null
+          return {
+            current: el.querySelectorAll('[aria-current="page"]').length,
+            items: el.querySelectorAll('a[href^="/tech/"]').length,
+          }
+        })(),
         overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       }
     })
-    check('三期#4 详情页正文栏宽 ≈68ch（60–72）', d.proseCh >= 60 && d.proseCh <= 72, `${d.proseCh.toFixed(1)}ch`)
+    check(
+      '三期#4 详情页正文宽 = 内容栏宽（正文通栏，≈48 汉字/行）',
+      d.proseFill >= 0.98 && d.charsPerLine > 42 && d.charsPerLine < 56,
+      `${d.proseW}/${d.wrapW}px 占比 ${(d.proseFill * 100).toFixed(1)}% · ${d.charsPerLine.toFixed(1)} 字/行`,
+    )
     check('三期#5 详情页正文行高 = 1.9', Math.abs(d.lineHeightRatio - 1.9) < 0.05, `${d.lineHeightRatio.toFixed(2)}`)
     check('三期#6 详情页 h2 有自动编号', !!d.h2Numbered && d.h2Numbered !== 'none' && d.h2Numbered !== '""', `::before=${d.h2Numbered}`)
     check('三期#7 代码块有复制按钮', d.copyButton > 0, `按钮=${d.copyButton}`)
     check('三期#8 TOC 锚点与正文 id 一一对应', d.tocAllHit, `TOC=${d.tocCount} 全命中=${d.tocAllHit}`)
+    check('三期#8b 页内目录在左栏里（正文右侧不再有目录栏）', d.tocInRail, `在左栏=${d.tocInRail}`)
+    check(
+      '三期（详情页左栏目录存在，且恰好一项标出当前页）',
+      d.rail !== null && d.rail.current === 1 && d.rail.items > 0,
+      d.rail ? `目录项=${d.rail.items} 当前项=${d.rail.current}` : '没有找到左栏目录',
+    )
     check('三期 详情页无横向溢出', d.overflow <= 0, `溢出=${d.overflow}px`)
     await ctx.close()
   }
@@ -892,7 +916,10 @@ async function auditPhase3(browser) {
   for (const w of [1440, 1280, 1100]) {
     await page.setViewportSize({ width: w, height: 900 })
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
-    await page.waitForTimeout(700)
+    // 1600ms 而不是 700：天体的换位是 1400ms 的 CSS transition，700ms 时球还在半路上。
+    // 2026-10-20 在生产构建（vite preview）上这条稳定报 −4 ~ −13px，换成等它收敛
+    // （同一个页面新开标签量是 +56 / +16）—— 断言要量的是停稳后的位置，不是动画中间帧。
+    await page.waitForTimeout(1600)
     clearance.push(
       await page.evaluate(() => {
         const hero = document.querySelector('section[aria-labelledby="hero-title"]')

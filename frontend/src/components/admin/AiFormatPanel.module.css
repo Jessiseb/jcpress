@@ -1,0 +1,288 @@
+/* AI 排版对比面板。
+   与 MarkdownEditor.module.css 同属后台，所以这里直接用外壳那层 `--adm-*` 令牌
+   （定义在 .adminScope 上，本组件在其内部，可继承），而不是公开站的 `--ds-c-*`。
+   颜色一律取自令牌，不自造浅灰 —— 后台的对比度是被 audit-contrast 逐元素卡过的。 */
+
+.panel {
+  margin-bottom: var(--ds-space-4);
+  border: 1px solid var(--adm-border);
+  border-radius: var(--adm-r);
+  background: var(--adm-card);
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border-bottom: 1px solid var(--adm-border);
+  background: var(--adm-table-head);
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 2px;
+  background: var(--adm-solid);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: var(--ds-fw-medium);
+  line-height: 1.6;
+}
+
+.headHint {
+  font-size: 0.75rem;
+  color: var(--adm-text-3);
+}
+
+.close {
+  margin-left: auto;
+  padding: 0 var(--ds-space-2);
+  border: none;
+  background: none;
+  color: var(--adm-text-2);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: var(--adm-danger);
+}
+
+/* ---- 结构计数 ---- */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 1px;
+  background: var(--adm-border);
+  border-bottom: 1px solid var(--adm-border);
+}
+
+.statCell {
+  padding: var(--ds-space-2) var(--ds-space-3);
+  background: var(--adm-card);
+}
+
+.statLabel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--adm-text-3);
+}
+
+.statWarn {
+  padding: 0 4px;
+  border-radius: 2px;
+  background: var(--adm-danger-soft);
+  color: var(--adm-danger);
+  font-size: 0.6875rem;
+}
+
+.statValue {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 2px;
+  font-family: var(--ds-font-mono);
+  font-size: 0.875rem;
+  color: var(--adm-text);
+}
+
+/* 有变化才提亮，没变的项保持安静 —— 否则一整排都在喊，等于没喊 */
+.statChanged .statFrom {
+  color: var(--adm-text-4);
+}
+
+.statArrow {
+  color: var(--adm-text-4);
+  font-size: 0.75rem;
+}
+
+.statTo {
+  color: var(--adm-text);
+  font-weight: var(--ds-fw-medium);
+}
+
+.statLost {
+  color: var(--adm-danger);
+  font-weight: var(--ds-fw-semibold);
+}
+
+.regression {
+  margin: 0;
+  padding: var(--ds-space-2) var(--ds-space-3);
+  background: var(--adm-danger-soft);
+  border-bottom: 1px solid var(--adm-border);
+  color: var(--adm-danger);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+}
+
+/* ---- 左右预览 ---- */
+
+/* 左右两栏共用**一个**纵向滚动条，滚动天然同步 —— 不需要任何 JS 去镜像另一栏。
+   为什么不"各滚各的、再按比例同步对方"：两栏长度往往不同（AI 可能略长），比例同步会
+   累积漂移，越往下错得越多；同一个滚动条是绝对对齐的。
+   代价：较短那栏滚到底后会留白 —— 这块留白本身就是"哪边内容更长"的信息，不算损失。 */
+.compare {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  max-height: 300px;
+  overflow-y: auto;
+  /* 滚到边界就停住，别把整页带着滚 —— 面板在编辑页的中段，误触代价高 */
+  overscroll-behavior: contain;
+}
+
+.col {
+  min-width: 0;
+}
+
+.col + .col {
+  border-left: 1px solid var(--adm-border);
+}
+
+.colHead {
+  position: sticky;
+  top: 0;
+  padding: var(--ds-space-1) var(--ds-space-3);
+  border-bottom: 1px solid var(--adm-border);
+  background: var(--adm-bg);
+  color: var(--adm-text-2);
+  font-size: 0.75rem;
+  font-weight: var(--ds-fw-medium);
+}
+
+/* 纵向由 .compare 那一个滚动条统一负责，所以这里**不能**再设 height —— 两栏高度
+   必须由内容撑开，最短的那栏会被栅格拉伸到与最长的一栏等高（竖分隔线因此贯穿到底）。
+   横向仍各滚各的：正文里的宽表格不该把栅格撑破。 */
+.colBody {
+  padding: var(--ds-space-3);
+  overflow-x: auto;
+  overflow-y: hidden;
+  color: var(--adm-text);
+}
+
+/* 窄屏两栏会挤成一列，此时固定视口反而别扭（一个格子里塞两段，要滚两遍），交还给页面滚动。
+   **必须放在 .col + .col / .colHead 的基础规则之后** —— 媒体查询不提升特异性，
+   同选择器下源码顺序靠后的赢，写在前面会被基础规则整个覆盖掉。 */
+@media (max-width: 900px) {
+  .compare {
+    grid-template-columns: minmax(0, 1fr);
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .col + .col {
+    border-left: none;
+    border-top: 1px solid var(--adm-border);
+  }
+
+  .colHead {
+    position: static;
+  }
+}
+
+/* ---- 元信息 ---- */
+
+.meta {
+  border-top: 1px solid var(--adm-border);
+}
+
+.metaRow {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-2) var(--ds-space-3);
+  align-items: start;
+}
+
+.metaRow + .metaRow {
+  border-top: 1px solid var(--adm-border);
+}
+
+.metaCheck {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.metaCheck input:disabled + .metaLabel {
+  color: var(--adm-text-4);
+}
+
+.metaLabel {
+  font-size: 0.8125rem;
+  font-weight: var(--ds-fw-medium);
+  color: var(--adm-text-2);
+}
+
+.metaValue {
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  color: var(--adm-text);
+  word-break: break-word;
+}
+
+.metaEmpty {
+  color: var(--adm-text-4);
+}
+
+.overwrite {
+  margin-left: var(--ds-space-2);
+  padding: 0 6px;
+  border-radius: 2px;
+  background: var(--adm-warning-soft);
+  color: var(--adm-warning);
+  font-size: 0.75rem;
+}
+
+/* ---- 操作条 ---- */
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-3);
+  border-top: 1px solid var(--adm-border);
+  background: var(--adm-table-head);
+}
+
+.apply,
+.discard {
+  padding: 6px 16px;
+  border-radius: var(--adm-r);
+  font-size: 0.8125rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.apply {
+  border: 1px solid var(--adm-solid);
+  background: var(--adm-solid);
+  color: #fff;
+}
+
+.apply:hover {
+  border-color: var(--adm-solid-hover);
+  background: var(--adm-solid-hover);
+}
+
+.discard {
+  border: 1px solid var(--adm-border-strong);
+  background: var(--adm-card);
+  color: var(--adm-text-2);
+}
+
+.discard:hover {
+  border-color: var(--adm-primary);
+  color: var(--adm-primary);
+}
+
+.footerHint {
+  font-size: 0.75rem;
+  color: var(--adm-text-3);
+}

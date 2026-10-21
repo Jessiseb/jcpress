@@ -1,17 +1,24 @@
 /**
  * 正文排版（护眼阅读档位）。
  *
- * 档位是**写死的**，来自设计 D7：正文 17px / 行高 1.9 / 栏宽 68ch / 段间距 1.15em / 代码 14px·1.7。
+ * 档位是**写死的**，来自设计 D7：正文 17px / 行高 1.9 / 段间距 1.15em / 代码 14px·1.7。
  * 效果矩阵里的 V2/V3/V4 就是量这里的值，所以别在别处覆盖它们。
  *
- * 栏宽用已有的 `--ds-measure-prose`（36rem）而不是再写一个 68ch：17px 下 68ch ≈ 578px ≈ 36rem，
- * 两者落点一致，**但页面上只该有一个「正文栏宽」的定义**。
+ * 栏宽默认走 `--ds-measure-prose`（40rem，17px 下 640px ≈ 37.6 汉字/行）。
+ * 原先写的是「68ch ≈ 578px ≈ 36rem」—— 那是按英文口径算的，17px 下实际只有 33.9 个汉字，读起来偏窄。
+ * **页面上只该有一个默认的「正文栏宽」令牌**，改就改这条。
+ *
+ * 外层可以用 `--prose-measure` 覆盖它（详情页用 `none` 吃满内容栏，见
+ * `ArticleDetailPage.module.css`）。覆盖是**逐层继承**的，所以只在真正要改宽度的
+ * 那个容器上写，别写到全局 —— 首页、列表页、占位页都还吃着默认值。
  *
  * 语法高亮不引 highlight.js 主题，而是把 token 类名映射到 `--ds-syn-*`（亮暗各一套，实测过 AA）。
  */
 
 .prose {
-  max-width: var(--ds-measure-prose);
+  /* 栏宽可被外层覆盖：详情页把页内目录收进左栏后，正文可以吃满整条内容栏
+     （2026-10-20 用户两次要求「再宽一些」），后台预览等场景仍用默认令牌 */
+  max-width: var(--prose-measure, var(--ds-measure-prose));
   font-size: 17px;
   line-height: 1.9;
   color: var(--ds-c-text);
@@ -52,6 +59,22 @@
 .prose ol {
   margin: 0 0 1.15em;
   padding-left: 1.4em;
+}
+
+/* 全局 reset 把 ul 的符号摘了（`global.css` 的 `ul { list-style: none }`，
+   那是给导航清单用的）。正文里必须还回来：2026-10-20 看截图发现
+   「- 启动一个 Java 程序……」三条要点排成了一段没有圆点的缩进文字，
+   和段落分不开，读者看不出这是并列的三条。 */
+.prose ul {
+  list-style: disc;
+}
+
+.prose ul ul {
+  list-style: circle;
+}
+
+.prose ol {
+  list-style: decimal;
 }
 
 .prose li {

@@ -29,7 +29,11 @@ public enum ErrorCodeEnum {
     RATE_LIMITED(42901, "请求过于频繁", HttpStatus.TOO_MANY_REQUESTS),
 
     SYSTEM_ERROR(50000, "系统异常", HttpStatus.INTERNAL_SERVER_ERROR),
-    OPERATION_ERROR(50001, "操作失败", HttpStatus.INTERNAL_SERVER_ERROR);
+    OPERATION_ERROR(50001, "操作失败", HttpStatus.INTERNAL_SERVER_ERROR),
+    /** AI 未配置：缺 key 就是不提供该能力，明确报出来，**不静默降级成"排版成功但什么都没变"** */
+    AI_NOT_CONFIGURED(50002, "AI 服务未配置", HttpStatus.SERVICE_UNAVAILABLE),
+    /** 上游模型报错/超时/返回不可解析 */
+    AI_UPSTREAM_ERROR(50201, "AI 服务调用失败", HttpStatus.BAD_GATEWAY);
 
     private final int code;
     private final String message;

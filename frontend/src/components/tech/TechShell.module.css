@@ -1,0 +1,114 @@
+/* 「技术分享」外壳：窄屏单栏（目录折叠在顶部）→ ≥1080px 变「左栏目录 + 内容栏」。
+   左栏**只属于详情页**（是否渲染由 TechShell 判断），列表页没有它 ——
+   但 `.content` 的 `grid-column: 4 / -1` 对所有情况一视同仁：
+   列表页的第 1–3 列于是留白，而这块留白与首页各区块的装订线**逐像素对齐**
+   （都是第 4 列起）。换言之列表页不需要再单独定一套宽度，也就不会和全站栅格打架。
+
+   ⚠️ 这里**不能**直接套全局的 `.section`：它自身就是一个 12 列编辑式栅格，并且带一条
+   `.section > *:not(.sectionTitle, .sectionLead) { grid-column: 4 / -1 }` —— 会把这里的
+   左栏与内容栏**各自**推到第 4 列，两栏于是变成上下堆叠（2026-10-16 实测过：
+   左栏宽 828、内容栏宽 828，都在 x=368）。
+
+   改法是反过来利用它：外壳自己就是那套 12 列栅格，左栏占第 1–3 列、内容栏从第 4 列起。
+   收益不只是省事 —— 正文的起始位置与首页各区块**逐像素对齐**（都是第 4 列），
+   而左栏正好落进原本空着的那三列里，不再需要另造一套宽度体系。
+   这里只从 `.section` 借它「纵向留白 4rem」这一条节奏。 */
+
+.shell {
+  padding-block: 4rem;
+}
+
+/* 列表页的顶部留白比详情页少 2rem（2026-10-19 用户：「这个位置有点低」）。
+   不是随手调的：三页的 h1 顶上堆的东西不一样高 ——
+     首页 hero：64px padding + 22px kicker   → h1 距导航底 110px
+     详情页  ：64px padding + 22px 面包屑     → 95px
+     列表页  ：64px padding + 64px 环 badge + 16px 间距 → **144px**
+   同样的 padding 下，列表页因为那枚 64px 的环 badge 把标题顶得最靠下，隔着导航
+   一眼看过去就是「低了一块」。环本身不能缩（`--ds-ring-badge` 是照 54–64px 这一档
+   定的不透明度，见 decisions #32），所以减的是外壳的 padding：64 → 32，
+   h1 净间距落到 112px，与首页 110 同档。
+   详情页保持 4rem —— 它的 h1 上方只有面包屑，本来就不低。 */
+.shell[data-page='list'] {
+  padding-top: 2rem;
+}
+
+.content {
+  min-width: 0;
+}
+
+/* ── 窄屏：一条可折叠的目录条 ── */
+.railToggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--ds-c-hairline);
+  border-radius: var(--ds-radius-lg);
+  background: transparent;
+  color: var(--ds-c-text-mute);
+  font-family: var(--ds-font-sans);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.railToggleMark {
+  font-size: 12px;
+  color: var(--ds-c-text-subtle);
+}
+
+.railBody[data-open='off'] {
+  display: none;
+}
+
+.railBody[data-open='on'] {
+  padding: 0.9rem 0.2rem 0.2rem;
+}
+
+/* 左栏顶部的「本页目录」（2026-10-20 从正文右侧搬来的）。与下方文章清单之间
+   拉一条细线：两者性质不同 —— 一个是「这一篇讲了哪几节」，一个是「全部文章」，
+   只靠留白分不开，读者会把第一个小节标题当成清单里的某一篇文章。 */
+.railPageToc {
+  margin-bottom: 1.3rem;
+  padding-bottom: 1.3rem;
+  border-bottom: 1px solid var(--ds-c-hairline);
+}
+
+/* ── 桌面：左栏常驻、粘顶 ──
+   下面两条覆盖规则**必须写在 `[data-open]` 之后**：`.railBody[data-open='off']` 与
+   `.railBody[data-open]` 特异性相同（都是 0-2-0），靠源码顺序决胜负 ——
+   上一轮在 AiFormatPanel 的窄屏媒体查询上踩过同一个坑（媒体查询不提升特异性）。 */
+@media (min-width: 1080px) {
+  .shell {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--ds-space-5);
+    align-items: start;
+  }
+
+  /* 第 1–3 列 ≈ 260px：够放下 13px 的导航清单（长标题折两行），
+     又不至于把正文挤到 36rem 以下 —— 内容栏仍是 828px，与改造前逐像素一致。
+     2026-10-20 起这条栏还兼放「本页目录」（.railPageToc），内容栏宽度不变。 */
+  .rail {
+    grid-column: 1 / span 3;
+    position: sticky;
+    /* 与首页各区块首屏同档：5rem 是导航条高度，粘住时标题正好压在导航下方 */
+    top: 5rem;
+    max-height: calc(100vh - 8rem);
+    overflow-y: auto;
+  }
+
+  .content {
+    grid-column: 4 / -1;
+  }
+
+  .railToggle {
+    display: none;
+  }
+
+  .railBody[data-open] {
+    display: block;
+    padding: 0;
+  }
+}

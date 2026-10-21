@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import { getToken } from '@/api/client'
@@ -59,6 +59,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const bodyRef = useRef<HTMLDivElement>(null)
 
   const meta = resolveAdminRoute(location.pathname)
 
@@ -70,10 +71,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [collapsed])
 
-  // 换页就收起移动端抽屉与用户下拉，否则它们会挂在下一页上
+  // 换页就收起移动端抽屉与用户下拉，否则它们会挂在下一页上；
+  // 同时把内容区滚回顶部 —— 滚动容器是 `.body` 而不是 window，浏览器那套
+  // 「前进后退恢复滚动位置」管不到它，从长页面切到短页面会停在空白处。
+  // 用 `scrollTop = 0` 而不是 `scrollTo()`：jsdom 没实现 Element.scrollTo，
+  // 在单测里会直接抛 TypeError，把整页渲染带崩（这两个写法语义一样）。
   useEffect(() => {
     setDrawerOpen(false)
     setMenuOpen(false)
+    if (bodyRef.current) bodyRef.current.scrollTop = 0
   }, [location.pathname])
 
   const toggleNav = () => {
@@ -255,7 +261,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           )}
         </div>
 
-        <div className={styles.body}>{children}</div>
+        <div className={styles.body} ref={bodyRef}>{children}</div>
       </div>
     </div>
   )

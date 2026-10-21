@@ -28,6 +28,16 @@ vi.mock('@/api/admin', () => ({
   fetchAdminArticles: vi.fn().mockResolvedValue({ list: [], page: 1, size: 50, total: 0, pages: 0 }),
   publishAdminArticle: vi.fn(),
   deleteAdminArticle: vi.fn(),
+  // 编辑页把自己包在 AdminLayout 里，而布局要读一次登录态（顶栏头像用 nickname）。
+  // 少了这个导出，整页渲染时直接抛「No fetchCurrentAdmin export is defined」。
+  fetchCurrentAdmin: vi.fn().mockResolvedValue({
+    id: '1',
+    username: 'admin',
+    nickname: '管理员',
+    role: 'ADMIN',
+  }),
+  adminLogin: vi.fn(),
+  adminLogout: vi.fn(),
 }))
 
 const fetchCategories = vi.fn()

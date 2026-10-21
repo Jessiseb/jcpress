@@ -3,6 +3,8 @@ import type {
   AdminArticleQuery,
   AdminArticleVO,
   AdminUserVO,
+  AiFormatPayload,
+  AiFormatVO,
   ArticleSavePayload,
   LoginVO,
   PageResult,
@@ -70,3 +72,13 @@ export async function uploadImage(file: File): Promise<UploadFileVO> {
   }
   return payload.data
 }
+
+/**
+ * AI 排版。**服务端不做任何兜底**：没配 key 回 50002、超出频次回 42901、
+ * 上游超时回 50003 —— 前端按错误码给提示，不假装成功（本项目的网络层一贯如此）。
+ *
+ * 这是同步阻塞调用，实测一篇 3400 字正文要 40 秒上下，所以调用方必须给出
+ * 明确的"进行中"反馈，不能让它看起来像没反应。
+ */
+export const formatAdminArticleAi = (payload: AiFormatPayload) =>
+  request<AiFormatVO>('/api/v1/admin/ai/format', { method: 'POST', auth: true, body: payload })

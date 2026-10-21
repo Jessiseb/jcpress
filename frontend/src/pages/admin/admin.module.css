@@ -114,13 +114,24 @@
 
 .shell {
   display: flex;
-  min-height: 100vh;
+  /* 后台**整页不滚**，滚动发生在 `.body` 里 —— 这样侧边栏、顶栏、标签条都不动。
+     原来是 `min-height: 100vh` + 整页滚动：侧边栏只是被 flex 拉伸的普通项，
+     高度等于整页内容高度，跟着一起滚走（2026-10-21 用户报的就是这个）。
+     窄屏不受影响：那时 `.sidebar` 已经是 `position: fixed` 的抽屉。 */
+  height: 100vh;
+  /* 移动端地址栏伸缩时 100vh 会多算一截、把内容区底部顶出屏幕；
+     认 dvh 的浏览器用第二行覆盖，不认的留在 100vh 上 */
+  height: 100dvh;
+  overflow: hidden;
   background: var(--adm-bg);
 }
 
 .main {
   flex: 1;
   min-width: 0;
+  /* flex column 的子项默认 min-height:auto，不压住的话 `.body` 会被内容撑高、
+     把外壳顶出视口外面 —— 那就退回整页滚动的老样子了 */
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -562,6 +573,10 @@
 
 .body {
   flex: 1;
+  /* 唯一的滚动容器（见 `.shell` 的注释）。`min-height: 0` 让它在内容超长时
+     真的产生内部滚动条，而不是把 `.main` 撑高。 */
+  min-height: 0;
+  overflow-y: auto;
   padding: var(--ds-space-4);
 }
 

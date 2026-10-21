@@ -47,15 +47,10 @@
   font-size: 12px;
 }
 
-/* 常驻栏（桌面）：粘顶，长文滚动时目录一直可见 */
-@media (min-width: 1024px) {
-  .toc {
-    position: sticky;
-    top: 5rem;
-    max-height: calc(100vh - 8rem);
-    overflow-y: auto;
-  }
-}
+/* 常驻粘顶原来在这里（≥1024px 时 `position: sticky`）。2026-10-20 撤掉：
+   唯一的使用场景变成技术分享外壳的左栏，那条栏自己就是 sticky + 内部滚动，
+   两处都设会出现嵌套滚动条（外层滚一半、内层滚一半，滚轮到底先滚谁全看光标位置）。
+   窄屏那条折叠目录则跟着页面正常滚动，本来也不需要粘。 */
 
 @media (prefers-reduced-motion: reduce) {
   .toc a {

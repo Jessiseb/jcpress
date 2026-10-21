@@ -1,5 +1,9 @@
 .wrap {
   min-height: 60vh;
+  /* 列表页不自撑宽：宽度由外壳的内容栏（第 4 列起）决定。
+     列表页没有左栏，但左侧三列照样留白 —— 那是全站各区块共用的装订线，
+     这里**不要**为了「填满」把它吃掉：填了就和首页错开一栏的距离。 */
+  max-width: none;
 }
 
 /* 环 badge：与占位页、项目经历区块共用同一档（--ds-ring-badge，比大环浓） */
@@ -32,33 +36,140 @@
 
 /* 计数：弱化小字，不抢标题。含中文 → 不走等宽栈（decisions #41） */
 .count {
-  margin: var(--ds-space-5) 0 var(--ds-space-3);
+  margin: var(--ds-space-5) 0 var(--ds-space-4);
   font-size: var(--ds-fs-xs);
   letter-spacing: 0.05em;
   color: var(--ds-c-text-subtle);
 }
 
-/* ── 卡片栅格：桌面 2 栏、≥1200px 3 栏、≤719px 单栏；首篇跨栏做头版 ── */
-.grid {
+/* ── 目录式索引：按分类分组，组内一行一篇 ── */
+.index {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-5);
+}
+
+.groupName {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--ds-c-hairline);
+  font-size: 1.05rem;
+  font-weight: var(--ds-fw-display-strong);
+}
+
+/* 组内篇数：跟在分组名后面，弱化处理 */
+.groupCount {
+  font-family: var(--ds-font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ds-c-text-subtle);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 一行一篇：缩略图 + 正文 + 档案。整行可点（触摸目标远大于 44px） */
+.row {
   display: grid;
-  gap: 1.1rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ds-space-3);
+  padding: 0.6rem 0.6rem 0.6rem 0.4rem;
+  border-radius: var(--ds-radius-lg);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    background-color 160ms var(--ds-ease-out),
+    box-shadow 160ms var(--ds-ease-out);
 }
 
-.grid > :first-child {
-  grid-column: 1 / -1;
+/* 相邻行之间一条极淡的分隔线；用 + 而不是给每行加 border-top，
+   免得首行头上也多出一道线 */
+.rows > li + li .row {
+  box-shadow: inset 0 1px 0 var(--ds-c-hairline);
 }
 
-@media (min-width: 1200px) {
-  .grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+.row:hover {
+  background-color: var(--ds-c-bg-elv);
 }
 
-@media (max-width: 719px) {
-  .grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.thumb {
+  display: block;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: var(--ds-radius-lg);
+  /* 无封面时的「字体封面」底：品牌渐变，不依赖外部图片、不闪。
+     ⚠️ 两条照抄 ArticleCard 的结论（那里踩过，别重踩）：
+     ① 品牌色**写死不跟随主题** —— 封面块是一块「品牌面」，不是随主题变的正文面；
+     ② 必须**先给一条不透明 `background-color` 再叠渐变** —— 渐变走 `background-image`，
+        而对比度审计的 `effectiveBg` 只认 `background-color`，否则会一路上溯到页面浅底，
+        把白字算成「白底白字」（假报 1:1）。 */
+  background-color: #0756ab;
+  background-image: linear-gradient(135deg, #096fdc 0%, #0756ab 100%);
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 无封面时的字体封面：标题首字 */
+.coverGlyph {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: var(--ds-font-display);
+  font-size: 1.4rem;
+  font-weight: var(--ds-fw-display-strong);
+}
+
+.rowBody {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.rowTitle {
+  font-family: var(--ds-font-display);
+  font-size: 1.06rem;
+  line-height: 1.45;
+}
+
+/* 摘要限制两行：目录要的是"扫一眼看清有哪些"，不是把正文搬来 */
+.rowSummary {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--ds-c-text-mute);
+}
+
+.rowMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+  font-family: var(--ds-font-sans);
+  font-size: 12px;
+  color: var(--ds-c-text-subtle);
+  white-space: nowrap;
 }
 
 .state {
@@ -92,5 +203,22 @@
 @media (max-width: 719px) {
   .title {
     font-size: 2rem;
+  }
+
+  /* 窄屏把档案行收进正文之下：一行挤不下三列，日期会被标题顶出画面 */
+  .row {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .thumb {
+    width: 48px;
+    height: 48px;
+  }
+
+  .rowMeta {
+    grid-column: 2;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
   }
 }

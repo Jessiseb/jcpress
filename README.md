@@ -1,190 +1,197 @@
+<div align="center">
+
 # jcpress
+一个Vibe Coding出来个人网站
+为了能方便地分享技术，所以才有了这个网站。
+为了展示自己的技术能力，所以才有了这个网站。
 
-> 个人网站 —— 展示个人经历与技术栈，沉淀技术分享与项目笔记。
-> 当前状态：**一期前端已完结**（首页 / 频道外壳 / 视觉语言，见 `docs/dev-journal.md` 阶段 1–14）；
-> **二期视觉修订已完结并归档**（`openspec/changes/archive/2026-10-01-phase-2-r3/`）；
-> **三期（技术分享模块）后端 + 前台/后台 UI 已完结**（分支 `feat/phase-3-tech-module`）：
-> Spring Boot 后端（公开读接口 + 后台写平面 + Markdown 导入器）、`/tech` 列表与详情页、
-> `/admin` 登录与写入口、文章专用字体子集。
-> 效果与验收见 [`docs/phase3-effect-matrix.md`](docs/phase3-effect-matrix.md)。
+[![React](https://img.shields.io/badge/React-18.3-61DAFB?style=flat-square)](https://react.dev/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3.4-6DB33F?style=flat-square)](https://spring.io/projects/spring-boot)
+[![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?style=flat-square)](https://www.mysql.com/)
+[![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat-square)](https://redis.io/)
 
-## 技术栈
+<img src="docs/assets/home-light.webp" alt="首页" width="880">
 
-| 层 | 选型 |
-| --- | --- |
-| 前端 | React 18 + TypeScript + Vite 6 + React Router 6 + TanStack Query 5；**构建期预渲染**（SEO）；**移动端优先适配** |
-| 后端 | **Java 17** + Spring Boot 3.3.4 + MyBatis-Plus + **Gson** + **Sa-Token 1.44.0**（仅后台登录用） |
-| 存储 | MySQL 8（内容 + 后台账号） · Redis 7（Sa-Token 会话 / 缓存 / 限流 / 浏览量去重） |
-| 部署 | Docker Compose（Nginx + Backend + MySQL + Redis） |
+</div>
 
-> ⚠️ **JDK 基线是 17**。本机 `JAVA_HOME` 常指向其它版本，跑后端命令前先
-> `export JAVA_HOME=<jdk-17>`，否则 `./mvnw` 会以错误版本启动。
+前端 React 18 + TypeScript + Vite 6，纯静态 SPA；后端 Spring Boot 3.3 + MySQL 8 + Redis 7，只提供内容读写接口。公开页面不用登录，后台单账号，账号在数据库里维护，没有注册入口。
 
-## 规划文档
+## 目录
 
-| 文档 | 内容 |
-| --- | --- |
-| [`docs/项目前期规划.md`](docs/项目前期规划.md) | **唯一源**：设计基线、信息架构、系统架构、数据库设计、Redis 设计、访问控制与后台认证（Sa-Token）、API 契约、后台管理系统、工程规范、部署、里程碑、风险、决策表 |
-| [`design-system/README.md`](design-system/README.md) | 设计 token 的提取溯源、许可说明与已知缺口 |
-| [`design-system/tokens.curated.css`](design-system/tokens.curated.css) | 从参照站提取的 light + dark 双主题 token（**证据基线，保持原样**） |
-| [`design-system/theme.jcpress.css`](design-system/theme.jcpress.css) | **本站品牌主题层**：青碧 Teal 主色、语义色调校、移动端 token 覆盖（在基线之后引入） |
-| [`design-system/palette-options.html`](design-system/palette-options.html) | 品牌主色候选预览（亮 / 暗两套 + 语义色撞色判定） |
+- [里面有什么](#里面有什么)
+- [怎么跑起来](#怎么跑起来)
+- [几个想过的取舍](#几个想过的取舍)
+- [常用命令](#常用命令)
+- [项目结构](#项目结构)
+- [还没做好的地方](#还没做好的地方)
+- [一些规矩](#一些规矩)
+- [部署](#部署)
+- [文档](#文档)
+- [许可](#许可)
 
-## 已确定的内容结构
+## 里面有什么
 
-导航：**关于我** · **技术分享**（按分类）· **算法笔记**（按专题 + 难度）· **项目笔记**
+**首页**简历
 
-- `/` 关于我：Hero、技术栈矩阵、实习经历时间线、项目经历卡片、数据统计、联系方式
-- `/tech` 技术分享：分类总览 → 分类列表 → 文章详情（Markdown + 代码高亮 + TOC）
-- `/algo` 算法笔记：专题总览（数据结构 / 算法思想）→ 题目列表（难度筛选）→ 题解详情（题号 / 复杂度 / 多解法），
-  复用 `article` 管线 + `algo_problem` 扩展表
-- `/projects` 项目笔记：项目卡片墙 → 项目详情 → 关联笔记
-- `/admin` 后台写入口：**需要账号登录**（Sa-Token），不出现在公开导航里
-- 前台**无需登录**：全站公开可读，没有注册入口、没有内容可见性分级
-- 生活经验频道**暂不实现**（决策 D2；可见性备选方案见规划文档[附录 C](docs/项目前期规划.md#附录-c生活经验可见性备选方案)）
+**技术分享**
 
-## 内容维护方式（一期）
+## 怎么跑起来
 
-| 内容 | 怎么维护 |
-| --- | --- |
-| 技术分享 / 算法笔记 / 项目笔记 | 仓库写 `content/**/*.md` + front-matter（算法笔记另带题号 / 难度 / 复杂度），M1 的 **Markdown 导入器**灌库（可 diff、可回滚）；也可用后台写入口 |
-| 后台写入口 | `/admin` 登录后写，M5 实现（**Sa-Token 账号登录**） |
-| 简历数据 | Flyway seed / 直接 SQL |
-| 后台账号 | 数据库手工维护，**不开放注册** |
-| 完整管理后台 | **放在 M7，按需启动** —— 见规划文档 [§10](docs/项目前期规划.md#10-后台管理系统)（决策 D8） |
+依赖：JDK 17、Node 18 以上、MySQL 8、Redis 6 以上。
 
-## 验收怎么跑
-
-**权威清单**：[`docs/phase3-effect-matrix.md`](docs/phase3-effect-matrix.md)（三期，**当前**）
-与 [`docs/phase2-effect-matrix.md`](docs/phase2-effect-matrix.md)（二期，视觉修订）。
-两者都是「评估集」：每条效果的判据 + 复核命令 + 实测结果。
-
-> **端口约定：后端 8091 / 前端 8099。** 与 `deploy/` 部署脚本、`frontend/vite.config.ts`
-> （`server.port`、`preview.port`、`/api` 代理目标）以及 `.tmp/tools/` 下验收脚本里写死的 URL 一致。
-> 后端 8091 是**运行时覆盖**（`application.yml` 里仍是 8080），本地起服务必须带上 `--server.port=8091`。
-
-### 后端
+### 建库
 
 ```bash
-# 前置：JDK 17（本机 JAVA_HOME 常指向 8/21，必须显式指定）
-export JAVA_HOME="<path-to-jdk-17>"
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS jcpress DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;"
+```
 
+表结构和种子数据由 Flyway 在启动时执行（`backend/src/main/resources/db/migration/`）。也可以手动建：`mysql -u root -p jcpress < deploy/init_schema.sql`。
+
+### 起后端（:8091）
+
+```bash
+export JAVA_HOME=/path/to/jdk-17      # 必须是 17，本机这条经常指错
 cd backend
-./mvnw -q -B test                          # 全量测试：111 run / 0 fail / 0 error
-./mvnw -q -DskipTests compile              # 只编译
-./mvnw -q spring-boot:run -Dspring-boot.run.arguments="--server.port=8091"   # 起服务（端口 8091）
-curl -s http://127.0.0.1:8091/api/health   # 期望 code=0 且 db=UP、redis=UP
-
-# Markdown 导入器（CLI，非 web 模式；--dry-run 只打印将处理的清单）
-./mvnw -q spring-boot:run -Dspring-boot.run.profiles=importer -Dspring-boot.run.arguments="--dry-run"
+./mvnw -q spring-boot:run -Dspring-boot.run.arguments="--server.port=8091"
 ```
-
-需要 MySQL 8 与 Redis ≥6.0 在跑（Sa-Token 会话依赖 Redis）。
-
-### 前端
 
 ```bash
-# 前置：dev server 必须在 8099 上跑着（截图与浏览器断言里的 URL 是硬编码的）
-cd frontend && npm run dev
-
-# 类型检查（本机可用）
-cd frontend && npx tsc --noEmit
-
-# 浏览器行为断言：二期 71 项 + 三期专项 12 项 = 82 项
-node .tmp/tools/audit-behavior.cjs
-
-# 对比度审计（4 条路由 × 亮/暗 = 8 组合，未达标必须为 0）
-node .tmp/tools/audit-contrast.cjs
-
-# 天体分节停靠（8 scene，每场「压字 0 处」）
-node .tmp/tools/probe-docking.cjs
-
-# 首屏资源归属 + 体积（三期 V10）
-node .tmp/tools/audit-firstscreen.cjs        # 首屏不含编辑器/Markdown/文章字体
-node .tmp/tools/audit-firstscreen-prod.cjs   # 首屏 gzip 生产口径（判据 ≤200KB）
-
-# 四视口截图 + 横向溢出（1280 / 768 / 390 / 375）
-node .tmp/tools/shot-final.cjs .tmp/shots-p3
+curl -s http://127.0.0.1:8091/api/health
+# {"code":0,"message":"ok","data":{"db":"UP","redis":"UP"},"traceId":"..."}
 ```
 
-> ⚠️ **`vitest run` 与 `vite build` 在本机跑不动**：EDR 拦截 esbuild 子进程读文件
-> （`winapi error #5`）。两者都失败在**启动/配置加载阶段**，测试代码与业务代码本身没问题。
-> 替代覆盖：`tsc --noEmit` + `audit-behavior.cjs` 的浏览器实测 + 对比度审计 +
-> `audit-firstscreen-prod.cjs`（零子进程，用 `esbuild-wasm` 直接算生产体积）。
-> **换到没有 EDR 拦截的机器上，`vitest run` / `vite build` 应回归。**
-> 详情见 `docs/phase3-effect-matrix.md` 的「构建口子的说明」。
+`application.yml` 里写的是 8080，**8091 是运行时覆盖的**。部署脚本、Vite 代理、验收脚本都按 8091 写死，本地起服务需保持一致，否则连不上。
 
-两条会误导人的经验（都写进了 `docs/decisions.md`）：
-
-- **性能数字必须标明测的是 dev 还是生产构建**：同一份代码对 dev server 跑 Lighthouse 只有 30 分，对生产构建是 98 分。
-- **截图工具必须先「冻结一帧」再拍**：页面上有常驻无限动画时，Chromium 会拍到空白/陈旧帧；
-  而 `animations: 'disabled'` 会把无限动画重置到初始态（流线相位归零，图案退化成挤在左边缘）。
-  正确做法见 `shot-final.cjs` 的 `freezeFlowFrame()`。
-
-## 字体流水线（自托管中文衬线子集）
-
-展示字是**两档真字重**的 Noto Serif SC 子集（Latin 仍走系统 Georgia，中文走自托管子集，
-`unicode-range` 只认 CJK）：
-
-| 档位 | 文件 | 字符表 | 体积 | 用在哪 |
-| --- | --- | --- | --- | --- |
-| 500 | `frontend/public/fonts/serif-sc-500.woff2` | 全站字符表（`.tmp/fonts/chars.txt`） | 92.7KB / 531 字 | 定位行、一句话定位、区块导语以外的衬线层 |
-| 700 | `frontend/public/fonts/serif-sc-700.woff2` | **只含展示字**（`.tmp/fonts/chars-display.txt`） | 9.0KB / 45 字 | `h1` / `h2` / 关键数字 |
-| 500·article | `frontend/public/fonts/serif-sc-article-500.woff2` | GB2312 一级字（`.tmp/fonts/chars-article.txt`） | 825KB / 4601 字 | **三期新增**：技术文章正文，独立 family `JCPress Serif SC Article` |
-| 700·article | `frontend/public/fonts/serif-sc-article-700.woff2` | 同上 | 840KB / 4601 字 | **三期新增**：文章内标题 |
-
-> **文章字体只在详情页下载**：`fonts-article.css` 由 `/tech/:slug` 路由的懒加载 chunk 引用，
-> 首页与 `/tech` 列表**不请求**这两个文件（`audit-firstscreen.cjs` 有反向断言守住这条）。
-> `@font-face` 只是声明、不触发下载，所以判据看的是**运行时请求**而非 CSS 文本归属。
+### 起前端（:8099）
 
 ```bash
 cd frontend
-npm run dev                  # 前置：dev server 必须在 8099 上跑着（收集字符要开浏览器）
-npm run fonts:build          # 500 档
-npm run fonts:build:display  # 700 档（自动跑「只收展示字」的字符表收集）
+npm install
+npm run dev        # → http://localhost:8099
 ```
 
-只重收字符表、不重切子集：`npm run fonts:chars`（全站）/ `npm run fonts:chars:display`（展示字）。
+`/api` 由 Vite 代理到 `127.0.0.1:8091`（`vite.config.ts` 里 `server.proxy` 和 `preview.proxy` 各配了一份），所以前后端同源，没有 CORS 问题。上传的图片也走这条代理。
 
-- 前置依赖：Python 3 + `fonttools` + `brotli`；源字体（Noto Serif SC 变量字体，约 24MB，OFL 许可）
-  首次自动下载并缓存在 `frontend/.tmp/fonts/`。
-- 字符表是从**真实渲染的 DOM** 收集的，不扫源码 —— 扫源码会把上千行中文注释也算进去、子集翻倍。
-- **新增汉字后必须重跑**：出现字符表外的字时，那个字会回落到系统宋体、与相邻字不同款。
-- **700 档漏字更隐蔽也更难看**：同一行标题里会混用两档字重（观感就是"发糊"）。
-  用 `node frontend/scripts/audit-display-font.cjs` 断言「展示字字符集 ⊆ 700 子集」——
-  它读的是**字体文件的真实 cmap**（`document.fonts.check()` 做不到这件事：两个 face 的
-  `unicode-range` 相同，check() 只回答"该用哪个 face"，不回答"字形存不存在"）。
-- 两个 `@font-face` 的 `unicode-range` 必须**逐字一致**，否则会出现同一个字一半走 Georgia、
-  一半走子集的分裂。
+### 跑验收
 
-## 仓库结构
+```bash
+# 后端 111 个用例
+export JAVA_HOME=/path/to/jdk-17 && cd backend && ./mvnw -q -B test
+
+# 前端类型检查 + 单测（本机要加 --configLoader runner，原因见「还没做好的地方」）
+cd frontend && npx tsc --noEmit
+cd frontend && npx vitest run --configLoader runner
+
+# 浏览器里的断言，需要 8099 和 8091 都在跑，从仓库根目录执行
+node .tmp/tools/audit-behavior.cjs      # 84 项：路由、交互、触摸目标、无溢出
+node .tmp/tools/audit-contrast.cjs      # 亮/暗两套主题的文字对比度
+node .tmp/tools/audit-firstscreen.cjs   # 首屏不许加载编辑器和文章字体
+node .tmp/tools/shot-final.cjs          # 四档视口截图 + 横向溢出巡检
+```
+
+这些脚本放在 `.tmp/tools/` 下（目录名像临时区，实际是 `.gitignore` 白名单放行的）。每加一条效果就补一个对应的判据脚本，不靠人工点一遍确认。
+
+## 几个想过的取舍
+
+**没用 Spring AI。** 装上试过：缺 api key 时整个应用起不来。这里的设计是「AI 可选，没配 key 也要能正常启动，调接口时返回 50002」，两者冲突。所以直接用 Spring 6.1 自带的 `RestClient` 调 OpenAI 兼容协议，没有新增依赖。
+
+**没用 UI 组件库。** 全站 CSS Modules 加一套自定的 token。这个站的排版本身就是要做的部分，套组件库等于跳过。
+
+**预渲染还没做，现在是纯 SPA。** `index.html` 里只有一个挂载点和一段首帧画主题的脚本。预渲染排在里程碑 M6，代码按「预渲染友好」写（首屏内容不依赖 JS 才存在），但功能尚未实现。
+
+理由和当时的实测数据都记在 [`docs/decisions.md`](docs/decisions.md) 里，包括走错又退回来的那几次。
+
+## 常用命令
+
+前端（`frontend/`）：
+
+| 命令 | 作用 |
+| :-- | :-- |
+| `npm run dev` | 开发服务器，:8099，带 `/api` 代理 |
+| `npm run build` | `tsc -b && vite build` |
+| `npm run preview` | 预览构建产物，:8099 |
+| `npm test` | Vitest 单测（本机要加 `--configLoader runner`） |
+| `npm run fonts:build` | 重建 500 档中文衬线子集 |
+| `npm run fonts:build:display` | 只重建展示字（700 档） |
+| `npm run fonts:build:article` | 重建文章正文字体（GB2312 一级字） |
+
+后端（`backend/`）：
+
+| 命令 | 作用 |
+| :-- | :-- |
+| `./mvnw -q -B test` | 全量测试 |
+| `./mvnw -q -DskipTests compile` | 只编译 |
+| `./mvnw -q spring-boot:run -Dspring-boot.run.arguments="--server.port=8091"` | 起服务 |
+| `./mvnw -q spring-boot:run -Dspring-boot.run.profiles=importer -Dspring-boot.run.arguments="--dry-run"` | Markdown 导入器，非 web 模式 |
+
+## 项目结构
 
 ```text
 jcpress/
-├── docs/                # 前期规划、决策记录、效果矩阵、开发留痕
-├── design-system/       # 设计 token、提取产物与溯源说明
-├── content/             # Markdown 源文件（技术文章 / 项目笔记），供导入器灌库
-├── frontend/            # React SPA，含 /admin 后台路由（三期已实现写入口）
-├── backend/             # Spring Boot 应用（三期已实现公开读 + 后台写 + 导入器）
-├── openspec/            # OpenSpec 变更与归档（每个变更一份 tasks/specs）
-└── deploy/              # docker-compose、nginx、Dockerfile（待创建）
+├── frontend/                  # React SPA（含 /admin 路由）
+│   ├── src/
+│   │   ├── pages/             # home / tech / admin / 两个占位频道
+│   │   ├── components/        # 按域分组：home、tech、admin、layout
+│   │   ├── api/               # 请求层与类型
+│   │   ├── hooks/             # useTechCatalog 等
+│   │   ├── styles/            # 全局样式与 token 引入顺序
+│   │   └── utils/             # Markdown 预览、结构计数
+│   ├── scripts/               # 字体子集流水线：收字符 → 切 woff2
+│   └── public/                # 字体、封面、公司照片、简历 PDF
+├── backend/                   # Spring Boot
+│   └── src/main/java/com/jcpress/
+│       ├── web/portal/        # 公开读接口
+│       ├── web/admin/         # 后台写接口，Sa-Token 保护
+│       ├── service/ manager/  # 业务逻辑，每个业务一个 manager
+│       ├── repository/        # MyBatis-Plus Mapper
+│       ├── domain/            # DO / DTO / VO / Query / Converter
+│       ├── infrastructure/    # 配置、Gson、存储、切面
+│       └── importer/          # Markdown 导入器
+├── content/                   # Markdown 源文件，供导入器灌库
+├── design-system/             # 设计 token 与提取溯源
+├── docs/                      # 规划、决策、效果矩阵、开发留痕
+├── deploy/                    # 裸机部署脚本 + 建表 SQL
+└── openspec/                  # 变更提案与归档
 ```
 
-## 下一步
+## 还没做好的地方
 
-1. 确认 [`docs/项目前期规划.md` §15](docs/项目前期规划.md#15-待确认决策) 剩下的 **D1、D4–D7、D11、D12** 决策
-   （已定：D2 生活经验暂不做 · D3 SPA+构建期预渲染 · D8 后台分三步 · D9 前台免登录 + 后台 Sa-Token ·
-   D10 单仓多模块 · D13 品牌主色青碧 Teal）
-2. **三期收尾**：归档 `openspec/changes/phase-3-tech-module/`（6.1 集成验收与 6.2 文档同步已完成）
-3. 规划中尚未启动的部分：算法笔记 `/algo`、项目笔记 `/projects`、搜索、
-   Docker 部署与预渲染流水线（见规划文档里程碑 M4/M6）
+目前已知的问题：
 
-## 说明
+**前端单测 59 例里有 15 例是红的。** 都在 `HomePage`、`AdminArticleEditPage`、`MarkdownBody` 三个文件里，三期改版之前就红了——用 `git show HEAD:` 把旧版取出来对照跑过，跟后面的改动无关，暂时没逐条修。现在靠 `tsc` 加浏览器断言兜着。
 
-- 设计基线提取自 `https://golangstar.cn/`（VuePress + VuePress Theme Hope，均为 MIT 许可），
-  仅复用 token 结构与数值体系，品牌色与视觉签名将自行设计；详见规划文档 §2.7。
-- **移动端是硬要求**：断点、触摸目标（≥44px）、代码块与表格的横向滚动、性能预算见规划文档 §2.8；
-  所有页面按 375 / 390 / 768 / 1280 四档宽度验收。
-- 仓库中不提交任何密钥；数据库口令、对象存储 AK、后台账号口令一律通过环境变量注入。
-- 后端工程规范遵循《Java开发手册（黄山版）》：包结构按 **portal / admin 隔离**，
-  并用 **P3C-PMD + ArchUnit** 在 CI 卡口（见规划文档 §11.4 分包架构、§11.5 符合性清单）。
+**后台编辑器的暗色模式有 31 处标点颜色不够。** 是 CodeMirror `basicSetup` 自带的浅色高亮（标点走 `#404740`）压不住暗底。要修得换一套跟着主题走的语法高亮，没做。
+
+**本机 `vite build` 过不去。** EDR 会拦 esbuild 子进程读文件，报 `winapi error #5`。`vitest` 加 `--configLoader runner` 能绕开，build 没有等价开关，所以生产构建在服务器上跑。
+
+**算法笔记、项目笔记的页面是空的。** 路由、导航、空态都在，内容待补。
+
+## 一些规矩
+
+几条固定约束：
+
+- 视觉基线取自 [`golangstar.cn`](https://golangstar.cn/) 的结构和数值（VuePress + Theme Hope，MIT），只用 token 体系和数值关系，颜色与视觉签名另外做。溯源在 [`design-system/README.md`](design-system/README.md)。
+- 字体自托管子集，两档真字重（500 / 700），拉丁字母走系统 Georgia。文章正文另有一套 GB2312 一级字子集，**只在文章详情页下载**，首页和列表页不请求，有反向断言守着。新增汉字要重跑字符表，否则那个字会掉回系统宋体，和旁边的字不同款。
+- 手机上必须能用。每版都在 375 / 390 / 768 / 1280 四档下验收，触摸目标不小于 44px，代码块和表格横向滚动，不用 `overflow: hidden` 掩盖问题。
+- 性能数字必须带测试环境。同一份代码，dev server 上跑 Lighthouse 是 30 分，生产构建是 98 分。
+
+## 部署
+
+没用 Docker，裸机脚本（服务器装好 JDK 17 和 Node 18+ 就行）：
+
+```bash
+bash deploy/deploy-backend.sh    # 停旧进程 → 拉代码 → 构建 → 起 jar（:8091）
+bash deploy/deploy-frontend.sh   # 装依赖 → build → vite preview（:8099）
+```
+
+两个脚本顶部都有「按你实际环境改这里」的配置块：部署路径、分支、JDK 路径、JVM 参数、端口。密钥从部署机上的 `.env` 注入，不写在脚本里，仓库里也没留。
+
+## 文档
+
+- [`docs/项目前期规划.md`](docs/项目前期规划.md)：信息架构、系统架构、库表与 Redis 设计、接口契约、里程碑。改需求先改它。
+- [`RUNBOOK.md`](RUNBOOK.md)：怎么起服务、全套验收脚本怎么跑、本机环境的坑。
+- [`docs/decisions.md`](docs/decisions.md)：每条决策的理由和当时的实测数据。
+- [`docs/dev-journal.md`](docs/dev-journal.md)：开发留痕，包括被推翻过什么、返工了几轮。
+- [`docs/phase3-effect-matrix.md`](docs/phase3-effect-matrix.md)：每条效果的判据、复核命令、实测结果。
+
+

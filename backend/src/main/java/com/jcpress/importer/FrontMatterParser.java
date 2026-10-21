@@ -5,6 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.yaml.snakeyaml.Yaml;
 
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +27,7 @@ public class FrontMatterParser {
     private static final String DELIMITER = "---";
     private static final List<String> ALLOWED_STATUS = List.of("DRAFT", "PUBLISHED", "ARCHIVED");
     private static final List<String> ALLOWED_TYPES = List.of("TECH", "ALGO", "PROJECT");
+    private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public ParsedMarkdown parse(String raw, String fileName) {
         String normalized = raw.replace("\r\n", "\n");
@@ -92,7 +96,17 @@ public class FrontMatterParser {
     }
 
     private String asString(Object value) {
-        return value == null ? null : String.valueOf(value).trim();
+        if (value == null) {
+            return null;
+        }
+        // SnakeYAML 会把未加引号的 `2026-10-20 19:30:00` 隐式解析成 Date（YAML 规范里
+        // 无时区的时间戳按 UTC 处理）。若直接 toString，得到的是
+        // "Wed Oct 21 03:30:00 CST 2026"，后面 publishTime 的格式校验必然失败 ——
+        // 所以这里按 **UTC** 格式化回原字面量（用本地时区会再偏 8 小时）。
+        if (value instanceof Date date) {
+            return DATE_TIME.format(date.toInstant().atZone(ZoneOffset.UTC));
+        }
+        return String.valueOf(value).trim();
     }
 
     /** 解析结果：front-matter + 正文 */

@@ -1,0 +1,96 @@
+/* 左栏「技术分享目录」。
+   形态参照文档站：一条常驻竖栏 + 分组清单，当前项用左侧竖条 + 强调色标出
+   （与 Toc 的 `aria-current='location'` 同一套视觉语言，只是这里的语义是「当前页」）。 */
+
+.rail {
+  font-family: var(--ds-font-sans);
+  font-size: 13px;
+}
+
+/* ── 顶部入口：「全部文章」 ── */
+.root {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem 0.35rem 0.7rem;
+  border-left: 2px solid transparent;
+  color: var(--ds-c-text);
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    color 140ms var(--ds-ease-out),
+    border-color 140ms var(--ds-ease-out);
+}
+
+.root:hover {
+  color: var(--ds-c-accent);
+}
+
+/* 在列表页时「全部文章」就是当前页 */
+.root[aria-current='page'] {
+  border-left-color: var(--ds-c-accent);
+  color: var(--ds-c-accent);
+}
+
+.rootCount {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ds-c-text-subtle);
+}
+
+/* ── 分组 ── */
+.group {
+  margin-top: 1.15rem;
+}
+
+.groupName {
+  margin: 0 0 0.4rem;
+  padding-left: 0.7rem;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--ds-c-text-subtle);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: block;
+  padding: 0.3rem 0.5rem 0.3rem 0.7rem;
+  border-left: 2px solid transparent;
+  color: var(--ds-c-text-mute);
+  text-decoration: none;
+  line-height: 1.55;
+  transition:
+    color 140ms var(--ds-ease-out),
+    border-color 140ms var(--ds-ease-out);
+}
+
+.item:hover {
+  color: var(--ds-c-text);
+}
+
+/* 当前文章：竖条 + 强调色。用 border 而不是背景块 —— 暗色下背景块会成色带 */
+.item[aria-current='page'] {
+  border-left-color: var(--ds-c-accent);
+  color: var(--ds-c-accent);
+}
+
+.state {
+  margin: 0.5rem 0 0 0.7rem;
+  font-size: 12px;
+  color: var(--ds-c-text-subtle);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root,
+  .item {
+    transition: none;
+  }
+}

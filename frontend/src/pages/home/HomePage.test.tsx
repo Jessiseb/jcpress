@@ -1,14 +1,26 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import HomePage from './HomePage'
 
+/**
+ * 三期给首页加了「最新技术分享」区块，它内部走 react-query。
+ * 不挂 Provider 会让**整页**在渲染时抛 `No QueryClient set`，11 条用例一起红 ——
+ * 报错发生在子组件里，看不出和首页有什么关系，所以这里挂上 Provider 并给接口一个空结果。
+ */
+vi.mock('@/api/articles', () => ({
+  fetchArticles: vi.fn().mockResolvedValue({ list: [], page: 1, size: 3, total: 0, pages: 0 }),
+}))
+
 function renderHome() {
   return render(
-    <MemoryRouter>
-      <HomePage />
-    </MemoryRouter>,
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>
+    </QueryClientProvider>,
   )
 }
 

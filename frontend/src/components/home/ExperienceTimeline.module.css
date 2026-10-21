@@ -68,13 +68,35 @@
   box-shadow: 0 10px 28px color-mix(in srgb, var(--ds-c-text) 7%, transparent);
 }
 
-/* 左栏：公司图片铺满，底部压一块**不透明**实底承载公司标识与编号。
+/* 左栏：公司图片铺满，底部压一块**不透明**实底承载编号。
    实底不是装饰：图片上的文字对比度不可测也不可信（见 TSX 里的注释），
-   落到实底上之后 白字/#0b1418 ≈ 19:1、编号(#fff 62%) ≈ 7:1，都是真达标。 */
+   落到实底上之后 白字/#0b1418 ≈ 19:1、编号(#fff 66%) ≈ 8:1，都是真达标。 */
 .visual {
   position: relative;
   display: flex;
   min-height: 30rem;
+  /* 2026-10-16 换真实公司照片后**新增**：图片框自己定比例，不再被右栏文字撑高。
+     原因很具体 —— 原来是 grid 默认 stretch，左栏高度 = 右栏高度 = 855px（比例 0.55），
+     而照片是 1:1 的**横幅构图**（CVTE / MAXHUB / seewo 希沃 一排横着占了原图约 65% 宽）。
+     1:1 塞进 0.55 的框，`cover` 从中间裁 → 实测把「MAXHUB」切成「AXHUB」、
+     「seewo 希沃」只剩一半。公司名被切一半是这里最不能接受的裁切。
+
+     2026-10-16 二次修正（去掉底部大字那轮）：底部的公司简称大字删掉后，这条实底
+     从当年的高度瘦到实测 70px（桌面）/ 54px（窄屏），照片在**垂直**方向多露出一截。
+     但真正卡人的是**水平**方向 —— `.visualPhoto` 是 absolute inset:0 铺满整个左栏，
+     所以水平裁切只由框的宽高比决定：2/3 时可见的原图横条恒为 x 180–900
+     （1080 宽的 66.7%，居中），而那排 logo 实测占 x 180–876 —— **左缘正好贴边**。
+     5/7 之后可见横条变为 x 155–925，左右余量 25 / 49px，代价只是左栏矮约 50px
+     （2/3 时约 705 → 5/7 时 656，1280 视口）。
+
+     数字来源：`.tmp/tools/probe-logo-bounds.cjs`（量 logo 外接矩形，红标蓝字直接扫，
+     中性深灰的 MAXHUB 靠分箱定左缘）+ `.tmp/tools/probe-photo-margins.cjs`
+     （复现 cover 裁切并把可见区映射回原图坐标，四个视口各给一次左右余量）。
+     上一版注释里的「两侧各留约 78px」是手算错的，同一段还写出过 x 上界 1133 > 原图宽
+     1080 —— 所以这次一律以探针输出为准。取更矮（3/4 = 0.75）余量能到 50 / 70px，
+     但左栏会比右栏矮掉 226px 显得空。 */
+  aspect-ratio: 5 / 7;
+  align-self: start;
   flex-direction: column;
   justify-content: flex-end;
   overflow: hidden;
@@ -99,13 +121,18 @@
   background: rgb(8 18 24 / 34%);
 }
 
+/* 底部实底：只剩编号一行（2026-10-16 去掉了原来那行公司简称大字 —— 照片里本就有
+   CVTE logo，重复；而且那个大字把这条实底撑高了一倍，白吃照片的可见区）。
+   实测高度 70px（桌面）/ 54px（窄屏），见 `.tmp/tools/probe-exp-photo.cjs`。
+   实底留着是有理的，不是装饰：`.visualCaption` 落在不透明底色上，
+   白字/#0b1418 ≈ 19:1、编号(#fff 66%) ≈ 8:1，都真达标；飘在照片上就不可测了。 */
 .plate {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   gap: var(--ds-space-3);
-  padding: var(--ds-space-6) var(--ds-space-7);
+  padding: var(--ds-space-5) var(--ds-space-7);
   background: #0b1418;
 }
 
@@ -120,14 +147,6 @@
   border: 1px solid currentColor;
   border-radius: 50%;
   opacity: 0.28;
-}
-
-.visualMark {
-  font-family: var(--ds-font-display);
-  font-size: clamp(3.25rem, 6vw, 6rem);
-  font-weight: var(--ds-fw-display);
-  letter-spacing: -0.06em;
-  line-height: 0.9;
 }
 
 .visualCaption {
@@ -369,14 +388,18 @@
 
   .visual {
     min-height: 14rem;
+    /* 单列时图片横跨整行（768 视口下 718px 宽）。原来的 14rem(224px) 横条
+       比例高达 3.2，1:1 照片塞进去只剩中间 31% 高 —— 实测 CVTE 被切掉上半，
+       整排 logo 基本全丢。4/3 不是随手取的：底部还有那条不透明带压在上面
+       （实测 54px），可见部分只有上半。4/3 时可见区是原图 y 135–864，
+       那排 logo（y 285–545）完整落在里面，左右还各有 185 / 205px 余量 ——
+       横条框只裁**上下**、不裁左右，所以窄屏这边从来不存在切字风险。
+       数字来自 `.tmp/tools/probe-photo-margins.cjs`。 */
+    aspect-ratio: 4 / 3;
   }
 
   .plate {
-    padding: var(--ds-space-5);
-  }
-
-  .visualMark {
-    font-size: 3rem;
+    padding: var(--ds-space-4) var(--ds-space-5);
   }
 
   .body {

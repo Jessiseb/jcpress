@@ -10,7 +10,7 @@ describe('withLatinEmphasis', () => {
   })
 
   it('纯中文不产生任何 em', () => {
-    const html = renderToStaticMarkup(<>{withLatinEmphasis('广州 · AI 应用开发')}</>)
+    const html = renderToStaticMarkup(<>{withLatinEmphasis('广州 · 深圳')}</>)
     // 「AI」本身是 Latin 词，会被包成 em；这里只守住中文没被包
     expect(html).not.toContain('<em>广州</em>')
     expect(html).not.toContain('<em>应用开发</em>')

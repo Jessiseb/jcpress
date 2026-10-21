@@ -15,6 +15,7 @@ public final class AuditActionConstant {
     public static final String DELETE = "DELETE";
     public static final String PUBLISH = "PUBLISH";
     public static final String UPLOAD = "UPLOAD";
+    public static final String AI_FORMAT = "AI_FORMAT";
 
     private AuditActionConstant() {
     }

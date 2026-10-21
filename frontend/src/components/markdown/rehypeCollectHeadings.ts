@@ -27,8 +27,14 @@ const textOf = (node: HastNode): string => {
   return (node.children ?? []).map(textOf).join('')
 }
 
+/**
+ * ⚠️ 必须返回**两层函数**。`rehypePlugins` 收的是 attacher（拿到 processor、返回 transformer），
+ * 不是 transformer 本身。原来这里直接返回 transformer，unified 会把它当 attacher 调用一次 ——
+ * 传进去的 `tree` 其实是 undefined，walk 立刻返回，收集到的永远是一个空数组，而且不报错。
+ * 这条失败只在「回调收没收到东西」这一层能看出来，页面上表现为「目录一直空着」。
+ */
 export function rehypeCollectHeadings(collect: (items: TocItem[]) => void) {
-  return (tree: unknown) => {
+  return () => (tree: unknown) => {
     const items: TocItem[] = []
     const walk = (node: HastNode | undefined) => {
       // hast 的 children 数组允许有「空洞」（undefined 占位），直接解引用会崩。

@@ -74,6 +74,20 @@ export default function AdminArticleEditPage() {
 
   const patch = (partial: Partial<FormState>) => setForm((previous) => ({ ...previous, ...partial }))
 
+  /**
+   * 对比面板里勾选的元信息回填。只处理**真正被勾选**的字段（undefined 表示没勾，
+   * 不能当成"清空"），标签按表单的逗号分隔口径拼回去。
+   */
+  const applyAiMeta = (next: { summary?: string; tags?: string[]; slug?: string }) => {
+    const partial: Partial<FormState> = {}
+    if (next.summary !== undefined) partial.summary = next.summary
+    if (next.tags !== undefined) partial.tags = next.tags.join(', ')
+    if (next.slug !== undefined) partial.slug = next.slug
+    patch(partial)
+    // AI 下发的 slug 已过语法校验，之前那条"请手填英文 slug"的提示不再成立
+    if (next.slug !== undefined) setSlugError(null)
+  }
+
   /** 返回错误信息（null = 通过）。中文标题 + 空 slug 是本地特判。 */
   const validateSlug = (): string | null => {
     const slug = form.slug.trim()
@@ -256,7 +270,13 @@ export default function AdminArticleEditPage() {
       <div className={styles.card}>
         <div className={styles.cardHead}>正文（Markdown）</div>
         <div className={styles.cardBody}>
-          <MarkdownEditor value={form.contentMd} onChange={(next) => patch({ contentMd: next })} />
+          <MarkdownEditor
+            value={form.contentMd}
+            onChange={(next) => patch({ contentMd: next })}
+            title={form.title}
+            meta={{ summary: form.summary, tags: form.tags, slug: form.slug }}
+            onApplyMeta={applyAiMeta}
+          />
         </div>
       </div>
 
