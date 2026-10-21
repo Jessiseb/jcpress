@@ -15,17 +15,15 @@ describe('profileData', () => {
     })
   })
 
-  it('实习经历按「结束时间倒序」排列，至今的那段排在最前', () => {
-    // 注意：CVTE（2025-04 起，至今）与用友（2025-07 ~ 2025-10）时间重叠，
-    // 因此排序不能按 startTime —— 按 endTime 倒序，至今视为最新。
+  it('实习经历按「结束时间倒序」排列', () => {
+    // 排序不能按 startTime：CVTE（2025.04 - 2025.10）与用友（2025.07 - 2025.10）时间重叠，
+    // 用友那段的起点反而更晚，按 startTime 排会把 CVTE 排到后面。
+    // 两端同为 2025-10 收尾，并列时不要求相对顺序 —— 只断言整体非递增。
     const endTime = (end: string | null) => end ?? '9999-12'
-    const sorted = [...profileData.experiences].sort((a, b) =>
-      endTime(a.endDate) < endTime(b.endDate) ? 1 : -1,
-    )
+    const ends = profileData.experiences.map((item) => endTime(item.endDate))
 
-    expect(profileData.experiences.map((item) => item.company)).toEqual(sorted.map((item) => item.company))
+    expect(ends).toEqual([...ends].sort().reverse())
     expect(profileData.experiences[0].company).toContain('视源')
-    expect(profileData.experiences[0].endDate).toBeNull()
   })
 
   it('每段经历都有职责条目与技术栈', () => {

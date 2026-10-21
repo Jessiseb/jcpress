@@ -220,7 +220,7 @@ export const profileData: ProfileAggregateVO = {
       employmentType: 'INTERN',
       city: '广州',
       startDate: '2025-04',
-      endDate: null,
+      endDate: '2025-10',
       projectName: 'OS 应用智能运维系统',
       projectIntro:
         '基于飞书机器人的智能运维系统：把 OS 应用售后场景里「人工下载日志包、逐文件排查」的流程，改成由中心智能体统一编排、可对话可闭环的 Agent 工作流。',
