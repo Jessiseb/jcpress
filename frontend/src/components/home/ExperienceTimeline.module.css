@@ -9,13 +9,17 @@
   margin-top: var(--ds-space-6);
 }
 
+/* 三段切换：简称在上、期间在下，三列左对齐。
+   原来是 `row + space-between`，日期被推到每列最右边 —— 等宽列下看着像三个互不相干
+   的标签，中间空一大片。改成两行左对齐后，三列的起点在同一条竖线上。 */
 .tab {
   display: flex;
   min-width: 0;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ds-space-3);
-  padding: 0.9rem 1.25rem;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: 0.8rem 1.15rem;
   border: 1px solid transparent;
   border-radius: 0.85rem;
   background: transparent;
@@ -68,40 +72,29 @@
   box-shadow: 0 10px 28px color-mix(in srgb, var(--ds-c-text) 7%, transparent);
 }
 
-/* 左栏：公司图片铺满，底部压一块**不透明**实底承载编号。
-   实底不是装饰：图片上的文字对比度不可测也不可信（见 TSX 里的注释），
-   落到实底上之后 白字/#0b1418 ≈ 19:1、编号(#fff 66%) ≈ 8:1，都是真达标。 */
+/* 左栏：图片区（按比例）+ 信息板（吃掉剩余高度）。
+   2026-10-21 改版：原来是 `align-self: start` + 整个左栏 5/7 定比例，
+   结果图片只有 660px 高、右栏正文 1015px，卡片左下空掉 354px —— 观感就是「没对齐」。
+   现在左栏跟右栏等高，图片盒子按比例定高（保住 logo 不被裁），剩下的交给 .plate。 */
 .visual {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-rows: auto 1fr;
   min-height: 30rem;
-  /* 2026-10-16 换真实公司照片后**新增**：图片框自己定比例，不再被右栏文字撑高。
-     原因很具体 —— 原来是 grid 默认 stretch，左栏高度 = 右栏高度 = 855px（比例 0.55），
-     而照片是 1:1 的**横幅构图**（CVTE / MAXHUB / seewo 希沃 一排横着占了原图约 65% 宽）。
-     1:1 塞进 0.55 的框，`cover` 从中间裁 → 实测把「MAXHUB」切成「AXHUB」、
-     「seewo 希沃」只剩一半。公司名被切一半是这里最不能接受的裁切。
-
-     2026-10-16 二次修正（去掉底部大字那轮）：底部的公司简称大字删掉后，这条实底
-     从当年的高度瘦到实测 70px（桌面）/ 54px（窄屏），照片在**垂直**方向多露出一截。
-     但真正卡人的是**水平**方向 —— `.visualPhoto` 是 absolute inset:0 铺满整个左栏，
-     所以水平裁切只由框的宽高比决定：2/3 时可见的原图横条恒为 x 180–900
-     （1080 宽的 66.7%，居中），而那排 logo 实测占 x 180–876 —— **左缘正好贴边**。
-     5/7 之后可见横条变为 x 155–925，左右余量 25 / 49px，代价只是左栏矮约 50px
-     （2/3 时约 705 → 5/7 时 656，1280 视口）。
-
-     数字来源：`.tmp/tools/probe-logo-bounds.cjs`（量 logo 外接矩形，红标蓝字直接扫，
-     中性深灰的 MAXHUB 靠分箱定左缘）+ `.tmp/tools/probe-photo-margins.cjs`
-     （复现 cover 裁切并把可见区映射回原图坐标，四个视口各给一次左右余量）。
-     上一版注释里的「两侧各留约 78px」是手算错的，同一段还写出过 x 上界 1133 > 原图宽
-     1080 —— 所以这次一律以探针输出为准。取更矮（3/4 = 0.75）余量能到 50 / 70px，
-     但左栏会比右栏矮掉 226px 显得空。 */
-  aspect-ratio: 5 / 7;
-  align-self: start;
-  flex-direction: column;
-  justify-content: flex-end;
   overflow: hidden;
   background: #0b1418; /* 图没加载出来时的兜底底色，避免闪一块白 */
   color: white;
+}
+
+/* 图片盒子的宽高比决定**水平**裁切：`.visualPhoto` 是 absolute inset:0 铺满这里。
+   2/3 时可见的原图横条恒为 x 180–900，而那排 logo 实测占 x 180–876 —— 左缘正好贴边；
+   5/7 之后可见横条变为 x 155–925，左右余量 25 / 49px。
+   数字来源：`.tmp/tools/probe-logo-bounds.cjs` + `probe-photo-margins.cjs`。 */
+.visualPhotoBox {
+  position: relative;
+  aspect-ratio: 5 / 7;
+  overflow: hidden;
+  background: #0b1418;
 }
 
 .visualPhoto {
@@ -121,19 +114,32 @@
   background: rgb(8 18 24 / 34%);
 }
 
-/* 底部实底：只剩编号一行（2026-10-16 去掉了原来那行公司简称大字 —— 照片里本就有
-   CVTE logo，重复；而且那个大字把这条实底撑高了一倍，白吃照片的可见区）。
-   实测高度 70px（桌面）/ 54px（窄屏），见 `.tmp/tools/probe-exp-photo.cjs`。
-   实底留着是有理的，不是装饰：`.visualCaption` 落在不透明底色上，
-   白字/#0b1418 ≈ 19:1、编号(#fff 66%) ≈ 8:1，都真达标；飘在照片上就不可测了。 */
+/* 信息板：占满图片下方到卡片底边的全部高度，内容贴底 ——
+   这样「WORK EXPERIENCE / 01」与右侧的进度点/箭头落在同一条水平线上。
+   浅色主题下这块是深色，与照片连成一体，视觉上像杂志左栏。 */
 .plate {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--ds-space-3);
-  padding: var(--ds-space-5) var(--ds-space-7);
+  justify-content: flex-end;
+  gap: 0.45rem;
+  padding: var(--ds-space-5) var(--ds-space-7) var(--ds-space-7);
   background: #0b1418;
+}
+
+.platePeriod {
+  font-family: var(--ds-font-display);
+  font-size: clamp(1.35rem, 1.8vw, 1.75rem);
+  font-weight: var(--ds-fw-display);
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.plateMeta {
+  color: rgb(255 255 255 / 66%);
+  font-size: var(--ds-fs-xs);
 }
 
 /* 装饰环：只留一圈描边，不再叠两层大 spread 的 box-shadow（外扩 5rem 的阴影
@@ -150,6 +156,9 @@
 }
 
 .visualCaption {
+  /* 编号贴在图片下沿（信息板顶部），期间与地点贴底 —— 中间留白是刻意的，
+     否则三行字挤在块底、上面空出一大片纯黑更难看。 */
+  margin-bottom: auto;
   font-size: var(--ds-fs-xs);
   font-weight: var(--ds-fw-semibold);
   letter-spacing: 0.16em;
@@ -299,15 +308,18 @@
   content: '';
 }
 
-.tech {
-  margin-top: auto;
-  padding-top: var(--ds-space-3);
-  color: var(--ds-c-text-subtle);
-  font-size: 0.875rem;
+.plateTech {
+  margin-top: 0.3rem;
+  color: rgb(255 255 255 / 66%);
+  font-size: var(--ds-fs-xs);
+  line-height: 1.6;
 }
 
 .controls {
   display: flex;
+  /* 技术栈挪到左栏之后，右栏底部少了一行，这里兜住「内容比卡片矮」的情况
+     （用友 / 粤建那段正文较短），保证进度点与箭头仍贴在卡片底边。 */
+  margin-top: auto;
   align-items: center;
   justify-content: space-between;
   gap: var(--ds-space-4);
@@ -380,21 +392,28 @@
   color: var(--ds-c-accent-text);
 }
 
-@media (max-width: 899px) {
+/* 断点从 899 提到 1023：两栏布局下右栏正文会随宽度变窄而变长（900px 时 1182px 高），
+   而左栏照片高度受宽度限制（5/7 比例，保住 logo 不被裁），
+   结果信息板被撑到占左栏 58%（900px）/ 50%（960px），整块黑压压的很难看。
+   ≥1024 时占比 35–43%，可接受；更窄就走单列（照片横条在上、正文在下）。 */
+@media (max-width: 1023px) {
   .switcher {
     grid-template-columns: minmax(0, 1fr);
     min-height: 0;
   }
 
   .visual {
-    min-height: 14rem;
-    /* 单列时图片横跨整行（768 视口下 718px 宽）。原来的 14rem(224px) 横条
-       比例高达 3.2，1:1 照片塞进去只剩中间 31% 高 —— 实测 CVTE 被切掉上半，
-       整排 logo 基本全丢。4/3 不是随手取的：底部还有那条不透明带压在上面
-       （实测 54px），可见部分只有上半。4/3 时可见区是原图 y 135–864，
-       那排 logo（y 285–545）完整落在里面，左右还各有 185 / 205px 余量 ——
-       横条框只裁**上下**、不裁左右，所以窄屏这边从来不存在切字风险。
-       数字来自 `.tmp/tools/probe-photo-margins.cjs`。 */
+    min-height: 0;
+  }
+
+  /* 单列时图片横跨整行（768 视口下 718px 宽）。原来的 14rem(224px) 横条
+     比例高达 3.2，1:1 照片塞进去只剩中间 31% 高 —— 实测 CVTE 被切掉上半，
+     整排 logo 基本全丢。4/3 不是随手取的：底部还有那条信息板压在上面，
+     可见部分只有上半。4/3 时可见区是原图 y 135–864，
+     那排 logo（y 285–545）完整落在里面，左右还各有 185 / 205px 余量 ——
+     横条框只裁**上下**、不裁左右，所以窄屏这边从来不存在切字风险。
+     数字来自 `.tmp/tools/probe-photo-margins.cjs`。 */
+  .visualPhotoBox {
     aspect-ratio: 4 / 3;
   }
 

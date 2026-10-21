@@ -103,37 +103,51 @@ export default function ExperienceTimeline({ experiences }: Props) {
             只能沿祖先链取 background-color（不认 background-image），
             飘在照片上的白字会被算成「白底白字」而必然不达标 —— 而且那个判定是对的，
             照片任意一帧都可能把文字吃掉。所以编号落在底部一块**不透明**的实底上。 */}
-        <div className={`${styles.visual} ${companyTone(active.company)}`} data-photo="">
-          {/* 照片走 <img> 而不是 CSS 背景：能吃到 loading=lazy 与 decoding=async，
-              移动端 4× 降速时不会把大图解码排进首屏长任务。
-              width/height 写的是**当前这张真实照片**的像素（1080×1080 方形）；
-              另两家仍是 560×840 的占位图 —— 这两个数字对布局没有影响
-              （`.visualPhoto` 是 absolute + 100%/100%，尺寸由 CSS 说了算），
-              它只是给浏览器一个纵横比提示，换图时同步一下即可。 */}
-          <img
-            className={styles.visualPhoto}
-            src={companyImage(active.company)}
-            alt={`${active.company} 公司图片`}
-            width={1080}
-            height={1080}
-            loading="lazy"
-            decoding="async"
-          />
-          {/* 压暗用**实色**罩，不用渐变：渐变宿主是登记制（audit-behavior 的
-              「渐变只出现在流线 / 面板 / 环装置 / 姓名 / 顶栏遮罩 / 聚光宿主上」），
-              这里只是给照片降亮度的功能性遮罩，没资格占一个渐变名额。 */}
-          <span className={styles.visualShade} aria-hidden="true" />
-          <span className={styles.visualGlow} aria-hidden="true" />
-          {/* 2026-10-16 用户要求去掉底部的公司简称大字（原来这里是 clamp 到 6rem 的
-              「CVTE」）。这个大字是多余的：照片本身就是 CVTE 前台实拍，画面里已经有
-              CVTE / Dream·Future 的 logo，纸面上再印一遍是重复；而且它把底部那块实底
-              撑高了一倍，白占照片的可见区。现在这块底只剩编号一行（实测 70px，原先是
-              大字的字号在占高度）。
-              公司标识不走这里也不丢：顶部切换条、右侧正文的 h3 全名都写着。 */}
+        <div className={`${styles.visual} ${companyTone(active.company)}`}>
+          {/* 图片单独立一个盒子：左栏要跟右栏等高（否则图片下方空 300 多 px），
+              所以图片盒子按比例定高、剩下的空间交给下面的 .plate 信息板。
+              data-photo 留着给验收探针量图片可见区。 */}
+          <div className={styles.visualPhotoBox} data-photo="">
+            {/* 照片走 <img> 而不是 CSS 背景：能吃到 loading=lazy 与 decoding=async，
+                移动端 4× 降速时不会把大图解码排进首屏长任务。
+                width/height 写的是**当前这张真实照片**的像素（1080×1080 方形）；
+                另两家仍是 560×840 的占位图 —— 这两个数字对布局没有影响
+                （`.visualPhoto` 是 absolute + 100%/100%，尺寸由 CSS 说了算），
+                它只是给浏览器一个纵横比提示，换图时同步一下即可。 */}
+            <img
+              className={styles.visualPhoto}
+              src={companyImage(active.company)}
+              alt={`${active.company} 公司图片`}
+              width={1080}
+              height={1080}
+              loading="lazy"
+              decoding="async"
+            />
+            {/* 压暗用**实色**罩，不用渐变：渐变宿主是登记制（audit-behavior 的
+                「渐变只出现在流线 / 面板 / 环装置 / 姓名 / 顶栏遮罩 / 聚光宿主上」），
+                这里只是给照片降亮度的功能性遮罩，没资格占一个渐变名额。 */}
+            <span className={styles.visualShade} aria-hidden="true" />
+            <span className={styles.visualGlow} aria-hidden="true" />
+          </div>
+
+          {/* 底部实底：2026-10-21 从「只有一行编号」扩成信息板。
+              原因：左栏原来只有图片（660px），右栏正文 1015px，卡片左下空掉 354px，
+              看起来像没对齐。现在这块用 flex:1 吃掉剩余高度，内容贴底，
+              和右侧的进度点/箭头落在同一条水平线上。
+              底色必须是不透明的 #0b1418：白字/#0b1418 ≈ 19:1，
+              编号(#fff 66%) ≈ 8:1，都过对比度；飘在照片上就不可测了。 */}
           <div className={styles.plate} data-plate="">
             <span className={styles.visualCaption}>
               WORK EXPERIENCE / {String(activeIndex + 1).padStart(2, '0')}
             </span>
+            <strong className={styles.platePeriod}>{formatPeriod(active)}</strong>
+            <span className={styles.plateMeta}>
+              {active.city} · {active.department}
+            </span>
+            {/* 技术栈放这里而不是右栏底部：右栏本来就长（1015px），而信息板在宽屏下
+                会空出 300 多 px 的纯黑。挪过来之后两边都更饱满，含义上也更合理 ——
+                期间、地点、技术栈都是「这家公司的事实」，跟正文要点分开。 */}
+            <span className={styles.plateTech}>{active.techStack.join(' · ')}</span>
           </div>
         </div>
 
@@ -166,8 +180,6 @@ export default function ExperienceTimeline({ experiences }: Props) {
               <li key={line} className={styles.highlight}>{renderRich(line)}</li>
             ))}
           </ul>
-
-          <p className={styles.tech}>{active.techStack.join(' · ')}</p>
 
           <div className={styles.controls}>
             <div className={styles.dots} aria-label="选择实习经历">
