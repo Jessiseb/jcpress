@@ -62,12 +62,30 @@ describe('TechListPage', () => {
     expect(screen.getByText(/共 2 篇/)).toBeInTheDocument()
   })
 
-  it('接口失败时显示错误态，而不是伪装成空态', async () => {
+  it('接口失败时显示错误态与重试入口，而不是伪装成空态', async () => {
     fetchArticles.mockRejectedValue(new Error('后端没起来'))
     renderPage()
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('后端没起来')
+    const alert = await screen.findByRole('alert')
+    // 说清发生了什么
+    expect(alert).toHaveTextContent('文章列表暂时打不开')
+    // 原因照旧给出（spec：错误态必须带失败原因）
+    expect(alert).toHaveTextContent('后端没起来')
+    // 给一条真能点的退路
+    expect(screen.getByRole('button', { name: /再试一次/ })).toBeInTheDocument()
     expect(screen.queryByText(/还没有发布的文章/)).toBeNull()
+  })
+
+  it('错误态不说工程内部话：不出现「假数据」这类写给评审看的措辞', async () => {
+    fetchArticles.mockRejectedValue(new TypeError('Failed to fetch'))
+    renderPage()
+
+    const alert = await screen.findByRole('alert')
+    // 浏览器的原始英文不能端给访客
+    expect(alert).not.toHaveTextContent('Failed to fetch')
+    // 更不能把「不做假数据降级」这条工程约束念给访客听（2026-10-21 用户指出「太人机」）
+    expect(alert).not.toHaveTextContent('假数据')
+    expect(alert).toHaveTextContent('网络好像不通')
   })
 
   it('后端返回空列表时显示空态', async () => {

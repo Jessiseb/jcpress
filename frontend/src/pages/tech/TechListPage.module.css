@@ -200,6 +200,24 @@
   color: var(--ds-c-text-subtle);
 }
 
+/* 错误态的第一行：说清「发生了什么」，比正文重一档。
+   不占 h2 —— 这个块只有一句话，屏幕阅读器已经由 role="alert" 播报过，
+   再给它一个标题级别反而会把目录撑出一个空壳小节。 */
+.errorTitle {
+  font-family: var(--ds-font-display);
+  font-size: 1.15rem;
+  line-height: 1.5;
+  color: var(--ds-c-text);
+}
+
+/* 两个出路并排（重试 / 回首页）。窄屏自然折行，不从中间断开 */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ds-space-2);
+}
+
 @media (max-width: 719px) {
   .title {
     font-size: 2rem;

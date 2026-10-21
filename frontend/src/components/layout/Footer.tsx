@@ -35,7 +35,10 @@ export default function Footer() {
 
         <div className={styles.meta}>
           <p>© {year} 庄家希 · 基于 React + Vite 构建</p>
-          <p className={styles.sub}>备案号待补充（国内节点需 ICP 备案，见规划 §12）</p>
+          {/* 2026-10-21：这里原来有一行「备案号待补充（国内节点需 ICP 备案，见规划 §12）」。
+              那是一句待办，不是给访客看的内容 —— 它连内部规划文档的章节号都念出来了。
+              ICP 备案下来之后在这里补一行真号即可（形如「粤ICP备xxxxxxxx号」），
+              没下来之前这个地方就该是空的。 */}
         </div>
       </div>
     </footer>

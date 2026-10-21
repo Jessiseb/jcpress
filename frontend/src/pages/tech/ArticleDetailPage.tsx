@@ -6,6 +6,7 @@ import MarkdownBody from '@/components/markdown/MarkdownBody'
 import type { TocItem } from '@/components/markdown/rehypeCollectHeadings'
 import { usePublishPageToc } from '@/components/tech/pageTocContext'
 import { useArticleDetail } from '@/hooks/useArticleDetail'
+import { describeLoadError } from '@/utils/loadError'
 // 文章页专用字体子集（GB2312 一级字，独立 family）。放在**详情页** import，
 // Vite 会把它并进详情页 chunk —— 首页既不加载这份 CSS，也不下载那两个字体文件。
 // @font-face 本身不触发下载，浏览器只在字形真正被用到时才取。
@@ -44,7 +45,7 @@ const stripDuplicateTitle = (markdown: string, title: string) => {
  */
 export default function ArticleDetailPage() {
   const { slug = '' } = useParams()
-  const { data, isPending, isError, error } = useArticleDetail(slug)
+  const { data, isPending, isError, error, refetch } = useArticleDetail(slug)
   const [headings, setHeadings] = useState<TocItem[]>([])
   const publishPageToc = usePublishPageToc()
 
@@ -91,7 +92,7 @@ export default function ArticleDetailPage() {
   if (isPending) {
     return (
       <section className={styles.wrap}>
-        <p className={styles.state}>正在取文章…</p>
+        <p className={styles.state}>正在加载…</p>
       </section>
     )
   }
@@ -99,11 +100,18 @@ export default function ArticleDetailPage() {
   if (isError || !data) {
     return (
       <section className={styles.wrap} role="alert">
-        <h1 className={styles.errorTitle}>这篇文章没取回来</h1>
-        <p className={styles.state}>{error instanceof Error ? error.message : '未知错误'}</p>
-        <Link to="/tech" className="btn btnSolid">
-          回到技术分享
-        </Link>
+        <h1 className={styles.errorTitle}>这篇文章暂时打不开</h1>
+        {/* 失败原因保留（spec：错误态要带原因），但由 describeLoadError 译成人话 ——
+            原来直接把 `error.message` 印出来，断网时访客看到的是 Failed to fetch */}
+        <p className={styles.state}>{describeLoadError(error)}</p>
+        <div className={styles.errorActions}>
+          <button type="button" className="btn btnSolid" onClick={() => void refetch()}>
+            再试一次
+          </button>
+          <Link to="/tech" className="btn btnGhost">
+            回到技术分享
+          </Link>
+        </div>
       </section>
     )
   }

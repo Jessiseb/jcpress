@@ -26,6 +26,15 @@
   font-size: 1.6rem;
 }
 
+/* 两个出路并排：重试（主）/ 回列表（次）。窄屏折行不从中间断开 */
+.errorActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ds-space-3);
+  margin-top: var(--ds-space-5);
+}
+
 .header {
   margin-bottom: var(--ds-space-6);
 }

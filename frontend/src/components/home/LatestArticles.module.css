@@ -79,13 +79,43 @@
   font-family: var(--ds-font-mono);
 }
 
+/* 加载中 / 错误 / 空态共用这一档。
+   2026-10-21 加了顶部发丝线：`.section` 是 12 列栅格，导语在第 1–3 列、
+   正文从第 4 列起 —— 状态行只有短短一句时，它和左栏导语落在同一行的基线上，
+   读起来像「导语的后半句」。加一条线（和下面 `.list` 的那条同宽同色）就把它
+   明确划成一个从这儿开始的块。 */
 .state {
-  margin-top: var(--ds-space-3);
+  margin-top: var(--ds-space-4);
+  padding-top: var(--ds-space-3);
+  border-top: 1px solid var(--ds-c-hairline);
   color: var(--ds-c-text-mute);
 }
 
 .state a {
   color: var(--ds-c-accent);
+}
+
+/* 错误态里的重试：文字按钮，不做成实心 CTA ——
+   「这一块没加载出来」不值得用一颗主按钮去抢首屏以下的注意力，
+   但它是唯一能让访客自救的入口，所以给足 44px 触摸高度。
+   `display: flex` 是刻意的：让它独占一行。跟在句号后面时，
+   它会被读成那句话的一部分（「…HTTP 502。再试一次」）。 */
+.retry {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 0.1rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ds-c-accent);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.retry:hover {
+  text-decoration-thickness: 2px;
 }
 
 .more {

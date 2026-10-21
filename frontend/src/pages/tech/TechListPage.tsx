@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 
 import type { ArticleCardVO } from '@/api/types'
 import { CATALOG_SIZE, useTechCatalog } from '@/hooks/useTechCatalog'
+import { describeLoadError } from '@/utils/loadError'
 import styles from './TechListPage.module.css'
 
 const formatDate = (value: string) => value.slice(0, 10).replace(/-/g, '.')
@@ -54,9 +55,17 @@ function ArticleRow({ article }: { article: ArticleCardVO }) {
  *
  * 四种状态齐全，且**错误态不许伪装成空态** —— 接口挂了要明说，不能显示"还没有文章"
  * （Agent.md：依赖缺失应表现为失败，不得降级为假内容）。
+ *
+ * 2026-10-21：错误态的**文案重写**。原来那两句是
+ * 「后端没起来或是接口出错 —— 这里不会拿假数据凑数。」——
+ * 说的是工程约束（`Agent.md` 里的「不做假数据降级」），听的对象是代码评审，
+ * 却被摆到了访客眼前：他不知道什么叫后端，也不关心你有没有兜底，
+ * 他只知道「这里空了、还能不能看」。
+ * 现在只说发生了什么 + 给一个真能点的重试；原因仍保留（spec 要求错误态带失败原因），
+ * 但由 `describeLoadError` 统一翻译成人话，不再把原始英文或实现细节端出来。
  */
 export default function TechListPage() {
-  const { data, isPending, isError, error } = useTechCatalog()
+  const { data, isPending, isError, error, refetch, isFetching } = useTechCatalog()
   const empty = !isPending && !isError && data.groups.length === 0
 
   return (
@@ -68,12 +77,25 @@ export default function TechListPage() {
       </h1>
       <p className={styles.lead}>把踩过的坑写清楚：Java 后端、AI Agent 工程、数据库与中间件。</p>
 
-      {isPending && <p className={styles.state}>正在取文章…</p>}
+      {isPending && <p className={styles.state}>正在加载…</p>}
 
       {isError && (
         <div className={styles.empty} role="alert">
-          <p>文章列表没取回来：{error instanceof Error ? error.message : '未知错误'}</p>
-          <p className={styles.emptyHint}>后端没起来或是接口出错 —— 这里不会拿假数据凑数。</p>
+          <p className={styles.errorTitle}>文章列表暂时打不开</p>
+          <p className={styles.emptyHint}>{describeLoadError(error)}</p>
+          <div className={styles.actions}>
+            <button
+              type="button"
+              className="btn btnSolid btnSm"
+              onClick={() => void refetch()}
+              disabled={isFetching}
+            >
+              {isFetching ? '正在重试…' : '再试一次'}
+            </button>
+            <Link to="/" className="btn btnGhost btnSm">
+              回到首页
+            </Link>
+          </div>
         </div>
       )}
 
@@ -113,10 +135,10 @@ export default function TechListPage() {
             ))}
           </div>
 
+          {/* 一次只取 CATALOG_SIZE 篇（左栏要的是「一眼看得到整体」），超出的部分如实说一声。
+              原文是「还有 N 篇 —— 分页与筛选留给下一期」：后半句是排期，不是访客要知道的事。 */}
           {data.total > CATALOG_SIZE && (
-            <p className={styles.more}>
-              还有 {data.total - CATALOG_SIZE} 篇 —— 分页与筛选留给下一期。
-            </p>
+            <p className={styles.more}>还有 {data.total - CATALOG_SIZE} 篇没在这里列出。</p>
           )}
         </>
       )}

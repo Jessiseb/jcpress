@@ -31,9 +31,9 @@ export default function TechSidebar({ activeSlug }: { activeSlug: string }) {
         {data && <span className={styles.rootCount}>{data.total}</span>}
       </Link>
 
-      {isPending && <p className={styles.state}>正在取目录…</p>}
-      {/* 目录取不回来时只说这一句，不占位假数据 */}
-      {isError && <p className={styles.state}>目录没取回来</p>}
+      {isPending && <p className={styles.state}>正在加载…</p>}
+      {/* 目录取不回来时只说这一句：不占位假数据，也不在这儿解释后端怎么了 */}
+      {isError && <p className={styles.state}>目录暂时打不开</p>}
 
       {data?.groups.map((group) => (
         <div key={group.name} className={styles.group}>

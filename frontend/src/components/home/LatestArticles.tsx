@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 
 import { useLatestArticles } from '@/hooks/useLatestArticles'
+import { describeLoadError } from '@/utils/loadError'
 import styles from './LatestArticles.module.css'
 
 const stagger = (step: number) => ({ '--reveal-delay': `${step * 80}ms` }) as CSSProperties
@@ -24,9 +25,13 @@ const formatDate = (value: string) => value.slice(0, 10).replace(/-/g, '.')
  *     区块数仍是 7，后面所有停靠分析都建立在错误前提上；
  *  2. 根节点带 `data-block="latest-articles"` —— 行为断言靠它定位；
  *  3. 加载失败显示「没取回来」而不是空态 —— 错误不许伪装成没内容。
+ *
+ * 2026-10-21：错误文案重写。原来写的是「文章没取回来 —— 这里不会拿假数据凑数。」，
+ * 那是把工程约束（不做假数据降级）念给访客听；现在只说没加载出来 + 给一次重试，
+ * 原因交给 `describeLoadError` 说人话（详见该文件的注释）。
  */
 export default function LatestArticles() {
-  const { data, isPending, isError } = useLatestArticles(3)
+  const { data, isPending, isError, error, refetch } = useLatestArticles(3)
   const articles = data?.list ?? []
 
   return (
@@ -45,14 +50,17 @@ export default function LatestArticles() {
 
       {isPending && (
         <p className={styles.state} data-reveal style={stagger(2)}>
-          正在取文章…
+          正在加载…
         </p>
       )}
 
       {isError && (
-        <p className={styles.state} role="alert" data-reveal style={stagger(2)}>
-          文章没取回来 —— 这里不会拿假数据凑数。
-        </p>
+        <div className={styles.state} role="alert" data-reveal style={stagger(2)}>
+          <span>技术分享暂时没加载出来，{describeLoadError(error)}。</span>
+          <button type="button" className={styles.retry} onClick={() => void refetch()}>
+            再试一次
+          </button>
+        </div>
       )}
 
       {!isPending && !isError && articles.length === 0 && (

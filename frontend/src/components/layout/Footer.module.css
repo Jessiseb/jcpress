@@ -68,12 +68,6 @@
   color: var(--ds-c-text-mute);
 }
 
-.sub {
-  margin-top: var(--ds-space-1);
-  font-size: var(--ds-fs-xs);
-  color: var(--ds-c-text-subtle);
-}
-
 @media (max-width: 719px) {
   /* 窄屏页脚更矮，环要再上移，让弧线落在收尾语附近而不是顶到框线上 */
   .ringLayer > * {
