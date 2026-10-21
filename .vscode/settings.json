@@ -1,0 +1,31 @@
+{
+  "files.eol": "\n",
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/target/**": true,
+    "**/dist/**": true,
+    "**/.git/objects/**": true,
+    "**/*.log": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/target": true,
+    "**/dist": true,
+    "**/package-lock.json": true,
+    "**/*.log": true
+  },
+  "search.followSymlinks": false,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "java.import.maven.enabled": false,
+  "java.autobuild.enabled": false,
+  "java.completion.enabled": false,
+  "java.signatureHelp.enabled": false,
+  "java.referencesCodeLens.enabled": false,
+  "java.implementationsCodeLens.enabled": false,
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "editor.formatOnSave": false,
+  "telemetry.telemetryLevel": "off",
+  "extensions.autoCheckUpdates": false,
+  "extensions.autoUpdate": false
+}

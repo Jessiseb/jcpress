@@ -6,6 +6,10 @@
 # 唯一可运行的验收手段，必须入库；其余临时产物一概忽略。
 .tmp/*
 !.tmp/tools
+# 验收脚本入库，但审计截图不入库（每次跑都变，24 张 5.2MB）
+.tmp/tools/*.png
+.tmp/tools/*.jpg
+.tmp/tools/*.webp
 
 # ---- 前端 ----
 node_modules/
@@ -42,7 +46,10 @@ logs/
 
 # ---- 编辑器与系统 ----
 .idea/
-.vscode/
+# 整个 .vscode 忽略，但远程开发的配置要跟着仓库走（换机器 / 新 clone 时不用重配）
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 *.iml
 .DS_Store
 Thumbs.db

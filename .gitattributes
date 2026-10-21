@@ -1,0 +1,23 @@
+# 部署脚本会在 Linux 服务器上直接执行，必须是 LF。
+# 本机 core.autocrlf=true，不在这里钉死的话 checkout 出来就是 CRLF，
+# 传上去跑会报 "\r: command not found"。
+*.sh   text eol=lf
+*.conf text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+Dockerfile text eol=lf
+
+# Windows 侧脚本保持 CRLF
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# 二进制：不要参与任何换行转换
+*.woff2 binary
+*.woff  binary
+*.jpg   binary
+*.jpeg  binary
+*.png   binary
+*.webp  binary
+*.pdf   binary
+*.jar   binary

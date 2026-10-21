@@ -1,12 +1,14 @@
-# 生产环境配置（部署到服务器 119.91.227.162 时用）
-# 激活方式：--spring.profiles.active=prod（见 deploy/deploy-backend.sh）
+# 生产环境配置
+# 激活方式：--spring.profiles.active=prod
 #
-# 安全：数据库密码走环境变量 DB_PASSWORD，不在此硬编码（避免入库泄露）。
-# 服务器注入方式：export DB_PASSWORD='...' 或创建 /opt/jcpress/backend/.env 写入后由 deploy-backend.sh 自动 source。
+# 安全：仓库是 public，这里不写服务器公网 IP、不写任何口令。
+#   MySQL 地址走 DB_HOST（默认本机回环，MySQL 与后端同机时不用额外配）
+#   口令走环境变量：DB_PASSWORD / REDIS_PASSWORD / JCPRESS_AI_API_KEY
+#   服务器注入方式：backend/.env（模板见 backend/.env.example，.env 不入库）
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://119.91.227.162:3306/jcpress?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/jcpress?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     username: root
     password: ${DB_PASSWORD}
   data:

@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "ms-vscode-remote.remote-ssh",
+    "editorconfig.editorconfig",
+    "mikestead.dotenv"
+  ],
+  "unwantedRecommendations": [
+    "vscjava.vscode-java-pack",
+    "redhat.java",
+    "eamodio.gitlens",
+    "dbaeumer.vscode-eslint"
+  ]
+}
