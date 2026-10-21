@@ -14,6 +14,23 @@ const stagger = (step: number) => ({ '--reveal-delay': `${step * 70}ms` }) as CS
 /** 每段默认露出的要点条数，其余折叠。CVTE 有 7 条，全摊开整块会到两屏。 */
 const VISIBLE_POINTS = 3
 
+/**
+ * 按内容量决定折几条。
+ *
+ * 剩下的**只有 1 条时不折**：为了多看一眼去点一次「展开其余 1 条」，收益是负的 ——
+ * 那行 summary 有 44px 触摸高度，比被它藏起来的那条要点还高。
+ * 用友那段正好 4 条，就是这种情况（用户原话：「用友的实习经历不用收起，直接展示」）。
+ * 阈值写成规则而不是「用友/粤建不折」的白名单：数据改了以后行为跟着内容走，
+ * 不用回来改代码。
+ */
+function splitHighlights(highlights: string[]): { shown: string[]; folded: string[] } {
+  if (highlights.length - VISIBLE_POINTS <= 1) return { shown: highlights, folded: [] }
+  return {
+    shown: highlights.slice(0, VISIBLE_POINTS),
+    folded: highlights.slice(VISIBLE_POINTS),
+  }
+}
+
 function formatMonth(value: string): string {
   return value.replace('-', '.')
 }
@@ -79,8 +96,7 @@ export default function ExperienceTimeline({ experiences }: Props) {
 
       <ol className={styles.timeline}>
         {experiences.map((experience, index) => {
-          const shown = experience.highlights.slice(0, VISIBLE_POINTS)
-          const folded = experience.highlights.slice(VISIBLE_POINTS)
+          const { shown, folded } = splitHighlights(experience.highlights)
           const size = companyImageSize(experience.company)
 
           return (

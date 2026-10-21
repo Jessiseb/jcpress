@@ -72,6 +72,17 @@ describe('HomePage', () => {
     expect(details.querySelector('summary')).toHaveTextContent('展开其余 4 条')
   })
 
+  it('要点只比阈值多 1 条时不折叠——藏一条却要多点一次，是负收益', () => {
+    renderHome()
+
+    // 用友那段共 4 条：剩 1 条，直接全露，不出 details
+    const items = sectionOf('实习经历').querySelectorAll('ol > li')
+    const yonyou = items[1] as HTMLElement
+
+    expect(yonyou.querySelectorAll('details')).toHaveLength(0)
+    expect(yonyou.querySelectorAll('ul li')).toHaveLength(4)
+  })
+
   it('四个关键数字都有标签与出处', () => {
     renderHome()
 
