@@ -14,12 +14,19 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--ds-space-4);
-  min-height: 420px;
+  /* 两栏**各自滚动**（2026-10-22 用户：「滑动的时候虽然能一起滑动，但是左右内容没有对应上」）。
+     原来是 `min-height: 420px` + 内容撑高：两栏都没有自己的滚动，滚的是外层 `.body` ——
+     整页一动两边一起动，但源码一行 24px、渲染段落 32px 起，越往下差得越多。
+     锁死高度之后才能让两边按**源文行号**对齐（见 MarkdownEditor 的同步逻辑）。
+     68vh：1440×900 下量出约 612px，正文区能放 20 行左右；上限 860px 防止超宽屏太高。 */
+  height: clamp(420px, 68vh, 860px);
 }
 
 @media (max-width: 900px) {
   .editor {
     grid-template-columns: minmax(0, 1fr);
+    /* 单列时两栏上下排，再锁总高就挤成两条缝了：各自定高、让页面滚 */
+    height: auto;
   }
 }
 
@@ -27,6 +34,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  height: 100%;
   border: 1px solid var(--ds-c-border);
   border-radius: var(--ds-radius-sm);
   background: var(--ds-c-bg);
@@ -54,7 +62,8 @@
 /* CodeMirror 宿主：撑满剩余高度，内部滚动 —— 编辑器不把页面顶高。 */
 .cmHost {
   flex: 1;
-  min-height: 380px;
+  /* 必须 0：flex 子项默认 `min-height: auto`，会被内容撑高、把 `overflow` 顶失效 */
+  min-height: 0;
   overflow: auto;
 }
 
@@ -99,8 +108,18 @@
   border-left-color: var(--adm-text);
 }
 
+/* 单列（≤900px）时两栏上下排：各锁一个高度。写在这条后面，
+   否则上面 `.pane { height: 100% }` 同权重会把它盖掉（第一版就写早了，
+   结果两栏按内容长到 1087 / 1543px）。 */
+@media (max-width: 900px) {
+  .pane {
+    height: min(68vh, 620px);
+  }
+}
+
 .preview {
   flex: 1;
+  min-height: 0;
   padding: var(--ds-space-4);
   overflow: auto;
   /* 预览里是文章正文，沿用正文排版；容器本身仍是后台的中性外观 */
@@ -119,6 +138,76 @@
   padding: 3px var(--ds-space-2);
   border-bottom: 1px solid var(--ds-c-border-soft);
   background: var(--ds-c-bg);
+}
+
+/* 按钮与色板都收在这层里：点空白处关色板要判断「点在不在工具条内」 */
+.toolbarItems {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
+}
+
+/* ---- 取色器（2026-10-22）----
+   两个按钮各开一个色板。绝对定位而不是撑开工具条：色板浮在编辑区上方，
+   开关时下面的正文不跟着跳一行。`data-align` 决定往左还是往右展开 ——
+   色板约 160px 宽，按钮本身贴着工具条右端时往右展开会被面板的 `overflow: hidden` 切掉。 */
+.paintWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.paintPop {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(6, 22px);
+  gap: 4px;
+  padding: 7px;
+  border: 1px solid var(--adm-border);
+  border-radius: var(--adm-r);
+  background: var(--adm-card);
+  box-shadow: 0 8px 20px rgb(0 0 0 / 16%);
+}
+
+.paintPop[data-align='right'] {
+  left: auto;
+  right: 0;
+}
+
+.swatchBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--adm-border);
+  border-radius: 3px;
+  background: none;
+  font-family: var(--ds-font-sans);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.swatchBtn:hover {
+  border-color: var(--adm-border-strong);
+}
+
+/* 当前选区已经用了这个色：描一圈，不用底色区分（底色正是色块本身要表达的信息） */
+.swatchBtn[data-active='on'] {
+  outline: 2px solid var(--adm-primary);
+  outline-offset: 1px;
+}
+
+.swatchBtn:focus-visible {
+  outline: 2px solid var(--adm-primary);
+  outline-offset: 1px;
 }
 
 .toolbarItem {

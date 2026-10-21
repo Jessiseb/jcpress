@@ -17,8 +17,10 @@ import {
   insertLink,
   insertTable,
   toggleInline,
+  togglePaint,
   type EditResult,
   type EditState,
+  type PaintOption,
 } from './markdownCommands'
 import styles from './MarkdownEditor.module.css'
 
@@ -150,6 +152,7 @@ const MARKDOWN_KEYMAP = keymap.of(markdownKeymap)
 export default function MarkdownEditor({ value, onChange, title, meta, onApplyMeta }: Props) {
   const hostRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
+  const previewRef = useRef<HTMLDivElement>(null)
   const [uploading, setUploading] = useState(false)
   const [aiRunning, setAiRunning] = useState(false)
   const [aiResult, setAiResult] = useState<AiFormatVO | null>(null)
@@ -246,6 +249,116 @@ export default function MarkdownEditor({ value, onChange, title, meta, onApplyMe
     })
   }, [value])
 
+  /**
+   * 左右两栏**按源文行号对齐**的滚动同步（2026-10-22 用户：「滑动的时候虽然能一起滑动，
+   * 但是左右内容没有对应上」）。
+   *
+   * 之前两栏都没有自己的滚动：滚的是外层 `.body`，两边一起动 —— 看起来"同步"，
+   * 但源码一行约 24px、渲染后的段落是 17px×1.9 再加段间距，还有代码块、表格这类
+   * 高度完全不成比例的东西，越往下偏得越多。**按比例换算也治不了**，比例本身在变。
+   *
+   * 所以对齐的单位是「源文行号」：`rehypeSourceLines` 在每个顶层渲染块上留下
+   * `data-src-line`，两边就都有了一把共同的尺子：
+   * - 左 → 右：取编辑器视口顶部的行号，在锚点里找夹住它的两个块，按行号在两者之间插值；
+   * - 右 → 左：取预览视口顶部落在哪两个锚点之间，反算行号，让编辑器把那一行滚到顶部。
+   *
+   * 两个方向各有自己的**静默窗**：程序化滚动会再触发一次 scroll 事件，不挡住的话
+   * 两边会互相推着走。用「谁被程序滚过、多久之内不理它的 scroll」而不是一个全局锁，
+   * 是因为全局锁会把用户自己连续拖动时的事件一起吃掉，手感变成每隔一段时间卡一下。
+   */
+  useEffect(() => {
+    const view = viewRef.current
+    const preview = previewRef.current
+    if (!view || !preview) return
+
+    const GUARD = 90
+    let editorLockedUntil = 0
+    let previewLockedUntil = 0
+
+    /** 带行号的顶层渲染块，DOM 顺序就是行号递增顺序 */
+    const anchors = () => Array.from(preview.querySelectorAll<HTMLElement>('[data-src-line]'))
+
+    /** 元素在预览容器里的内容坐标（与当前滚到哪无关） */
+    const contentTop = (el: HTMLElement) =>
+      el.getBoundingClientRect().top - preview.getBoundingClientRect().top + preview.scrollTop
+
+    /** 编辑器视口顶部那一行是第几行 */
+    const editorTopLine = () => {
+      const height = Math.max(view.scrollDOM.getBoundingClientRect().top - view.documentTop, 0)
+      const pos = view.lineBlockAtHeight(Math.min(height, view.contentHeight)).from
+      return view.state.doc.lineAt(pos).number
+    }
+
+    const previewTopLine = (list: HTMLElement[]) => {
+      if (list.length === 0) return null
+      const y = preview.scrollTop + 1
+      let index = 0
+      for (let i = 0; i < list.length; i += 1) {
+        if (contentTop(list[i]) <= y) index = i
+        else break
+      }
+      const line = Number(list[index].dataset.srcLine)
+      const next = list[index + 1]
+      if (!next) return line
+      const nextLine = Number(next.dataset.srcLine)
+      const span = contentTop(next) - contentTop(list[index])
+      if (span <= 0 || nextLine <= line) return line
+      const ratio = Math.min(Math.max((y - contentTop(list[index])) / span, 0), 1)
+      return line + ratio * (nextLine - line)
+    }
+
+    const syncPreviewTo = (line: number) => {
+      const list = anchors()
+      if (list.length === 0) return
+      let index = 0
+      for (let i = 0; i < list.length; i += 1) {
+        if (Number(list[i].dataset.srcLine) <= line) index = i
+        else break
+      }
+      const top = contentTop(list[index])
+      const currentLine = Number(list[index].dataset.srcLine)
+      const next = list[index + 1]
+      let target = top
+      if (next) {
+        const nextLine = Number(next.dataset.srcLine)
+        const ratio =
+          nextLine > currentLine
+            ? Math.min(Math.max((line - currentLine) / (nextLine - currentLine), 0), 1)
+            : 0
+        target = top + ratio * (contentTop(next) - top)
+      }
+      previewLockedUntil = performance.now() + GUARD
+      preview.scrollTop = Math.max(target, 0)
+    }
+
+    const syncEditorTo = (line: number) => {
+      const target = Math.min(Math.max(Math.round(line), 1), view.state.doc.lines)
+      editorLockedUntil = performance.now() + GUARD
+      view.dispatch({
+        // 不动光标，只滚动：用 effects 而不是 dispatch({selection})
+        effects: EditorView.scrollIntoView(view.state.doc.line(target).from, { y: 'start' }),
+      })
+    }
+
+    const onEditorScroll = () => {
+      if (performance.now() < editorLockedUntil) return
+      syncPreviewTo(editorTopLine())
+    }
+    const onPreviewScroll = () => {
+      if (performance.now() < previewLockedUntil) return
+      const line = previewTopLine(anchors())
+      if (line !== null) syncEditorTo(line)
+    }
+
+    const scroller = view.scrollDOM
+    scroller.addEventListener('scroll', onEditorScroll, { passive: true })
+    preview.addEventListener('scroll', onPreviewScroll, { passive: true })
+    return () => {
+      scroller.removeEventListener('scroll', onEditorScroll)
+      preview.removeEventListener('scroll', onPreviewScroll)
+    }
+  }, [])
+
   const runAiFormat = async () => {
     if (value.trim() === '' || aiRunning) return
     setAiRunning(true)
@@ -287,6 +400,12 @@ export default function MarkdownEditor({ value, onChange, title, meta, onApplyMe
     applyEdit(view, commandFor(action))
   }
 
+  const runPaint = (option: PaintOption) => {
+    const view = viewRef.current
+    if (!view) return
+    applyEdit(view, (state) => togglePaint(state, option))
+  }
+
   return (
     <div className={styles.wrap}>
       {aiError && (
@@ -323,13 +442,13 @@ export default function MarkdownEditor({ value, onChange, title, meta, onApplyMe
               {aiRunning ? '排版中…' : 'AI 排版'}
             </button>
           </div>
-          <MarkdownToolbar active={activeSet} onAction={runAction} />
+          <MarkdownToolbar active={activeSet} onAction={runAction} onPaint={runPaint} />
           <div ref={hostRef} className={styles.cmHost} />
         </div>
         <div className={styles.pane}>
           <div className={styles.paneHead}>预览</div>
-          <div className={styles.preview}>
-            <MarkdownBody markdown={value} />
+          <div ref={previewRef} className={styles.preview}>
+            <MarkdownBody markdown={value} sourceLines />
           </div>
         </div>
       </div>

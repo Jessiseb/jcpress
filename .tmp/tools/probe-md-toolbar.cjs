@@ -65,7 +65,8 @@ const main = async () => {
       const buttons = await page.evaluate(() =>
         Array.from(document.querySelectorAll('[role="toolbar"] button')).map((b) => b.getAttribute('aria-label')),
       )
-      check('工具条挂了 13 个按钮', buttons.length === 13, buttons.join(' / '))
+      // 13 个格式按钮 + 文字颜色 + 文字底色（2026-10-22 加的两个取色入口）
+      check('工具条挂了 15 个按钮', buttons.length === 15, buttons.join(' / '))
 
       // ── 点按钮加粗 ──
       await page.click('.cm-content')

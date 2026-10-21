@@ -119,6 +119,144 @@ export function toggleInline(state: EditState, kind: InlineKind): EditResult {
   }
 }
 
+/* ────────────────────────── 行内：文字颜色 / 底色 ────────────────────────── */
+
+export type PaintKind = 'tone' | 'bg'
+
+export interface PaintOption {
+  /** 源码里的色名，也是 `{红}…{/红}` 的定界符 */
+  token: string
+  /** 色板上读给读屏器的名字 */
+  label: string
+  kind: PaintKind
+  /**
+   * 色块颜色，**只用于色板预览**。正文实际渲染的颜色在
+   * `components/markdown/markdown.module.css`（亮暗各一套）—— 两处都对上才有意义，
+   * 所以 `probe-md-toolbar.cjs` 会拿渲染结果的 `color` 与这里逐一比对，改单边会被抓出来。
+   */
+  swatch: string
+}
+
+export const TONE_PAINTS: readonly PaintOption[] = [
+  { token: '红', label: '红色文字', kind: 'tone', swatch: '#b3261e' },
+  { token: '橙', label: '橙色文字', kind: 'tone', swatch: '#95500a' },
+  { token: '绿', label: '绿色文字', kind: 'tone', swatch: '#1f6b3a' },
+  { token: '蓝', label: '蓝色文字', kind: 'tone', swatch: '#1a5fb4' },
+  { token: '紫', label: '紫色文字', kind: 'tone', swatch: '#6a3fa0' },
+  { token: '灰', label: '灰色文字', kind: 'tone', swatch: '#5c6470' },
+]
+
+export const BG_PAINTS: readonly PaintOption[] = [
+  { token: '黄底', label: '黄色底色', kind: 'bg', swatch: '#fdf0ad' },
+  { token: '绿底', label: '绿色底色', kind: 'bg', swatch: '#d5f0dd' },
+  { token: '蓝底', label: '蓝色底色', kind: 'bg', swatch: '#d9e8fb' },
+  { token: '粉底', label: '粉色底色', kind: 'bg', swatch: '#fbdfe5' },
+  { token: '紫底', label: '紫色底色', kind: 'bg', swatch: '#e9defb' },
+  { token: '灰底', label: '灰色底色', kind: 'bg', swatch: '#e8eaee' },
+]
+
+/** 两族色名分开匹配：`{绿}` 与 `{绿底}` 是两种不同的东西，不能互相吃掉。 */
+const PAINT_FAMILY: Record<PaintKind, RegExp> = {
+  tone: /(红|橙|绿|蓝|紫|灰)/,
+  bg: /(黄底|绿底|蓝底|粉底|紫底|灰底)/,
+}
+
+const openOf = (token: string) => `{${token}}`
+const closeOf = (token: string) => `{/${token}}`
+
+/** 选区外侧紧贴着的那一对标记是什么色（含「哪一族」），没有就是 null。 */
+function wrappedToken(
+  text: string,
+  from: number,
+  to: number,
+  kind: PaintKind,
+): { token: string; openSize: number; closeSize: number } | null {
+  const family = PAINT_FAMILY[kind]
+  const head = text.slice(Math.max(from - 8, 0), from)
+  const tail = text.slice(to, to + 8)
+  const openMatch = /\{([^}\/]{1,3})\}$/.exec(head)
+  const closeMatch = /^\{(\/[^}]{1,3})\}/.exec(tail)
+  if (!openMatch || !closeMatch) return null
+  const token = openMatch[1]
+  if (closeMatch[1].slice(1) !== token) return null
+  if (!family.test(token)) return null
+  // 开标记与闭标记**不一样长**：`{红}` 三个字符，`{/红}` 四个 —— 用一个 size 会多删/少删一个字符
+  return { token, openSize: openMatch[0].length, closeSize: closeMatch[0].length }
+}
+
+/**
+ * 给选中的文字上色（文字色或底色），再点同一个色是取消，点另一个色是**换色**。
+ *
+ * 「换色而不是叠加」这条是刻意的：`{红}{蓝}字{/蓝}{/红}` 在渲染上等于蓝色，
+ * 但源码里留下了两层没人能看懂的标记，再点几次会越套越深。语雀/飞书里换色就是换色。
+ */
+export function togglePaint(state: EditState, option: PaintOption): EditResult {
+  const { text } = state
+  let from = state.from
+  let to = state.to
+
+  // 空选区：先选中光标下的词，和加粗那套一致
+  if (from === to) {
+    const word = wordAt(text, from)
+    if (word) {
+      from = word.from
+      to = word.to
+    }
+  }
+
+  const open = openOf(option.token)
+  const close = closeOf(option.token)
+  const inner = text.slice(from, to)
+
+  // ① 外面包着的就是这一个色 → 整个摘掉
+  const current = wrappedToken(text, from, to, option.kind)
+  if (current && current.token === option.token) {
+    return {
+      text: text.slice(0, from - current.openSize) + inner + text.slice(to + current.closeSize),
+      from: from - current.openSize,
+      to: from - current.openSize + inner.length,
+    }
+  }
+
+  // ② 外面包着同族的另一个色 → 换色，别套第二层
+  if (current) {
+    const before = text.slice(0, from - current.openSize)
+    const after = text.slice(to + current.closeSize)
+    return {
+      text: `${before}${open}${inner}${close}${after}`,
+      from: before.length + open.length,
+      to: before.length + open.length + inner.length,
+    }
+  }
+
+  // ③ 标记被一起框进选区了（手动选中 `{红}字{/红}` 再点）→ 摘掉这一对
+  if (inner.length >= open.length + close.length && inner.startsWith(open) && inner.endsWith(close)) {
+    const stripped = inner.slice(open.length, inner.length - close.length)
+    return {
+      text: text.slice(0, from) + stripped + text.slice(to),
+      from,
+      to: from + stripped.length,
+    }
+  }
+
+  // ④ 空光标、附近也没有词：插一对空标记，光标落在中间
+  if (from === to) {
+    const caret = from + open.length
+    return {
+      text: text.slice(0, from) + open + close + text.slice(from),
+      from: caret,
+      to: caret,
+    }
+  }
+
+  // ⑤ 包起来，选中里面的文字
+  return {
+    text: text.slice(0, from) + open + inner + close + text.slice(to),
+    from: from + open.length,
+    to: from + open.length + inner.length,
+  }
+}
+
 /* ────────────────────────── 块级：标题 / 引用 / 列表 ────────────────────────── */
 
 export type BlockKind = 'h1' | 'h2' | 'h3' | 'quote' | 'bullet' | 'ordered'
@@ -333,6 +471,12 @@ export function detectActive(state: EditState): string[] {
     if (isWrapped(text, from, to, INLINE_MARKER[kind])) active.push(kind)
   }
   if (isWrapped(text, from, to, '`')) active.push('code')
+
+  // 文字色 / 底色：给 `tone:红` `bg:黄底` 两种键，色板据此标出「当前是哪个色」
+  for (const kind of ['tone', 'bg'] as const) {
+    const wrapped = wrappedToken(text, from, to, kind)
+    if (wrapped) active.push(`${kind}:${wrapped.token}`)
+  }
 
   const group = groupOf(splitLine(text.slice(lineStartAt(text, state.from), lineEndAt(text, state.from))).marker)
   if (group) active.push(group)

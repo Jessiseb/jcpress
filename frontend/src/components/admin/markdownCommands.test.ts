@@ -2,12 +2,15 @@ import { describe, expect, it } from 'vitest'
 
 import {
   applyLinePrefix,
+  BG_PAINTS,
   detectActive,
   diffChange,
   insertCodeBlock,
   insertLink,
   insertTable,
   toggleInline,
+  togglePaint,
+  TONE_PAINTS,
   type EditResult,
   type EditState,
 } from './markdownCommands'
@@ -181,5 +184,53 @@ describe('diffChange', () => {
 
   it('纯追加只报追加的部分', () => {
     expect(diffChange('abc', 'abcd')).toEqual({ from: 3, to: 3, insert: 'd' })
+  })
+})
+
+describe('togglePaint', () => {
+  const red = TONE_PAINTS.find((paint) => paint.token === '红')!
+  const blue = TONE_PAINTS.find((paint) => paint.token === '蓝')!
+  const yellow = BG_PAINTS.find((paint) => paint.token === '黄底')!
+
+  it('选中文字上红色：包一层 {红}…{/红}，选区留在文字上', () => {
+    expectEdit(togglePaint(at('前面重点后面', 2, 4), red), '前面{红}重点{/红}后面', 5, 7)
+  })
+
+  it('再点同一个色是取消，不是套第二层', () => {
+    expectEdit(togglePaint(at('前面{红}重点{/红}后面', 5, 7), red), '前面重点后面', 2, 4)
+  })
+
+  it('点另一个色是**换色**，源码里不留两层标记', () => {
+    expectEdit(togglePaint(at('{红}重点{/红}', 3, 5), blue), '{蓝}重点{/蓝}', 3, 5)
+  })
+
+  it('底色和文字色是两个家族：红字上点黄底是叠加', () => {
+    expectEdit(togglePaint(at('{红}重点{/红}', 3, 5), yellow), '{红}{黄底}重点{/黄底}{/红}', 7, 9)
+  })
+
+  it('手动把标记一起选进来再点同一个色 → 摘掉这一对', () => {
+    // 选区要真的把 `{红}…{/红}` 整对框进来（开标记 3 字、闭标记 4 字）
+    expectEdit(togglePaint(at('前{红}重点{/红}后', 1, 10), red), '前重点后', 1, 3)
+  })
+
+  it('空光标落在词上：给整个词上色（与加粗同一套取词规则）', () => {
+    // 汉字按连续汉字取词，所以要拿空格把词隔开（否则整句算一个"词"）
+    expectEdit(togglePaint(at('前面 重点 后面', 3), red), '前面 {红}重点{/红} 后面', 6, 8)
+  })
+
+  it('空光标且附近没有词：插一对空标记，光标落在中间', () => {
+    expectEdit(togglePaint(at('', 0), red), '{红}{/红}', 3, 3)
+  })
+})
+
+describe('detectActive 认得上色', () => {
+  it('选区外包着 {红} 时报 tone:红', () => {
+    expect(detectActive(at('{红}重点{/红}', 3, 5))).toContain('tone:红')
+  })
+
+  it('底色报 bg:黄底，与文字色互不冒充', () => {
+    const active = detectActive(at('{黄底}重点{/黄底}', 4, 6))
+    expect(active).toContain('bg:黄底')
+    expect(active.some((key) => key.startsWith('tone:'))).toBe(false)
   })
 })

@@ -24,6 +24,110 @@
   color: var(--ds-c-text);
   /* 章节自动编号的计数器 */
   counter-reset: section;
+
+  /* 正文里可选的文字色（`{红}…{/红}`）。亮色一套：都按白底实测过 AA，
+     最低 5.98:1（灰）、最高 7.42:1（紫）—— 这是**装饰性也要能读**的底线，
+     别为了让红更红把对比度压到 3:1。 */
+  --jc-tone-red: #b3261e;
+  --jc-tone-orange: #95500a;
+  --jc-tone-green: #1f6b3a;
+  --jc-tone-blue: #1a5fb4;
+  --jc-tone-purple: #6a3fa0;
+  --jc-tone-gray: #5c6470;
+
+  /* 底色（`{黄底}…{/黄底}`）：背景 + 前景成对给，不能只给背景 ——
+     只给背景的话深色主题下会继承浅色文字，压在浅黄底上直接看不见。
+     亮色这组前景压底色实测 8.11–10.03:1。 */
+  --jc-hl-yellow-bg: #fdf0ad;
+  --jc-hl-yellow-fg: #4a3600;
+  --jc-hl-green-bg: #d5f0dd;
+  --jc-hl-green-fg: #12492c;
+  --jc-hl-blue-bg: #d9e8fb;
+  --jc-hl-blue-fg: #123f6d;
+  --jc-hl-pink-bg: #fbdfe5;
+  --jc-hl-pink-fg: #7a1f33;
+  --jc-hl-purple-bg: #e9defb;
+  --jc-hl-purple-fg: #43256f;
+  --jc-hl-gray-bg: #e8eaee;
+  --jc-hl-gray-fg: #343b47;
+}
+
+/* 深色主题：色相不变、明度整体翻面（亮底上的深字 → 深底上的亮字）。
+   两套都是实测 AA，见上一条注释的同一套口径。 */
+[data-theme='dark'] .prose {
+  --jc-tone-red: #ff9a90;
+  --jc-tone-orange: #e8ab63;
+  --jc-tone-green: #79d9a2;
+  --jc-tone-blue: #8ebcff;
+  --jc-tone-purple: #c6a8ff;
+  --jc-tone-gray: #aab2be;
+
+  --jc-hl-yellow-bg: #4a3c05;
+  --jc-hl-yellow-fg: #ffe89a;
+  --jc-hl-green-bg: #123f2a;
+  --jc-hl-green-fg: #a5ebc2;
+  --jc-hl-blue-bg: #12324f;
+  --jc-hl-blue-fg: #b3d2ff;
+  --jc-hl-pink-bg: #431f28;
+  --jc-hl-pink-fg: #ffbccb;
+  --jc-hl-purple-bg: #2f2150;
+  --jc-hl-purple-fg: #d8c2ff;
+  --jc-hl-gray-bg: #2a2f37;
+  --jc-hl-gray-fg: #d6dbe3;
+}
+
+.prose :global([data-jc-tone='red']) {
+  color: var(--jc-tone-red);
+}
+.prose :global([data-jc-tone='orange']) {
+  color: var(--jc-tone-orange);
+}
+.prose :global([data-jc-tone='green']) {
+  color: var(--jc-tone-green);
+}
+.prose :global([data-jc-tone='blue']) {
+  color: var(--jc-tone-blue);
+}
+.prose :global([data-jc-tone='purple']) {
+  color: var(--jc-tone-purple);
+}
+.prose :global([data-jc-tone='gray']) {
+  color: var(--jc-tone-gray);
+}
+
+/* 底色用 <mark> 而不是 span：语义上就是「标记」，读屏器能念出来；
+   浏览器自带的黄底则被这里的规则覆盖掉。`box-decoration-break: clone`
+   让一段话折行后每行都有完整的内边距与圆角，而不是只在首尾有。 */
+.prose mark[data-jc-bg] {
+  padding: 0.08em 0.2em;
+  border-radius: var(--ds-radius-sm);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.prose :global(mark[data-jc-bg='yellow']) {
+  background: var(--jc-hl-yellow-bg);
+  color: var(--jc-hl-yellow-fg);
+}
+.prose :global(mark[data-jc-bg='green']) {
+  background: var(--jc-hl-green-bg);
+  color: var(--jc-hl-green-fg);
+}
+.prose :global(mark[data-jc-bg='blue']) {
+  background: var(--jc-hl-blue-bg);
+  color: var(--jc-hl-blue-fg);
+}
+.prose :global(mark[data-jc-bg='pink']) {
+  background: var(--jc-hl-pink-bg);
+  color: var(--jc-hl-pink-fg);
+}
+.prose :global(mark[data-jc-bg='purple']) {
+  background: var(--jc-hl-purple-bg);
+  color: var(--jc-hl-purple-fg);
+}
+.prose :global(mark[data-jc-bg='gray']) {
+  background: var(--jc-hl-gray-bg);
+  color: var(--jc-hl-gray-fg);
 }
 
 .prose p {
