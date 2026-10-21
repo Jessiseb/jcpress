@@ -661,14 +661,24 @@ async function auditPhase3(browser) {
         .filter((el) => el.closest('[data-celestial]'))
         .map((el) => el.getAttribute('src') || '')
         .filter((src) => !src.startsWith('/')),
+      // 内容图现在也全部是同源本地资源（decisions #64 的遗留项：
+      // 实习经历那三张 Unsplash 占位图，2026-10-21 用友 / 三和换成真实 logo 后清零）。
+      // 原先这里只是往输出里追加一句「欠债」提示，不参与判定 —— 欠债既然还完，
+      // 就该把提示换成真检查，否则护栏白占一行。
+      remotePhotos: imgs
+        .filter((el) => el.closest('[data-photo]'))
+        .map((el) => el.getAttribute('src') || '')
+        .filter((src) => !src.startsWith('/')),
       photoCount: imgs.filter((el) => el.closest('[data-photo]')).length,
       textureCount: imgs.filter((el) => el.closest('[data-celestial]')).length,
     }
   })
   check(
-    '图片全部登记：内容图挂 data-photo、天体贴图挂 data-celestial 且必须自托管',
-    photos.unregistered.length === 0 && photos.remoteTextures.length === 0,
-    `${photos.total} 张（内容图 ${photos.photoCount} / 天体贴图 ${photos.textureCount}）；请求 ${imageReqs.length} 条${photos.unregistered.length ? `；未登记 ${photos.unregistered.join(', ')}` : ''}${photos.remoteTextures.length ? `；远程贴图 ${photos.remoteTextures.join(', ')}` : ''}${photos.photoCount ? '；内容图是远程占位图（欠债，见 decisions #64）' : ''}`,
+    '图片全部登记：内容图挂 data-photo、天体贴图挂 data-celestial，且都必须自托管',
+    photos.unregistered.length === 0 &&
+      photos.remoteTextures.length === 0 &&
+      photos.remotePhotos.length === 0,
+    `${photos.total} 张（内容图 ${photos.photoCount} / 天体贴图 ${photos.textureCount}）；请求 ${imageReqs.length} 条${photos.unregistered.length ? `；未登记 ${photos.unregistered.join(', ')}` : ''}${photos.remoteTextures.length ? `；远程贴图 ${photos.remoteTextures.join(', ')}` : ''}${photos.remotePhotos.length ? `；远程内容图 ${photos.remotePhotos.join(', ')}` : '；内容图全部自托管'}`,
   )
 
   // 每条流线的 `d` 都必须真的有效（非法值会被浏览器静默丢掉，长度归零）

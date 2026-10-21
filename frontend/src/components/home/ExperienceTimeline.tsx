@@ -23,27 +23,32 @@ function formatPeriod(experience: ExperienceVO): string {
 }
 
 /**
- * 公司图片。
+ * 公司图片：三家现在都是本地资源，且统一成 1:1 方图。
  *
- * 视源（CVTE）是**真实公司照片**（2026-10-16 用户提供前台实拍，本机转 webp：
- * 源 1280×1280 / 454KB → `public/companies/cvte.webp` 1080×1080 / 68KB）。
- * 其余两家仍是 Unsplash 占位图，等真实照片到位再换。
+ * 视源是**真实前台照片**（2026-10-16 用户提供，源 1280×1280 / 454KB →
+ * `cvte.webp` 1080×1080 / 68KB）。
+ * 用友与三和（2026-10-21 用户提供）给的分别是横排和竖排的白底 logo，
+ * 不能直接塞进方框 —— `object-fit: cover` 会把横排 logo 两端切掉。
+ * 所以先用 `.tmp/tools/make-company-logo.cjs` 裁掉四周白边、居中补成方形再转 webp。
+ * **换图必须重跑那个脚本**，直接丢一张非方图进来会被裁边。
  *
- * 真实照片必须落在本地：移动端 4× 降速下远程大图解码会排进长任务；断网时退化成空白；
+ * 图片必须落在本地：移动端 4× 降速下远程大图解码会排进长任务；断网时退化成空白；
  * 还会把访客 IP 送给第三方图床。照片走 <img loading=lazy decoding=async>，
  * 不用 CSS background-image（背景图没法 lazy，也没法 async 解码）。
  */
 function companyImage(company: string): string {
   if (company.includes('视源')) return '/companies/cvte.webp'
-  if (company.includes('用友')) return 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=560&h=840&q=70'
-  return 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=560&h=840&q=70'
+  if (company.includes('用友')) return '/companies/yonyou.webp'
+  return '/companies/sanhe.webp'
 }
 
 /** 给 <img> 的 width/height 属性（纵横比提示，防加载完成时抖一下）。
- *  真实照片是 1:1 方图，占位图是 2:3 竖图，写错会在解码后重排。 */
+ *  三张都是 1:1，写真实边长而不是写 1:1 占位值 —— 将来真混进一张非方图，
+ *  这里会立刻对不上，比默默 cover 裁掉一截更容易发现。 */
 function companyImageSize(company: string): { width: number; height: number } {
   if (company.includes('视源')) return { width: 1080, height: 1080 }
-  return { width: 560, height: 840 }
+  if (company.includes('用友')) return { width: 256, height: 256 }
+  return { width: 512, height: 512 }
 }
 
 /**
