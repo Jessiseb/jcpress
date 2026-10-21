@@ -176,28 +176,37 @@ cd backend
 | 坑 | 现象 | 处置 |
 | --- | --- | --- |
 | **JDK 版本** | `mvnw` 以 JDK 8 启动、编译失败 | `export JAVA_HOME="/c/Program Files/Java/jdk-17"` |
-| **git 代理** | `git pull/push` 报 `Failed to connect to 127.0.0.1 port <旧端口>: Connection refused` | git 里配过写死的代理端口，会话间会失效。**本仓库已改为直连**（本机直连 github 实测通且更快），若再遇到就 `git config --unset http.proxy && git config --unset https.proxy` |
+| **git 代理** | `git pull/push` 报 `Failed to connect to ...:443` 或 `schannel: server closed abruptly` 或 `CONNECT tunnel failed, response 502` | 环境会注入 `http_proxy/https_proxy=127.0.0.1:64274`，那个端口连不上 github。直连 443 也不通。**实际可用的是 7890**，见下面「git 代理」一节 |
 | **凭据助手名过时** | `git: 'credential-manager-core' is not a git command` | `git config --global credential.helper manager`（已修） |
 | **前端 dev server / 测试报 `winapi error #5`** | `npm run dev`、`vitest run` 报 `failed to load config from vite.config.ts` + `Cannot read file "package.json": winapi error #5` | 本机 EDR 拦 **esbuild 子进程**读文件，**与代理无关**。但根因只有一环：vite 默认 `configLoader: bundle`，会用 esbuild 去编译 `vite.config.ts`。换成 runner 模式（Node 原生加载）即可绕开：<br>`npx vite --configLoader runner`（≈ `npm run dev -- --configLoader runner`）<br>`npx vitest run --configLoader runner`<br>**两者已于 2026-10-12 实测跑通**（dev server 起在 8099、模块转换与依赖预构建均正常，vitest 全量 42 例可跑）。`vite build` 未验证。<br>**别用 `esbuild --version` 判断环境可用性**（它不读文件所以永远成功）<br>**2026-10-20 更新**：runner 模式只解决「编译配置文件」这一环。**依赖预构建**同样要 esbuild 读 `node_modules`，现在这一步也被拦（15 个入口全部 `winapi error #5`），所以 `node_modules/.vite` 一旦被删，dev server 就再也起不来 —— 替代路径见上面「启动」一节。`vite build --target esnext --minify false` 可以跑完（rollup 负责读文件） |
 | **上传 URL 404** | 正文图片打不开 | 对外 URL 带 `/api` 前缀（`/api/uploads/...`），与静态映射路径 `/uploads` 是两个配置项 |
 | **`SERVER__PORT` 覆盖端口**（2026-10-13 实测） | 后端报 `Port 57196 was already in use`，但 57196 不是项目里任何配置 | 宿主（WorkBuddy）会往环境里注入 `SERVER__PORT`，Spring Boot 的 relaxed binding 让它等价于 `server.port`，直接盖掉配置值。起服务前 `unset SERVER__PORT SERVER_PORT` |
 | **`mvnw` 拉不到新依赖**（2026-10-13 实测） | `mvnw dependency:get` 报 `Could not find artifact ... in alimaven`，现象像"坐标写错了" | `settings.xml` 里配的是 **HTTP** 阿里云镜像，而 `mvnw` 用的 Maven 3.8.1 会拦 HTTP 镜像。**用系统 `mvn`（3.6.3，不拦）即可**，代价是要自己 `export JAVA_HOME` 指到 JDK 17。已有依赖在本地仓库 `D:\maven\repository`，`mvnw` 日常编译不受影响 |
 
-### git 代理（当前：直连）
+### git 代理（当前：只能用 7890）
 
-本仓库**不配代理**，直接用直连。本机实测直连 github 通且比走代理更快（2026-10-12 验证）。
+2026-10-21 实测的三种情况，别在其他两种上浪费时间：
+
+| 方式 | 结果 |
+| --- | --- |
+| 环境变量里的 `127.0.0.1:64274` | `CONNECT tunnel failed, response 502` / `schannel: server closed abruptly` |
+| 清空环境变量直连 | `Failed to connect to github.com:443 after 21061 ms` |
+| `127.0.0.1:7890` | 正常，`ddc64ef..49f5615 jcpress-test -> jcpress-test` |
+
+环境变量里的代理每次会话可能变，**不要**写进 `git config`（写死后端口一变就全挂）。只在单次命令上挂：
 
 ```bash
-# 若哪天直连不通、必须走代理：环境提供的本地代理端口每次会话会变
-env | grep -i proxy           # 拿当前端口（注意环境变量里的端口也可能过期）
-netstat -ano | grep LISTENING | grep -E ":(7890|7897|10809)\b"   # 找真正在听的端口
-git config http.proxy  http://127.0.0.1:<端口>
-git config https.proxy http://127.0.0.1:<端口>
-# 用完记得清掉，否则下次会话端口一变又连不上：
-git config --unset http.proxy && git config --unset https.proxy
+git -c http.proxy=http://127.0.0.1:7890 -c https.proxy=http://127.0.0.1:7890 push origin jcpress-test
 ```
 
-彻底摆脱这件事的办法：改用 SSH key，或把 remote 换成 `gh` 管理的地址。
+找可用端口：
+
+```bash
+netstat -ano | grep LISTENING | grep -E ":(7890|7897|10809)"
+curl -x http://127.0.0.1:<端口> -sI -m 20 https://github.com | head -1
+```
+
+彻底摆脱这件事的办法：把 `~/.ssh/id_rsa.pub` 加到 GitHub 账号，remote 换 SSH。现在这个 key 不在账号里（`ssh -T git@github.com` 报 `Permission denied (publickey)`），所以暂时只能走代理。
 
 ## 7. 部署上线（服务器拉代码构建）
 
