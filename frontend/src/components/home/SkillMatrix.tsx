@@ -60,7 +60,7 @@ export default function SkillMatrix({ groups }: Props) {
         技术栈
       </h2>
       <p className="sectionLead" data-reveal style={stagger(1)}>
-        按方向整理，标注我在实际项目中的使用深度。
+        我会的内容
       </p>
 
       {/* data-glass：面板是本元素的渐变宿主身份（顶部高光那层 linear-gradient），

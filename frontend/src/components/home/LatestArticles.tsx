@@ -45,7 +45,7 @@ export default function LatestArticles() {
         最新技术分享
       </h2>
       <p className="sectionLead" data-reveal style={stagger(1)}>
-        把踩过的坑写清楚 —— 后端、数据库与工程化里的可复现经验。
+        程序员的素养
       </p>
 
       {isPending && (

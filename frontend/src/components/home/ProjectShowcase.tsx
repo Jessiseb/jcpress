@@ -109,7 +109,7 @@ export default function ProjectShowcase({ projects }: Props) {
         <span className={styles.badge} data-ring="" aria-hidden="true" />
       </h2>
       <p className="sectionLead" data-reveal style={stagger(1)}>
-        两个从 0 到 1 自研的项目，都由我负责后端与整体方案。展开看难点与取舍。
+        丰富的项目经历，单独负责与开发的项目
       </p>
 
       {/* data-glass + .panel：与「关键数字」并列的第二处（也是最后一处）面板 */}

@@ -38,7 +38,7 @@ export default function HighlightStats({ metrics }: Props) {
         拿得出手的数字
       </h2>
       <p className="sectionLead" data-reveal style={stagger(1)}>
-        四个来自真实生产环境的量化结果，每一项都能回指到具体项目与责任范围。
+        四个来自真实生产环境的量化结果
       </p>
 
       {/* data-glass + .panel：二期的「有限面板化」——只给这一类区块与项目经历用（#46 的修订）。
