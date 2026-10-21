@@ -19,7 +19,7 @@ export interface ProfileVO {
   summary: string
   location: string
   email: string
-  /** Gitee 主页（简历给出的唯一可确认代码托管地址） */
+  /** GitHub 主页。Gitee 是简历上的老地址，见 contacts */
   githubUrl: string
   blogUrl: string | null
   wechatQrUrl: string | null
@@ -116,7 +116,7 @@ export const profileData: ProfileAggregateVO = {
       '在 CVTE 做 AI 运维 Agent，在用友与粤建三和做企业级 Java 后端。习惯先把架构想清楚再动手，也习惯把踩过的坑写下来——CSDN 累计 17 篇技术文、访问 1w+，Gitee 上还有智能体、API 开放平台等自研项目。',
     location: '广州',
     email: '2750685367@qq.com',
-    githubUrl: 'https://gitee.com/c-nomad',
+    githubUrl: 'https://github.com/Jessiseb',
     blogUrl: 'https://www.yuque.com/u42163082/chengshenbj',
     wechatQrUrl: null,
     resumePdfUrl: '/resume.pdf',
@@ -341,6 +341,7 @@ export const profileData: ProfileAggregateVO = {
     { label: '手机', value: '178 1921 2602', href: 'tel:+8617819212602' },
     { label: '微信', value: 'XIH1222', href: null, copyable: true },
     { label: 'Gitee', value: 'gitee.com/c-nomad', href: 'https://gitee.com/c-nomad' },
+    { label: 'GitHub', value: 'github.com/Jessiseb', href: 'https://github.com/Jessiseb' },
     { label: 'CSDN', value: 'C 游牧人 · 17 篇 / 访问 1w+', href: 'https://blog.csdn.net/2301_79737596?spm=1000.2115.3001.5343' },
     { label: '个人知识库', value: '语雀 · 成神笔记', href: 'https://www.yuque.com/u42163082/chengshenbj' },
   ],
