@@ -94,3 +94,18 @@
     transition: none;
   }
 }
+
+/* 加载态占位：与真实分组同样的左内边距与行距，数据回来时栏宽不动 */
+.pending {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  margin-top: 1.15rem;
+  padding-left: 0.7rem;
+}
+
+.pendingGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}

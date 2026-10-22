@@ -1,0 +1,65 @@
+/* 后台路由级骨架：几何全部借 admin.module.css 的变量与类，
+   保证「骨架 → 真外壳」是一次换壳而不是一次跳版。 */
+.sideList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.75rem 1rem 0;
+}
+
+.sideGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 0.9rem;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.85rem;
+}
+
+.kpi {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--adm-border);
+  border-radius: var(--adm-r);
+  background: var(--adm-card);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.panel {
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--adm-border);
+  border-radius: var(--adm-r);
+  background: var(--adm-card);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 0.85rem;
+}
+
+@media (max-width: 1080px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* 与真实趋势图同比例（viewBox 720×240）：高度对得上，数据回来时图不会「长出来」 */
+.chart {
+  width: 100%;
+  aspect-ratio: 720 / 240;
+}

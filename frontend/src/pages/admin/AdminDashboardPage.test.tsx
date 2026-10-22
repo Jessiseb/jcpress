@@ -149,4 +149,17 @@ describe('AdminDashboardPage', () => {
     expect(screen.getByText('这段时间还没有文章被打开过。')).toBeInTheDocument()
     expect(screen.getByText('这段时间还没有页面访问记录。')).toBeInTheDocument()
   })
+
+  it('总览还没回来时给骨架，不留「正在加载…」这种一行字', async () => {
+    // 永不 resolve：模拟首屏刷新时接口尚未返回的那一段
+    fetchStatsOverview.mockReturnValue(new Promise(() => {}))
+
+    renderPage()
+
+    const regions = await screen.findAllByRole('status')
+    expect(regions.length).toBeGreaterThan(0)
+    expect(screen.queryByText('正在加载…')).toBeNull()
+    // 骨架块的存在感：至少四张指标卡 + 图表 + 两个榜单行
+    expect(document.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(10)
+  })
 })

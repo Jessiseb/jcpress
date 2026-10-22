@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import type { ArticleCardVO } from '@/api/types'
 import { CATALOG_SIZE, useTechCatalog } from '@/hooks/useTechCatalog'
 import { describeLoadError } from '@/utils/loadError'
+import { TechListSkeleton } from '@/components/tech/ContentSkeleton'
 import styles from './TechListPage.module.css'
 
 const formatDate = (value: string) => value.slice(0, 10).replace(/-/g, '.')
@@ -77,7 +78,7 @@ export default function TechListPage() {
       </h1>
       <p className={styles.lead}>把踩过的坑写清楚：Java 后端、AI Agent 工程、数据库与中间件。</p>
 
-      {isPending && <p className={styles.state}>正在加载…</p>}
+      {isPending && <TechListSkeleton />}
 
       {isError && (
         <div className={styles.empty} role="alert">

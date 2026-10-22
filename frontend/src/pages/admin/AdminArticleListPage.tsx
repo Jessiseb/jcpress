@@ -9,6 +9,7 @@ import {
   useDeleteAdminArticle,
   usePublishAdminArticle,
 } from '@/hooks/useAdminArticles'
+import { Skeleton, SkeletonRegion } from '@/components/common/Skeleton'
 import AdminLayout from './AdminLayout'
 import styles from './admin.module.css'
 
@@ -118,7 +119,7 @@ export default function AdminArticleListPage() {
   if (isPending) {
     return (
       <AdminLayout>
-        <p className={styles.state}>正在加载…</p>
+        <ArticleListSkeleton />
       </AdminLayout>
     )
   }
@@ -382,5 +383,45 @@ export default function AdminArticleListPage() {
         </div>
       </div>
     </AdminLayout>
+  )
+}
+
+/**
+ * 列表加载骨架：搜索条 + 8 行表格占位。
+ *
+ * 为什么不做成 `<table>`：真实表格是 7 列，窄屏下必然横向溢出；骨架只表达
+ * 「有一批行正在来」，用 flex + overflow:hidden 更稳，也不会跟视觉隔离审计
+ * （它靠 `table` 标签判断是否被弹到登录页）纠缠。
+ */
+function ArticleListSkeleton() {
+  return (
+    <SkeletonRegion label="正在加载文章列表">
+      <div className={styles.card}>
+        <div className={styles.cardBody}>
+          <div className={styles.skForm}>
+            {[96, 112, 220].map((width, index) => (
+              <div className={styles.searchItem} key={index}>
+                <Skeleton width={36} height={11} radius={3} />
+                <Skeleton width={width} height={30} radius={6} />
+              </div>
+            ))}
+            <Skeleton width={132} height={30} radius={6} />
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.skList}>
+        {Array.from({ length: 8 }, (_, row) => (
+          <div className={styles.skListRow} key={row}>
+            <Skeleton className={styles.skGrow} height={13} radius={3} />
+            <Skeleton width={46} height={18} radius={9} />
+            <Skeleton width={64} height={12} radius={3} />
+            <Skeleton width={92} height={12} radius={3} />
+            <Skeleton width={38} height={12} radius={3} />
+            <Skeleton width={40} height={12} radius={3} />
+          </div>
+        ))}
+      </div>
+    </SkeletonRegion>
   )
 }

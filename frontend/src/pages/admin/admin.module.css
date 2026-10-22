@@ -1183,3 +1183,45 @@
     text-align: left;
   }
 }
+
+/* ---- 骨架（第四期优化）：列表与表单的加载占位 ----
+   行高、内边距都贴着真实内容，数据回来时是「填进去」而不是「跳一下」。
+   窄屏靠 overflow:hidden 兜住，不引入横向滚动条。 */
+.skList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.4rem 0.2rem;
+  overflow: hidden;
+}
+
+.skListRow {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-height: 2.9rem;
+  border-bottom: 1px solid var(--adm-border);
+}
+
+.skListRow:last-child {
+  border-bottom: 0;
+}
+
+.skGrow {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.skForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  padding: 0.2rem 0;
+}
+
+.skEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}

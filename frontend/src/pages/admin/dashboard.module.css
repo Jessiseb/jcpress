@@ -323,3 +323,50 @@
   font-size: 0.75rem;
   color: var(--adm-text-3);
 }
+
+/* 骨架：与真实趋势图同比例（TrendChart 的 viewBox 是 720×240），
+   数据回来时图不会「长出来」把下面对推 */
+.chartSkeleton {
+  width: 100%;
+  aspect-ratio: 720 / 240;
+}
+
+.rankSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.15rem 0;
+}
+
+.rankSkeletonRow {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) 38px;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 1.35rem;
+}
+
+.kpiNoteSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 0.4rem;
+}
+
+.chartWrap {
+  position: relative;
+}
+
+.chartGrid {
+  position: absolute;
+  inset: 8% 3% 10% 6%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.chartGrid span {
+  height: 1px;
+  background: color-mix(in srgb, var(--adm-text) 14%, transparent);
+}

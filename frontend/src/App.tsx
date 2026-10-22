@@ -11,6 +11,14 @@ import HomePage from '@/pages/home/HomePage'
 import ChannelPlaceholder from '@/pages/ChannelPlaceholder'
 import TechListPage from '@/pages/tech/TechListPage'
 import { ADMIN_HOME } from '@/pages/admin/adminMenu'
+import { ArticleSkeleton } from '@/components/tech/ContentSkeleton'
+
+/**
+ * 后台路由的骨架外壳（第四期优化）。**静态 import 是有意的**：
+ * 它是兜底 UI，本身必须比被兜底的 chunk 先到 —— 如果它也懒加载，
+ * 刷新时先看到的就是空白，跟现在的「一行正在加载…」一样难看。
+ */
+import AdminRouteFallback from '@/pages/admin/AdminRouteFallback'
 import { usePageView } from '@/hooks/usePageView'
 
 /**
@@ -65,7 +73,7 @@ export default function App() {
             <Route
               path=":slug"
               element={
-                <Suspense fallback={<p className="section">正在加载…</p>}>
+                <Suspense fallback={<ArticleSkeleton />}>
                   <ArticleDetailPage />
                 </Suspense>
               }
@@ -96,7 +104,7 @@ export default function App() {
           <Route
             path="/admin/login"
             element={
-              <Suspense fallback={<p className="container section">正在加载…</p>}>
+              <Suspense fallback={<AdminRouteFallback />}>
                 <AdminLoginPage />
               </Suspense>
             }
@@ -104,7 +112,7 @@ export default function App() {
           <Route
             path="/admin/dashboard"
             element={
-              <Suspense fallback={<p className="container section">正在加载…</p>}>
+              <Suspense fallback={<AdminRouteFallback />}>
                 <RequireAdmin>
                   <AdminDashboardPage />
                 </RequireAdmin>
@@ -114,7 +122,7 @@ export default function App() {
           <Route
             path="/admin/articles"
             element={
-              <Suspense fallback={<p className="container section">正在加载…</p>}>
+              <Suspense fallback={<AdminRouteFallback />}>
                 <RequireAdmin>
                   <AdminArticleListPage />
                 </RequireAdmin>
@@ -124,7 +132,7 @@ export default function App() {
           <Route
             path="/admin/articles/:id"
             element={
-              <Suspense fallback={<p className="container section">正在加载…</p>}>
+              <Suspense fallback={<AdminRouteFallback />}>
                 <RequireAdmin>
                   <AdminArticleEditPage />
                 </RequireAdmin>

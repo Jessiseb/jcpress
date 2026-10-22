@@ -4148,3 +4148,59 @@ jsdom 验不了布局与 SVG，所以另起一份探针：`/api/**` 全部 route
 3. **不做小时粒度 / 来源站点 / 设备地域**：本期要解决「有没有数、数对不数」，不是「数得多细」。
 4. **本地看到的 PV 是 2 倍**：React 18 StrictMode 会把 effect 跑两遍，生产构建不会（RUNBOOK 8.2 记了这条，免得下次当成 bug 查）。
 5. **归档没做**：按项目惯例，`openspec archive` 需要你先确认。
+
+---
+
+## 70. 刷新时的加载态：把「正在加载…」换成骨架屏（2026-10-22，15:08 起）
+
+### 70.1 症状盘点（动手前）
+
+用户原话：「当页面刷新的时候, 当前的展示太丑了, 可以看一下有什么组件能替换一下」。
+
+刷新 `/admin/dashboard` 实际会连闪四态：
+
+| # | 画面 | 原因 |
+| :-- | :-- | :-- |
+| 1 | 纯白 | `#root` 空着，等 `index-*.js`（442KB raw / 122KB gzip）下载执行 |
+| 2 | 白底一行「正在加载…」 | 后台路由是 `React.lazy`，`Suspense` 的兜底是 `<p>` |
+| 3 | 外壳**整体长出来** + 又一堆「正在加载…」 | `AdminLayout` 挂载 + 四个 `isPending` 各渲染一行字 |
+| 4 | 内容 | 数据到齐 |
+
+最难受的是 2→3：外壳（侧栏 200px、顶栏、标签栏）是**一次性蹦出来**的，页面结结实实地跳了一下。而 3 里那四行字，位置也不对——图表的「正在加载…」本来应该占一张图的位置。
+
+### 70.2 方案：一套骨架件，而不是四个库
+
+没引 `react-loading-skeleton` / antd `Skeleton`，理由写在组件注释里：这里只需要「跟随主题的灰底 + 扫光」，而站内有两套主题变量（前台 `--ds-c-*`、后台 `--adm-*`），第三方库的默认灰要接两套反而要多写覆盖层。
+
+落地的关键技巧：**底色用 `currentColor`**（`color-mix(in srgb, currentColor 10%, transparent)`）—— 谁包着骨架，它就跟谁的文字色走明暗，一套组件同时服务前台和后台，一个色值都不用写。
+
+新增/改动：
+- `components/common/Skeleton.tsx`（`Skeleton` / `SkeletonText` / `SkeletonRegion`）+ `skeleton.module.css`（扫光动画，`prefers-reduced-motion` 下降级为静态灰块；`SkeletonRegion` 给读屏播「正在加载」）
+- `pages/admin/AdminRouteFallback.tsx`：**复用 `admin.module.css` 的 `.shell/.sidebar/.main/.topbar/.body`**，所以骨架与真外壳的几何完全一样，换壳不是跳版
+- `components/tech/ContentSkeleton.tsx`：列表骨架（56px 缩略图 + 两行字，与真实目录行同高）与正文骨架
+- 五处 `Suspense` 兜底、四处页面内 `isPending`、编辑页与列表页加载态，全部替换
+- `index.html` 首屏兜底：`#root:empty::before/::after` 画一条呼吸线。**用伪元素而不是真实节点** —— React 一插入内容 `:empty` 就失效，自动消失，不需要「挂载后移除」的脚本
+
+### 70.3 翻车与返工（三次，都记下来）
+
+**① 探针拍到的「骨架截图」其实是加载完的页面。**
+第一版探针写的是 `await page.waitForSelector('[data-kpi]')` 再截图 —— 那个选择器只有数据回来才存在，于是永远等到了内容，截图里 60 个占位块变成 7 个。**拍摄时机选错，结论就完全反过来**（差点得出「骨架没生效」的结论）。改成等 `[class*="chartSkeleton"]` 出现即拍。
+
+**② 骨架比真页面矮 47px，图表上下跳。**
+先按感觉给了 11/26/10px 三行，实测指标卡 83px vs 真实 130px。改成量真实结构：label 19 / value 32 / note 37（两行 14px + 9px 间距），对齐后 **130 = 130**。
+
+**③ 加完标题占位后，反而高出 53px。**
+因为页面里的 `.head`（标题 + 区间切换）是**无条件渲染**的，骨架里再来一份就是两份标题。删掉后位移 **6px**（只剩口径小字真实折行带来的误差）。这条写进 `DashboardSkeleton` 的注释里，免得下次有人「顺手补一个标题占位」。
+
+### 70.4 验收
+
+| 项 | 结果 |
+| :-- | :-- |
+| `tsc --noEmit` | 0 错误 |
+| 前端全量 | **138/138**（新增 3 条：外壳骨架不含 `header/footer/table`、读屏播报、看板 pending 出骨架而非一行字） |
+| 首屏兜底 | JS 未到时 `#root` 子节点 0（呼吸线可见）；挂载后非 0（自动消失） |
+| 外壳骨架 | 侧栏宽 200px（与真实一致）；`header=false table=false`（不破坏视觉隔离审计） |
+| 内容骨架 | 占位块 65 个；读屏「正在加载站点数据」；**图表顶边 骨架 344 → 真图 350，位移 6px** |
+| 构建 | 通过；首屏 chunk 426→442KB raw（gzip 118→122KB，+3.5KB，仍在 200KB 预算内） |
+
+`probe-skeleton.cjs` 留在 `.tmp/tools/`，改加载态时直接复跑。

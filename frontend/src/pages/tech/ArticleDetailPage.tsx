@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { reportArticleView } from '@/api/articles'
 import MarkdownBody from '@/components/markdown/MarkdownBody'
 import type { TocItem } from '@/components/markdown/rehypeCollectHeadings'
+import { ArticleSkeleton } from '@/components/tech/ContentSkeleton'
 import { usePublishPageToc } from '@/components/tech/pageTocContext'
 import { useArticleDetail } from '@/hooks/useArticleDetail'
 import { describeLoadError } from '@/utils/loadError'
@@ -90,10 +91,11 @@ export default function ArticleDetailPage() {
   }, [data?.slug])
 
   if (isPending) {
+    // 骨架而不是一行「正在加载…」：正文是长页面，先给出它的形状，读起来像「正在排版」
     return (
-      <section className={styles.wrap}>
-        <p className={styles.state}>正在加载…</p>
-      </section>
+      <article className={styles.wrap}>
+        <ArticleSkeleton />
+      </article>
     )
   }
 

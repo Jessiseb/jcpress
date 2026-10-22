@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import TrendChart from '@/components/admin/TrendChart'
+import { ChartSkeleton, DashboardSkeleton, RankSkeleton } from './DashboardSkeleton'
 import { useArticleStats, usePathStats, useStatsOverview, useVisitTrend } from '@/hooks/useDashboardStats'
 import { describeLoadError } from '@/utils/loadError'
 import AdminLayout from './AdminLayout'
@@ -101,7 +102,7 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {overview.isPending && <p className={styles.state}>正在加载…</p>}
+      {overview.isPending && <DashboardSkeleton />}
 
       {overview.isError && (
         <div className={styles.stateError} role="alert">
@@ -146,7 +147,7 @@ export default function AdminDashboardPage() {
               <h2 className={styles.panelTitle}>访问趋势</h2>
               <span className={styles.panelHint}>近 {days} 天 · 悬停看某一天</span>
             </div>
-            {trend.isPending && <p className={styles.state}>正在加载…</p>}
+            {trend.isPending && <ChartSkeleton />}
             {trend.isError && (
               <div className={styles.stateError} role="alert">
                 <span>趋势暂时打不开：{describeLoadError(trend.error)}</span>
@@ -164,7 +165,7 @@ export default function AdminDashboardPage() {
                 <h2 className={styles.panelTitle}>文章阅读排行</h2>
                 <span className={styles.panelHint}>近 {days} 天 · 前 10 篇</span>
               </div>
-              {articles.isPending && <p className={styles.state}>正在加载…</p>}
+              {articles.isPending && <RankSkeleton />}
               {articles.isError && (
                 <div className={styles.stateError} role="alert">
                   <span>排行了打不开：{describeLoadError(articles.error)}</span>
@@ -237,7 +238,7 @@ export default function AdminDashboardPage() {
                 <h2 className={styles.panelTitle}>热门页面</h2>
                 <span className={styles.panelHint}>近 {days} 天 · 前 10 条</span>
               </div>
-              {paths.isPending && <p className={styles.state}>正在加载…</p>}
+              {paths.isPending && <RankSkeleton />}
               {paths.isError && (
                 <div className={styles.stateError} role="alert">
                   <span>热门页面打不开：{describeLoadError(paths.error)}</span>

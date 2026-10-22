@@ -6,6 +6,7 @@ import type { ArticleSavePayload } from '@/api/types'
 import MarkdownEditor from '@/components/admin/MarkdownEditor'
 import { useCategories } from '@/hooks/useCategories'
 import { useAdminArticle, useSaveAdminArticle } from '@/hooks/useAdminArticles'
+import { Skeleton, SkeletonRegion } from '@/components/common/Skeleton'
 import AdminLayout from './AdminLayout'
 import styles from './admin.module.css'
 
@@ -134,7 +135,7 @@ export default function AdminArticleEditPage() {
   if (!isNew && loadingArticle) {
     return (
       <AdminLayout>
-        <p className={styles.state}>正在加载文章…</p>
+        <ArticleFormSkeleton />
       </AdminLayout>
     )
   }
@@ -310,5 +311,26 @@ export default function AdminArticleEditPage() {
         {savedAt !== null && <span className={styles.savedHint}>已保存</span>}
       </div>
     </AdminLayout>
+  )
+}
+
+/** 编辑页加载骨架：标题 + 元信息一行 + 编辑器与预览两栏的轮廓 */
+function ArticleFormSkeleton() {
+  return (
+    <SkeletonRegion label="正在加载文章">
+      <div className={styles.skEditor}>
+        <Skeleton width="58%" height={30} radius={6} />
+        <div className={styles.skForm}>
+          {[128, 128, 128].map((width, index) => (
+            <div className={styles.field} key={index}>
+              <Skeleton width={40} height={11} radius={3} />
+              <Skeleton width={width} height={32} radius={6} />
+            </div>
+          ))}
+        </div>
+        <Skeleton height={220} radius={8} />
+        <Skeleton height={120} radius={8} />
+      </div>
+    </SkeletonRegion>
   )
 }

@@ -11,6 +11,56 @@
          正文标题，体积大、优先级高的预取会与关键 JS/CSS 抢带宽，交给 font-display: swap 更划算。 -->
     <link rel="preload" href="/fonts/serif-sc-700.woff2" as="font" type="font/woff2" crossorigin />
     <title>庄家希 · AI 应用开发工程师</title>
+    <style>
+      /* 首屏兜底（第四期优化）：JS 还在下载、React 还没挂载时，页面原本是纯白。
+         这里用 `#root:empty` 的两个伪元素画一条居中的呼吸线 —— React 一旦往 #root
+         里插入节点，`:empty` 就不再匹配，这段自动消失，**不需要任何 JS 参与清理**
+         （用真实 DOM 节点反而要写一段「挂载后移除」的脚本，且容易残留）。
+         颜色写死是因为此刻应用 CSS 还没解析到；明暗两套各给一份。 */
+      #root:empty::before,
+      #root:empty::after {
+        content: '';
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 104px;
+        height: 2px;
+        margin: -1px 0 0 -52px;
+        border-radius: 2px;
+        pointer-events: none;
+      }
+      #root:empty::before {
+        background: rgb(20 22 26 / 12%);
+      }
+      #root:empty::after {
+        background: linear-gradient(90deg, transparent, #096fdc, transparent);
+        transform-origin: center;
+        animation: jc-boot-sweep 1.15s ease-in-out infinite;
+      }
+      html[data-theme='dark'] #root:empty::before {
+        background: rgb(255 255 255 / 14%);
+      }
+      @keyframes jc-boot-sweep {
+        0% {
+          transform: scaleX(0.08);
+          opacity: 0;
+        }
+        45% {
+          transform: scaleX(1);
+          opacity: 1;
+        }
+        100% {
+          transform: scaleX(0.08);
+          opacity: 0;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #root:empty::after {
+          animation: none;
+          opacity: 0.85;
+        }
+      }
+    </style>
     <script>
       // 主题首帧前写入，避免闪白（规划 §5.2 预渲染约束）
       (function () {

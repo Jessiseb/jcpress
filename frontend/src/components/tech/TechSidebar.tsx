@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 
+import { Skeleton, SkeletonRegion } from '@/components/common/Skeleton'
 import { useTechCatalog } from '@/hooks/useTechCatalog'
 import styles from './TechSidebar.module.css'
 
@@ -31,7 +32,25 @@ export default function TechSidebar({ activeSlug }: { activeSlug: string }) {
         {data && <span className={styles.rootCount}>{data.total}</span>}
       </Link>
 
-      {isPending && <p className={styles.state}>正在加载…</p>}
+      {/* 加载态给三条短横线而不是一行字：左栏是常驻导航，文字会跟真实分组「抢位置」，
+          换成占位条之后，数据回来时只是把灰条填成标题，栏宽与节奏都不动 */}
+      {isPending && (
+        <SkeletonRegion label="正在加载目录" className={styles.pending}>
+          {[0, 1, 2].map((group) => (
+            <div className={styles.pendingGroup} key={group}>
+              <Skeleton width={52} height={10} radius={3} />
+              {[0, 1].map((row) => (
+                <Skeleton
+                  key={row}
+                  height={11}
+                  radius={3}
+                  width={row === 0 ? '82%' : group === 1 ? '64%' : '72%'}
+                />
+              ))}
+            </div>
+          ))}
+        </SkeletonRegion>
+      )}
       {/* 目录取不回来时只说这一句：不占位假数据，也不在这儿解释后端怎么了 */}
       {isError && <p className={styles.state}>目录暂时打不开</p>}
 
