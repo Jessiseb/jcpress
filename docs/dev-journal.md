@@ -4267,3 +4267,35 @@ antd 的响应式栅格（`Col xs/sm/xl`）挂载时读 `matchMedia`，jsdom 没
 用户选的是「后台 + 前台都换」，这一轮只落了看板：
 - **后台**：文章列表（`Table` + 分页 + 搜索 `Form`）、编辑页（`Form`/`Input`/`Select`/`Upload`）、登录页（`Form`/`Card`）、外壳（`Layout`/`Menu`）仍是手写；
 - **前台**：目前**保留零依赖骨架**（`LiteSkeleton`）+ 自研版式。原因就是 71.1 那笔账：前台技术列表页不在懒加载路由里，接 antd 会让首屏 gzip 从 119KB 回到 270KB 以上。要接，得先把列表页改成懒加载，或者接受预算上调 —— **这属于产品取舍，等确认**。
+
+### 71.6 选 B：前台也接 antd（16:54 起）
+
+用户回「B」。落地顺序与理由：
+
+1. **技术分享列表页改懒加载**（`App.tsx` 里 `const TechListPage = lazy(...)`）。这一步是 B 成立的前提 —— 它原本和首页在同一个包里，不拆开就直接把 antd 带进首屏。
+2. **页面内加载态 → antd `Skeleton`**：三个分组 × 三行的占位，56px 缩略图位与真实目录行同格（`grid-template-columns: 56px minmax(0,1fr) auto`）。
+3. **空态 → antd `Empty`**（`PRESENTED_IMAGE_SIMPLE`），文案一字未改，仍然是那句「去后台写第一篇…」。
+4. **详情页加载态 → antd `Skeleton` + `SkeletonText`**（它本来就是懒加载路由）。
+5. **chunk 未到的那一段仍是零依赖 `TechListSkeleton` / `ArticleSkeleton`** —— 这是 B 的固有代价：antd 的代码还没下载，不可能用它画骨架。两段都是灰块扫光，观感连续。
+
+**体积账（构建产物实测）**
+
+| chunk | 体积 | 何时加载 |
+| :-- | :-- | :-- |
+| `index-*.js`（首屏） | 436.6KB / gzip **120.7KB** | 首次进入任何页面 |
+| `Skeleton-*.js`（antd 共享块） | 283.4KB / gzip 72.4KB | 首访 `/tech` 或后台 |
+| `TechListPage-*.js` | 8.1KB / gzip 2.4KB | 首访 `/tech` |
+
+也就是说 **首屏仍是 120.7KB**（预算 200KB），首访 `/tech` 额外多下 **≈75KB gzip**。这正好是 B 承诺的形态：不破首屏，代价押在 `/tech` 首访。
+
+**验收**（`probe-tech-antd.cjs`）
+
+| 项 | 结果 |
+| :-- | :-- |
+| chunk 未到 | 兜底骨架 40 个（零依赖），无 antd |
+| 数据未回 | antd 骨架 39 个，轻量骨架 0 个（说明两段没有同时出现） |
+| 加载完成 | 横向溢出 0px，版式与改造前一致 |
+| 空态 | antd `Empty` 正常渲染 |
+| 前端全量 | **138/138**，`tsc` 0 错 |
+
+**探针也踩了一次假故障**：第一版按 `{ total, latest, groups }` 造数据，但接口实际回的是 `PageResult<ArticleCardVO>`（分组成 catalog 是前端 `select` 干的），于是页面一直空着 —— 差点报「迁移把列表弄坏了」。教训同 70.3①：**探针的假数据必须与真实契约同形状**。

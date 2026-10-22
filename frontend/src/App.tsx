@@ -9,9 +9,9 @@ import CelestialField from '@/components/visual/CelestialField'
 import TechShell from '@/components/tech/TechShell'
 import HomePage from '@/pages/home/HomePage'
 import ChannelPlaceholder from '@/pages/ChannelPlaceholder'
-import TechListPage from '@/pages/tech/TechListPage'
+
 import { ADMIN_HOME } from '@/pages/admin/adminMenu'
-import { ArticleSkeleton } from '@/components/tech/ContentSkeleton'
+import { ArticleSkeleton, TechListSkeleton } from '@/components/tech/ContentSkeleton'
 
 /**
  * 后台路由的骨架外壳（第四期优化）。**静态 import 是有意的**：
@@ -27,6 +27,10 @@ import { usePageView } from '@/hooks/usePageView'
  * CodeMirror —— 二者都与首屏无关，混进首屏会直接顶破 200KB 预算。
  */
 const ArticleDetailPage = lazy(() => import('@/pages/tech/ArticleDetailPage'))
+// 列表页也改懒加载（第四期接 antd 后）：它内部用 antd 的骨架与空态，
+// 若留在首屏包里，antd 核心（≈150KB gzip）会被一起拖进来 —— 首屏预算 200KB 直接破。
+// 代价是首访 /tech 多一次 chunk 请求，这期间用零依赖的 TechListSkeleton 顶上。
+const TechListPage = lazy(() => import('@/pages/tech/TechListPage'))
 // 后台三页同样懒加载：它们会拖进 CodeMirror（CodeMirror 只在编辑页用，
 // 但连列表页一起懒加载最省 —— 后台整块都跟首屏无关，不该进首屏包）。
 const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage'))
@@ -69,7 +73,14 @@ export default function App() {
           {/* 「技术分享」整段共用一个外壳（左栏目录），列表页与详情页都在它里面。
               这样从列表点进文章时左栏不重挂载，位置感是连续的。 */}
           <Route path="/tech" element={<TechShell />}>
-            <Route index element={<TechListPage />} />
+            <Route
+              index
+              element={
+                <Suspense fallback={<TechListSkeleton />}>
+                  <TechListPage />
+                </Suspense>
+              }
+            />
             <Route
               path=":slug"
               element={

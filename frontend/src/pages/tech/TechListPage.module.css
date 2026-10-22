@@ -240,3 +240,42 @@
     gap: 0.5rem;
   }
 }
+
+/* ---- 骨架（第四期接 antd）：几何贴着真实目录行（56px 缩略图 + 两行字） ---- */
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-5);
+  margin-top: var(--ds-space-5);
+}
+
+.skeletonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.skeletonGroup > :first-child {
+  margin-bottom: 0.35rem;
+}
+
+.skeletonRow {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ds-space-3);
+  padding: 0.6rem 0.6rem 0.6rem 0.4rem;
+}
+
+.skeletonRowText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* antd 的 Empty 自带留白，这里只补正文与行距 */
+.emptyText {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}

@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { reportArticleView } from '@/api/articles'
 import MarkdownBody from '@/components/markdown/MarkdownBody'
 import type { TocItem } from '@/components/markdown/rehypeCollectHeadings'
-import { ArticleSkeleton } from '@/components/tech/ContentSkeleton'
+import { Skeleton, SkeletonRegion, SkeletonText } from '@/components/common/Skeleton'
 import { usePublishPageToc } from '@/components/tech/pageTocContext'
 import { useArticleDetail } from '@/hooks/useArticleDetail'
 import { describeLoadError } from '@/utils/loadError'
@@ -91,10 +91,19 @@ export default function ArticleDetailPage() {
   }, [data?.slug])
 
   if (isPending) {
-    // 骨架而不是一行「正在加载…」：正文是长页面，先给出它的形状，读起来像「正在排版」
+    // 骨架而不是一行「正在加载…」：正文是长页面，先给出它的形状，读起来像「正在排版」。
+    // 用 antd 的 Skeleton —— 详情页本来就是懒加载路由，antd 不会进首屏包。
     return (
       <article className={styles.wrap}>
-        <ArticleSkeleton />
+        <SkeletonRegion label="正在加载文章" className={styles.skeleton}>
+          <Skeleton width={78} height={11} radius={3} />
+          <Skeleton width="86%" height={32} radius={6} />
+          <Skeleton width="54%" height={32} radius={6} />
+          <Skeleton width={240} height={12} radius={4} />
+          <SkeletonText lines={4} lineHeight={15} gap={14} />
+          <SkeletonText lines={5} lineHeight={15} gap={14} lastWidth="74%" />
+          <SkeletonText lines={3} lineHeight={15} gap={14} lastWidth="42%" />
+        </SkeletonRegion>
       </article>
     )
   }

@@ -141,3 +141,11 @@
     transition: none;
   }
 }
+
+/* 加载骨架（第四期接 antd）：与正文同一个栏宽与行距节奏 */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  max-width: 828px;
+}

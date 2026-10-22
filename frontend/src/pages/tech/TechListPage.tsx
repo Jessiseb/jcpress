@@ -1,9 +1,10 @@
+import { Empty } from 'antd'
 import { Link } from 'react-router-dom'
 
 import type { ArticleCardVO } from '@/api/types'
+import { Skeleton, SkeletonRegion } from '@/components/common/Skeleton'
 import { CATALOG_SIZE, useTechCatalog } from '@/hooks/useTechCatalog'
 import { describeLoadError } from '@/utils/loadError'
-import { TechListSkeleton } from '@/components/tech/ContentSkeleton'
 import styles from './TechListPage.module.css'
 
 const formatDate = (value: string) => value.slice(0, 10).replace(/-/g, '.')
@@ -78,7 +79,28 @@ export default function TechListPage() {
       </h1>
       <p className={styles.lead}>把踩过的坑写清楚：Java 后端、AI Agent 工程、数据库与中间件。</p>
 
-      {isPending && <TechListSkeleton />}
+      {/* 加载态用 antd 的 Skeleton（这一页已改懒加载，antd 不会进首屏包）。
+          chunk 还没到的那一段由 App 的 Suspense 兜底（零依赖 TechListSkeleton），
+          两段都是灰块扫光，视觉上是连续的。 */}
+      {isPending && (
+        <SkeletonRegion label="正在加载文章列表" className={styles.skeletonList}>
+          {[0, 1, 2].map((group) => (
+            <div className={styles.skeletonGroup} key={group}>
+              <Skeleton width={92} height={14} radius={4} />
+              {[0, 1, 2].map((row) => (
+                <div className={styles.skeletonRow} key={row}>
+                  <Skeleton width={56} height={56} radius={12} />
+                  <div className={styles.skeletonRowText}>
+                    <Skeleton height={16} radius={4} width={row === 1 ? '62%' : '78%'} />
+                    <Skeleton height={12} radius={4} width={row === 2 ? '48%' : '70%'} />
+                  </div>
+                  <Skeleton width={46} height={12} radius={4} />
+                </div>
+              ))}
+            </div>
+          ))}
+        </SkeletonRegion>
+      )}
 
       {isError && (
         <div className={styles.empty} role="alert">
@@ -102,10 +124,17 @@ export default function TechListPage() {
 
       {empty && (
         <div className={styles.empty}>
-          <p>还没有发布的文章。</p>
-          <p className={styles.emptyHint}>
-            去后台写第一篇，或先用导入器把 content/ 下的 Markdown 灌进来。
-          </p>
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={
+              <span className={styles.emptyText}>
+                还没有发布的文章。
+                <span className={styles.emptyHint}>
+                  去后台写第一篇，或先用导入器把 content/ 下的 Markdown 灌进来。
+                </span>
+              </span>
+            }
+          />
           <Link to="/" className="btn btnSolid">
             回到首页
           </Link>
