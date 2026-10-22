@@ -129,7 +129,8 @@ describe('AdminDashboardPage', () => {
     renderPage()
 
     expect(await screen.findByText(/数据暂时打不开/)).toBeInTheDocument()
-    expect(screen.getByText(/服务没响应（HTTP 500）/)).toBeInTheDocument()
+    // 总览与排行同时失败 → 两条 Alert 都带同一句原因，用 getAllByText
+    expect(screen.getAllByText(/服务没响应（HTTP 500）/).length).toBeGreaterThan(0)
     expect(screen.getAllByRole('button', { name: '再试一次' }).length).toBeGreaterThan(0)
     // 关键：失败不能被说成「还没有数据」
     expect(screen.queryByText('这段时间还没有文章被打开过。')).toBeNull()
@@ -156,10 +157,11 @@ describe('AdminDashboardPage', () => {
 
     renderPage()
 
-    const regions = await screen.findAllByRole('status')
-    expect(regions.length).toBeGreaterThan(0)
+    // 视觉骨架由 antd 的 `Card loading` 给 —— 注意它会把卡片内容整体换掉，
+    // 所以此刻「今日访问」这些标签**不在 DOM 里**，断言只能落在骨架上；
+    // 读屏状态由 `aria-busy` 补（antd 的 Skeleton 不带 role="status"）
+    expect(document.querySelectorAll('.ant-skeleton').length).toBeGreaterThan(3)
+    expect(document.querySelector('[aria-busy="true"]')).not.toBeNull()
     expect(screen.queryByText('正在加载…')).toBeNull()
-    // 骨架块的存在感：至少四张指标卡 + 图表 + 两个榜单行
-    expect(document.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(10)
   })
 })

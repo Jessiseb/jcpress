@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import { getToken } from '@/api/client'
+import { AntdProvider } from '@/components/common/AntdProvider'
 import { useAdminAuth } from '@/hooks/useAdminAuth'
 import { clearAdminTabs, useAdminTabs } from '@/hooks/useAdminTabs'
 import { ADMIN_MENU, resolveAdminRoute } from './adminMenu'
@@ -102,6 +103,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const initial = displayName.slice(0, 1).toUpperCase()
 
   return (
+    <AntdProvider variant="admin">
     <div className={`${styles.adminScope} ${styles.shell}`}>
       {narrow && drawerOpen && (
         <button
@@ -264,5 +266,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className={styles.body} ref={bodyRef}>{children}</div>
       </div>
     </div>
+    </AntdProvider>
   )
 }

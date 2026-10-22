@@ -4204,3 +4204,66 @@ jsdom 验不了布局与 SVG，所以另起一份探针：`/api/**` 全部 route
 | 构建 | 通过；首屏 chunk 426→442KB raw（gzip 118→122KB，+3.5KB，仍在 200KB 预算内） |
 
 `probe-skeleton.cjs` 留在 `.tmp/tools/`，改加载态时直接复跑。
+
+---
+
+## 71. 改用 Ant Design：先做看板，并量出一笔 150KB 的账（2026-10-22，16:25 起）
+
+用户原话：「可以使用element 之类的组件库,不用自己实现」。确认选型：**Ant Design 6**（Element 是 Vue 的，React 侧对应 antd），范围选了「后台 + 前台都换」。
+
+### 71.1 先装、先量，再谈替换
+
+`npm install antd@6` → 6.6.7，peer 要求 React ≥18（我们是 18.3.1，通过）。
+
+第一版把 `AntdProvider`（`ConfigProvider` + `zh_CN` locale + 明暗算法）挂在 `main.tsx`，并把手写骨架换成 `Skeleton.Button/Avatar`。构建结果：
+
+| 项 | 改前 | 改后 |
+| :-- | :-- | :-- |
+| 首屏 `index-*.js` | 442KB / gzip **121.7KB** | 1074KB / gzip **272.6KB** |
+
+**超了二期定的 200KB 首屏预算**。根因不是「用了 antd」，而是**它进了首屏包**：`main.tsx` 的 Provider、以及被 App 静态 import 的后台兜底 `AdminRouteFallback`，都把 antd 的核心（cssinjs + ConfigProvider + locale）拖进了首屏。
+
+处置（两步，各自有据）：
+1. `AntdProvider` 下沉到 `AdminLayout` 与 `AdminRouteFallback` 里 —— 后台本来就是懒加载；
+2. `AdminRouteFallback` **刻意不用 antd**，改用零依赖的 `LiteSkeleton`。它必须比懒加载的后台页先到，所以它不能碰 antd。
+
+改完首屏 **432KB / gzip 118.8KB**（比引入前还低一点，因为手写骨架的 CSS 搬走了）；antd 落在 `AdminLayout`（gzip 156KB）与各后台页的懒加载 chunk 里。
+
+### 71.2 看板：从「手写骨架」改成 antd 组件
+
+上一节（第 70 节）手写骨架在跟真实行高对表 —— 那本质是在跟两套排版系统打架。改用组件库后正确做法是**让组件自己出加载态**：
+
+- 四张指标卡 → `Row`/`Col` + `Card loading`（内部仍是自己的 label/value/口径三行，`Statistic` 的字号不适合这里的口径说明）
+- 趋势 → `Card loading`，里面还是手写 SVG 的 `TrendChart`
+- 排行 / 热门页面 → `Table loading` + `Empty`，`loading` 时**不给空态文案**（否则「正在取数」被读成「一篇文章都没人看」）
+- 区间切换 → `Segmented`；错误态 → `Alert` + `Button`
+- `DashboardSkeleton.tsx` 与其 CSS 全部删除
+
+图表顶边位移：**11px**（骨架 317 → 真图 306）。比手写版的 6px 略大，但换来的是「不再维护 200 行对表用的 CSS」。
+
+### 71.3 三个踩到的坑
+
+**① `window.matchMedia is not a function`（jsdom）。**
+antd 的响应式栅格（`Col xs/sm/xl`）挂载时读 `matchMedia`，jsdom 没实现 → 看板 5 条测试全红。处置：在 `src/test/setup.ts` 补 polyfill，一律 `matches: false`（等于宽屏），与 `AdminLayout`「拿不到就当宽屏」的策略一致。
+
+**② antd 不转发 `data-*` 到骨架元素。**
+想用 `data-skeleton` 当测试钩子，实测 `count=0`。改用**自己的标记类**：antd 那侧 `jc-skeleton`、轻量那侧 `jc-lite-skeleton`。**测试与探针只认自己的标记，不认 `ant-skeleton-*`**（那是组件库内部类名，升级就变）。
+
+**③ `Card loading` 会把卡片内容整体换掉。**
+所以加载中「今日访问」这些标签**不在 DOM 里**，测试断言不能等它出现。同理读屏也拿不到 `role="status"` —— 页面显式补了 `aria-busy`。
+
+### 71.4 验收
+
+| 项 | 结果 |
+| :-- | :-- |
+| `tsc --noEmit` | 0 错误 |
+| 前端全量 | **138/138** |
+| 首屏 gzip | **118.8KB**（预算 200KB 内） |
+| 图表顶边位移 | 11px |
+| 明暗 | antd `darkAlgorithm` 跟着 `<html data-theme>` 走（`MutationObserver` 监听，不另起状态） |
+
+### 71.5 没做完的部分（下一步）
+
+用户选的是「后台 + 前台都换」，这一轮只落了看板：
+- **后台**：文章列表（`Table` + 分页 + 搜索 `Form`）、编辑页（`Form`/`Input`/`Select`/`Upload`）、登录页（`Form`/`Card`）、外壳（`Layout`/`Menu`）仍是手写；
+- **前台**：目前**保留零依赖骨架**（`LiteSkeleton`）+ 自研版式。原因就是 71.1 那笔账：前台技术列表页不在懒加载路由里，接 antd 会让首屏 gzip 从 119KB 回到 270KB 以上。要接，得先把列表页改成懒加载，或者接受预算上调 —— **这属于产品取舍，等确认**。

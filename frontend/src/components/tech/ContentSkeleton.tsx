@@ -1,4 +1,8 @@
-import { Skeleton, SkeletonRegion, SkeletonText } from '@/components/common/Skeleton'
+import {
+  LiteSkeleton as Skeleton,
+  LiteSkeletonRegion as SkeletonRegion,
+  LiteSkeletonText as SkeletonText,
+} from '@/components/common/LiteSkeleton'
 import styles from './contentSkeleton.module.css'
 
 /**

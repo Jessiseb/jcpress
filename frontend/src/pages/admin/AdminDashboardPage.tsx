@@ -1,27 +1,32 @@
+import { Alert, Button, Card, Col, Empty, Row, Segmented, Table } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
+import type { ArticleStatsVO, PathStatsVO } from '@/api/types'
 import TrendChart from '@/components/admin/TrendChart'
-import { ChartSkeleton, DashboardSkeleton, RankSkeleton } from './DashboardSkeleton'
 import { useArticleStats, usePathStats, useStatsOverview, useVisitTrend } from '@/hooks/useDashboardStats'
 import { describeLoadError } from '@/utils/loadError'
 import AdminLayout from './AdminLayout'
-import adminStyles from './admin.module.css'
 import styles from './dashboard.module.css'
 
 /**
- * 站点数据看板（第四期）。
+ * 站点数据看板（第四期，改用 Ant Design）。
  *
  * 三条口径写在界面上，不是藏在文档里 —— 数据页最容易出的问题是「数看着对，其实自己在骗自己」：
  * 1. 「今日」的数据最多滞后 5 分钟（服务端每 5 分钟回写一次）；
  * 2. 没有「7 日 UV」这个东西，所以界面上也不出现（每天的 UV 不能相加）；
  * 3. 文章维度是「按天去重的阅读数」，不是「被点开的次数」。
+ *
+ * **加载态不再是手写的灰块**：`Card loading` / `Table loading` 由组件库负责，
+ * 卡片盒子与列宽本身不变，所以数据回来时是「填内容」而不是「换版式」。
+ * （手写骨架的两次返工见 dev-journal 70.3 —— 那两次都是在跟真实行高对表。）
  */
 
 const RANGES = [
-  { label: '7 天', days: 7 },
-  { label: '30 天', days: 30 },
-  { label: '90 天', days: 90 },
+  { label: '7 天', value: 7 },
+  { label: '30 天', value: 30 },
+  { label: '90 天', value: 90 },
 ]
 
 const number = (value: number) => value.toLocaleString('zh-CN')
@@ -34,11 +39,12 @@ interface KpiProps {
   unit?: string
   note: string
   delta?: number
+  loading: boolean
 }
 
-function Kpi({ metric, label, value, unit, note, delta }: KpiProps) {
+function Kpi({ metric, label, value, unit, note, delta, loading }: KpiProps) {
   return (
-    <div className={styles.kpi} data-kpi={metric}>
+    <Card size="small" loading={loading} className={styles.kpiCard} data-kpi={metric}>
       <div className={styles.kpiLabel}>
         <span>{label}</span>
         {delta !== undefined && (
@@ -55,7 +61,7 @@ function Kpi({ metric, label, value, unit, note, delta }: KpiProps) {
         {unit !== undefined && <span className={styles.kpiUnit}>{unit}</span>}
       </div>
       <p className={styles.kpiNote}>{note}</p>
-    </div>
+    </Card>
   )
 }
 
@@ -75,8 +81,33 @@ export default function AdminDashboardPage() {
   }
 
   const data = overview.data
-  const topArticleView = articles.data?.reduce((peak, item) => Math.max(peak, item.periodView), 0) ?? 0
-  const topPathView = paths.data?.reduce((peak, item) => Math.max(peak, item.pv), 0) ?? 0
+
+  const articleColumns: ColumnsType<ArticleStatsVO> = [
+    {
+      title: '#',
+      dataIndex: 'id',
+      width: 44,
+      render: (_value, _row, index) => <span className={styles.rankIndex}>{index + 1}</span>,
+    },
+    {
+      title: '标题',
+      dataIndex: 'title',
+      ellipsis: true,
+      render: (_value, row) =>
+        row.slug === null ? (
+          <span className={styles.rankTitleMuted}>{row.title}</span>
+        ) : (
+          <Link to={`/admin/articles/${row.id}`}>{row.title}</Link>
+        ),
+    },
+    { title: '期间', dataIndex: 'periodView', width: 76, align: 'right' },
+    { title: '累计', dataIndex: 'totalView', width: 76, align: 'right' },
+  ]
+
+  const pathColumns: ColumnsType<PathStatsVO> = [
+    { title: '路径', dataIndex: 'path', ellipsis: true },
+    { title: '访问', dataIndex: 'pv', width: 72, align: 'right' },
+  ]
 
   return (
     <AdminLayout>
@@ -85,204 +116,179 @@ export default function AdminDashboardPage() {
           <h1 className={styles.title}>站点数据</h1>
           <p className={styles.subtitle}>访问量与文章阅读的每日汇总，用来回答「有人来吗、在看什么」。</p>
         </div>
-        <div className={styles.ranges} role="group" aria-label="统计区间">
-          {RANGES.map((range) => (
-            <button
-              key={range.days}
-              type="button"
-              className={
-                range.days === days ? `${styles.rangeBtn} ${styles.rangeBtnActive}` : styles.rangeBtn
-              }
-              aria-pressed={range.days === days}
-              onClick={() => setDays(range.days)}
-            >
-              {range.label}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          value={days}
+          onChange={(value) => setDays(Number(value))}
+          options={RANGES}
+          aria-label="统计区间"
+        />
       </div>
 
-      {overview.isPending && <DashboardSkeleton />}
-
       {overview.isError && (
-        <div className={styles.stateError} role="alert">
-          <span>数据暂时打不开：{describeLoadError(overview.error)}</span>
-          <button className={adminStyles.btn} type="button" onClick={retryAll}>
-            再试一次
-          </button>
-        </div>
+        <Alert
+          type="error"
+          showIcon
+          style={{ marginBottom: 14 }}
+          message={`数据暂时打不开：${describeLoadError(overview.error)}`}
+          action={
+            <Button size="small" onClick={retryAll}>
+              再试一次
+            </Button>
+          }
+        />
       )}
 
-      {data !== undefined && (
-        <>
-          <section className={styles.kpis} aria-label="关键指标">
-            <Kpi
-              metric="todayPv"
-              label="今日访问"
-              value={data.todayPv}
-              unit="次"
-              note="数据每 5 分钟更新一次"
-              delta={data.todayPv - data.yesterdayPv}
-            />
-            <Kpi
-              metric="todayUv"
-              label="今日访客"
-              value={data.todayUv}
-              unit="人"
-              note="同一访客一天只算一次"
-              delta={data.todayUv - data.yesterdayUv}
-            />
-            <Kpi metric="last7Pv" label="近 7 日访问" value={data.last7Pv} unit="次" note="含今天在内共 7 天" />
-            <Kpi
-              metric="totalView"
-              label="累计阅读"
-              value={data.totalView}
-              unit="次"
-              note="按天去重的阅读数，同一人同一天只算一次"
-            />
-          </section>
+      {/* `aria-busy`：antd 的 `Card loading` 只给视觉骨架，读屏需要这个标记才知道「还在加载」 */}
+      <Row gutter={[14, 14]} aria-busy={overview.isPending}>
+        <Col xs={24} sm={12} xl={6}>
+          <Kpi
+            metric="todayPv"
+            label="今日访问"
+            value={data?.todayPv ?? 0}
+            unit="次"
+            note="数据每 5 分钟更新一次"
+            delta={data === undefined ? undefined : data.todayPv - data.yesterdayPv}
+            loading={overview.isPending}
+          />
+        </Col>
+        <Col xs={24} sm={12} xl={6}>
+          <Kpi
+            metric="todayUv"
+            label="今日访客"
+            value={data?.todayUv ?? 0}
+            unit="人"
+            note="同一访客一天只算一次"
+            delta={data === undefined ? undefined : data.todayUv - data.yesterdayUv}
+            loading={overview.isPending}
+          />
+        </Col>
+        <Col xs={24} sm={12} xl={6}>
+          <Kpi
+            metric="last7Pv"
+            label="近 7 日访问"
+            value={data?.last7Pv ?? 0}
+            unit="次"
+            note="含今天在内共 7 天"
+            loading={overview.isPending}
+          />
+        </Col>
+        <Col xs={24} sm={12} xl={6}>
+          <Kpi
+            metric="totalView"
+            label="累计阅读"
+            value={data?.totalView ?? 0}
+            unit="次"
+            note="按天去重的阅读数，同一人同一天只算一次"
+            loading={overview.isPending}
+          />
+        </Col>
+      </Row>
 
-          <section className={`${styles.panel} ${styles.trend}`} aria-label="访问趋势">
-            <div className={styles.panelHead}>
-              <h2 className={styles.panelTitle}>访问趋势</h2>
-              <span className={styles.panelHint}>近 {days} 天 · 悬停看某一天</span>
-            </div>
-            {trend.isPending && <ChartSkeleton />}
-            {trend.isError && (
-              <div className={styles.stateError} role="alert">
-                <span>趋势暂时打不开：{describeLoadError(trend.error)}</span>
-                <button className={adminStyles.btn} type="button" onClick={() => void trend.refetch()}>
-                  再试一次
-                </button>
-              </div>
+      <Card
+        size="small"
+        title="访问趋势"
+        extra={<span className={styles.panelHint}>近 {days} 天 · 悬停看某一天</span>}
+        style={{ marginTop: 14 }}
+        loading={trend.isPending}
+      >
+        {trend.isError ? (
+          <Alert
+            type="error"
+            showIcon
+            message={`趋势暂时打不开：${describeLoadError(trend.error)}`}
+            action={
+              <Button size="small" onClick={() => void trend.refetch()}>
+                再试一次
+              </Button>
+            }
+          />
+        ) : (
+          trend.data !== undefined && <TrendChart points={trend.data} />
+        )}
+      </Card>
+
+      <Row gutter={[14, 14]} style={{ marginTop: 14 }}>
+        <Col xs={24} xl={15}>
+          <Card
+            size="small"
+            title="文章阅读排行"
+            extra={<span className={styles.panelHint}>近 {days} 天 · 前 10 篇</span>}
+          >
+            {articles.isError ? (
+              <Alert
+                type="error"
+                showIcon
+                message={`排行了打不开：${describeLoadError(articles.error)}`}
+                action={
+                  <Button size="small" onClick={() => void articles.refetch()}>
+                    再试一次
+                  </Button>
+                }
+              />
+            ) : (
+              <Table<ArticleStatsVO>
+                size="small"
+                rowKey="id"
+                loading={articles.isPending}
+                columns={articleColumns}
+                dataSource={articles.data ?? []}
+                pagination={false}
+                // 加载中不给空态文案：否则「正在取数」会被读成「一篇文章都没人看」
+                locale={{
+                  emptyText: articles.isPending ? (
+                    ''
+                  ) : (
+                    <Empty description="这段时间还没有文章被打开过。" />
+                  ),
+                }}
+              />
             )}
-            {trend.data !== undefined && <TrendChart points={trend.data} />}
-          </section>
+          </Card>
+        </Col>
 
-          <div className={styles.columns}>
-            <section className={styles.panel} aria-label="文章阅读排行">
-              <div className={styles.panelHead}>
-                <h2 className={styles.panelTitle}>文章阅读排行</h2>
-                <span className={styles.panelHint}>近 {days} 天 · 前 10 篇</span>
-              </div>
-              {articles.isPending && <RankSkeleton />}
-              {articles.isError && (
-                <div className={styles.stateError} role="alert">
-                  <span>排行了打不开：{describeLoadError(articles.error)}</span>
-                  <button
-                    className={adminStyles.btn}
-                    type="button"
-                    onClick={() => void articles.refetch()}
-                  >
+        <Col xs={24} xl={9}>
+          <Card
+            size="small"
+            title="热门页面"
+            extra={<span className={styles.panelHint}>近 {days} 天 · 前 10 条</span>}
+          >
+            {paths.isError ? (
+              <Alert
+                type="error"
+                showIcon
+                message={`热门页面打不开：${describeLoadError(paths.error)}`}
+                action={
+                  <Button size="small" onClick={() => void paths.refetch()}>
                     再试一次
-                  </button>
-                </div>
-              )}
-              {articles.data !== undefined && articles.data.length === 0 && (
-                <p className={styles.emptyPanel}>这段时间还没有文章被打开过。</p>
-              )}
-              {articles.data !== undefined && articles.data.length > 0 && (
-                <div className={styles.tableScroll}>
-                  <table className={styles.table}>
-                    <thead>
-                      <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">标题</th>
-                        <th scope="col" className={styles.numCell}>
-                          期间
-                        </th>
-                        <th scope="col" className={styles.numCell}>
-                          累计
-                        </th>
-                        <th scope="col" className={styles.barCell} aria-label="相对比例" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {articles.data.map((item, index) => {
-                        const deleted = item.slug === null
-                        return (
-                          <tr key={item.id}>
-                            <td className={styles.rankIndex}>{index + 1}</td>
-                            <td>
-                              {deleted ? (
-                                <span className={`${styles.rankTitle} ${styles.rankTitleMuted}`}>
-                                  {item.title}
-                                </span>
-                              ) : (
-                                <Link className={styles.rankTitle} to={`/admin/articles/${item.id}`}>
-                                  {item.title}
-                                </Link>
-                              )}
-                            </td>
-                            <td className={styles.numCell}>{number(item.periodView)}</td>
-                            <td className={styles.numCell}>{number(item.totalView)}</td>
-                            <td className={styles.barCell}>
-                              <div className={styles.barTrack}>
-                                <div
-                                  className={styles.barFill}
-                                  style={{ width: `${(item.periodView / Math.max(topArticleView, 1)) * 100}%` }}
-                                />
-                              </div>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
+                  </Button>
+                }
+              />
+            ) : (
+              <Table<PathStatsVO>
+                size="small"
+                rowKey="path"
+                loading={paths.isPending}
+                columns={pathColumns}
+                dataSource={paths.data ?? []}
+                pagination={false}
+                locale={{
+                  emptyText: paths.isPending ? (
+                    ''
+                  ) : (
+                    <Empty description="这段时间还没有页面访问记录。" />
+                  ),
+                }}
+              />
+            )}
+          </Card>
+        </Col>
+      </Row>
 
-            <section className={styles.panel} aria-label="热门页面">
-              <div className={styles.panelHead}>
-                <h2 className={styles.panelTitle}>热门页面</h2>
-                <span className={styles.panelHint}>近 {days} 天 · 前 10 条</span>
-              </div>
-              {paths.isPending && <RankSkeleton />}
-              {paths.isError && (
-                <div className={styles.stateError} role="alert">
-                  <span>热门页面打不开：{describeLoadError(paths.error)}</span>
-                  <button
-                    className={adminStyles.btn}
-                    type="button"
-                    onClick={() => void paths.refetch()}
-                  >
-                    再试一次
-                  </button>
-                </div>
-              )}
-              {paths.data !== undefined && paths.data.length === 0 && (
-                <p className={styles.emptyPanel}>这段时间还没有页面访问记录。</p>
-              )}
-              {paths.data !== undefined && paths.data.length > 0 && (
-                <ul className={styles.pathList}>
-                  {paths.data.map((item) => (
-                    <li className={styles.pathRow} key={item.path}>
-                      <span className={styles.pathName} title={item.path}>
-                        {item.path}
-                      </span>
-                      <span className={styles.pathValue}>{number(item.pv)}</span>
-                      <span className={styles.pathTrack}>
-                        <span
-                          className={styles.pathFill}
-                          style={{
-                            display: 'block',
-                            width: `${(item.pv / Math.max(topPathView, 1)) * 100}%`,
-                          }}
-                        />
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </div>
-
-          <p className={styles.footNote}>
-            站内共有 {number(data.articleCount)} 篇内容，其中已发布 {number(data.publishedCount)} 篇。
-            后台自身的访问不计入统计。
-          </p>
-        </>
+      {data !== undefined && (
+        <p className={styles.footNote}>
+          站内共有 {number(data.articleCount)} 篇内容，其中已发布 {number(data.publishedCount)} 篇。
+          后台自身的访问不计入统计。
+        </p>
       )}
     </AdminLayout>
   )

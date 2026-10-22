@@ -1,4 +1,7 @@
-import { Skeleton, SkeletonRegion } from '@/components/common/Skeleton'
+import {
+  LiteSkeleton as Skeleton,
+  LiteSkeletonRegion as SkeletonRegion,
+} from '@/components/common/LiteSkeleton'
 import adminStyles from './admin.module.css'
 import styles from './adminRouteFallback.module.css'
 
@@ -11,6 +14,11 @@ import styles from './adminRouteFallback.module.css'
  * 现在改成「先画外壳的骨架，再换真外壳」：复用的还是 `admin.module.css` 里的同一套类
  * （`.shell` / `.sidebar` / `.main` / `.topbar` / `.body`），所以两次渲染的几何完全相同 ——
  * 换的是**内容**，不是版式。
+ *
+ * **这一层刻意不用 antd**：它被 App.tsx 静态 import（必须比懒加载的后台页面先到），
+ * 一旦它 import 了 antd 的 Skeleton，cssinjs + ConfigProvider + locale 就会全量进首屏包
+ * （实测首屏 gzip 122KB → 272KB）。这里用的是零依赖的 `LiteSkeleton`，
+ * 后台页面内部的骨架才用 antd（那部分随懒加载 chunk 才到）。
  *
  * 两条不能破的约束（与 AdminLayout 的注释同源）：
  *  · 不出现 `<header>` / `<footer>` / `<table>`：视觉隔离审计靠这几个标签判「后台是不是被弹到登录页」；

@@ -1,49 +1,5 @@
-/* 骨架屏：一套组件同时服务前台（--ds-c-*）与后台（--adm-*），所以**不用任何具体色值** ——
-   全部基于 currentColor，继承谁的上下文就跟着谁的明暗走。 */
-.skeleton {
-  position: relative;
-  overflow: hidden;
-  background: color-mix(in srgb, currentColor 10%, transparent);
-  border-radius: 6px;
-  flex: none;
-}
-
-/* 扫光：一条更亮的斜带从左划到右。用伪元素而不是 background-position，
-   是为了让容器本身的底色保持静态（扫光只叠在上面）。 */
-.skeleton::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, currentColor 14%, transparent),
-    transparent
-  );
-  transform: translateX(-100%);
-  animation: skeleton-sweep 1.4s ease-in-out infinite;
-}
-
-@keyframes skeleton-sweep {
-  to {
-    transform: translateX(100%);
-  }
-}
-
-/* 前庭敏感 / 省电模式：不扫光，静态灰块仍然表达「这里有东西正在来」 */
-@media (prefers-reduced-motion: reduce) {
-  .skeleton::after {
-    animation: none;
-    opacity: 0;
-  }
-}
-
-.text {
-  display: flex;
-  flex-direction: column;
-}
-
-/* 读屏用：骨架屏不能让屏幕阅读器读到一堆空 div */
+/* 骨架现在由 antd 渲染（扫光、圆角、暗色渐变都在它的 token 体系里），
+   这里只剩「读屏专用文本」这一个与组件库无关的辅助类。 */
 .srOnly {
   position: absolute;
   width: 1px;

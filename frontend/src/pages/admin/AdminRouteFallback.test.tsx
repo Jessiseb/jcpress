@@ -22,7 +22,7 @@ describe('AdminRouteFallback', () => {
     // 侧栏在，且里面有占位条（说明不是一片空白）
     const aside = container.querySelector('aside')
     expect(aside).not.toBeNull()
-    expect(aside?.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(3)
+    expect(aside?.querySelectorAll('.jc-lite-skeleton').length).toBeGreaterThan(3)
   })
 
   it('屏幕阅读器听到的是「正在加载后台」，不是一堆空 div', () => {

@@ -110,19 +110,28 @@ async function mockApi(page, { delay = 0 } = {}) {
     await mockApi(page, { delay: 4000 })
     await page.goto('http://127.0.0.1:5176/admin/dashboard', { waitUntil: 'domcontentloaded' })
     // 关键：**不要**等数据（data-kpi 出现），否则拍到的就是加载完的页面 —— 第一版就是这么错的
-    await page.waitForSelector('[class*="chartSkeleton"]', { timeout: 15000 })
+    // 看板改用 antd 的 `Card loading` 后，骨架是 `.ant-skeleton`
+    await page.waitForSelector('.ant-skeleton', { timeout: 15000 })
     await sleep(350)
     await page.screenshot({ path: `.tmp/p4/boot-skeleton-${theme}.png` })
     const info = await page.evaluate(() => ({
-      blocks: document.querySelectorAll('[aria-hidden="true"]').length,
-      statusText: (document.querySelector('[role="status"]')?.textContent || '').trim(),
-      chartTop: Math.round(document.querySelector('[class*="chartSkeleton"]')?.getBoundingClientRect().top || -1),
+      blocks: document.querySelectorAll('.ant-skeleton').length,
+      statusText: document.querySelector('[aria-busy="true"]') ? 'aria-busy' : '',
+      chartTop: (() => {
+        const card = [...document.querySelectorAll('.ant-card')].find((el) =>
+          el.textContent.includes('访问趋势'),
+        )
+        return Math.round(card?.getBoundingClientRect().top ?? -1)
+      })(),
     }))
     // 数据回来后量同一块图的位置，差值就是「换内容时版式跳了多少」
     await page.waitForSelector('svg[role="img"]', { timeout: 20000 })
-    const after = await page.evaluate(() =>
-      Math.round(document.querySelector('svg[role="img"]')?.getBoundingClientRect().top || -1),
-    )
+    const after = await page.evaluate(() => {
+      const card = [...document.querySelectorAll('.ant-card')].find((el) =>
+        el.textContent.includes('访问趋势'),
+      )
+      return Math.round(card?.getBoundingClientRect().top ?? -1)
+    })
     console.log(
       `[3] 内容骨架(${theme})  截图 ok | 占位块 ${info.blocks} 个 | 读屏「${info.statusText}」 | 图表顶边 骨架 ${info.chartTop} → 真图 ${after}（位移 ${Math.abs(after - info.chartTop)}px）`,
     )
