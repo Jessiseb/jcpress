@@ -10,6 +10,8 @@ import TechShell from '@/components/tech/TechShell'
 import HomePage from '@/pages/home/HomePage'
 import ChannelPlaceholder from '@/pages/ChannelPlaceholder'
 import TechListPage from '@/pages/tech/TechListPage'
+import { ADMIN_HOME } from '@/pages/admin/adminMenu'
+import { usePageView } from '@/hooks/usePageView'
 
 /**
  * 路由级懒加载（三期）：详情页与后台都**不进首屏包**。
@@ -20,6 +22,7 @@ const ArticleDetailPage = lazy(() => import('@/pages/tech/ArticleDetailPage'))
 // 后台三页同样懒加载：它们会拖进 CodeMirror（CodeMirror 只在编辑页用，
 // 但连列表页一起懒加载最省 —— 后台整块都跟首屏无关，不该进首屏包）。
 const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage'))
+const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage'))
 const AdminArticleListPage = lazy(() => import('@/pages/admin/AdminArticleListPage'))
 const AdminArticleEditPage = lazy(() => import('@/pages/admin/AdminArticleEditPage'))
 const RequireAdmin = lazy(() =>
@@ -28,6 +31,9 @@ const RequireAdmin = lazy(() =>
 
 export default function App() {
   const { pathname } = useLocation()
+  // 访问采集（第四期）：路由落定后上报一次。挂在根组件而不是各页面里 ——
+  // 页面会加减，采集点不能跟着加减；`/admin` 自己在 hook 里排除。
+  usePageView()
   // 天体只在首页挂载：它的「分节停靠」位置是按首页那 8 个区块配的，
   // 挂到 /tech 之类的页面上会变成一颗没有停靠点的球压在列表上。
   const onHome = pathname === '/'
@@ -96,6 +102,16 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/dashboard"
+            element={
+              <Suspense fallback={<p className="container section">正在加载…</p>}>
+                <RequireAdmin>
+                  <AdminDashboardPage />
+                </RequireAdmin>
+              </Suspense>
+            }
+          />
+          <Route
             path="/admin/articles"
             element={
               <Suspense fallback={<p className="container section">正在加载…</p>}>
@@ -115,7 +131,8 @@ export default function App() {
               </Suspense>
             }
           />
-          <Route path="/admin" element={<Navigate to="/admin/articles" replace />} />
+          {/* 落地页跟着 ADMIN_HOME 走（第四期起是数据看板） */}
+          <Route path="/admin" element={<Navigate to={ADMIN_HOME} replace />} />
           <Route path="*" element={<ChannelPlaceholder title="页面不存在" is404 />} />
         </Routes>
       </main>

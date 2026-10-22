@@ -104,4 +104,22 @@
     <update id="updateViewCountIncrement">
         UPDATE article SET view_count = view_count + #{delta} WHERE id = #{id}
     </update>
+
+    <select id="countTotalView" resultType="java.lang.Integer">
+        SELECT COALESCE(SUM(view_count), 0) FROM article
+    </select>
+
+    <!-- SUM(status = 1) 走的是「值恒为 1/0 的表达式」，MySQL 返回 NULL 当且仅当零行 ——
+         所以两个计数都要 COALESCE，否则空库时看板会拿到 null 而前端显示空白。
+         type 传 null 表示不限类型（看板要看全站内容量）。 -->
+    <select id="countByType" resultType="com.jcpress.domain.projection.ArticleCountRef">
+        SELECT COUNT(*)                    AS total,
+               COALESCE(SUM(status = 1), 0) AS published
+        FROM article
+        <where>
+            <if test="type != null and type != ''">
+                type = #{type}
+            </if>
+        </where>
+    </select>
 </mapper>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jcpress.repository.VisitStatMapper">
+
+    <!-- 快照覆盖：Redis 里的值是「当天累计」，所以直接覆盖。重复执行结果相同。 -->
+    <insert id="saveDaily">
+        INSERT INTO visit_daily (stat_date, pv, uv)
+        VALUES (#{statDate}, #{pv}, #{uv})
+        ON DUPLICATE KEY UPDATE pv = VALUES(pv), uv = VALUES(uv)
+    </insert>
+
+    <insert id="savePath">
+        INSERT INTO visit_path_daily (stat_date, path, pv)
+        VALUES (#{statDate}, #{path}, #{pv})
+        ON DUPLICATE KEY UPDATE pv = VALUES(pv)
+    </insert>
+
+    <select id="getDaily" resultType="com.jcpress.domain.projection.DailyPvUvRef">
+        SELECT stat_date, pv, uv
+        FROM visit_daily
+        WHERE stat_date = #{statDate}
+    </select>
+
+    <select id="listDailyBetween" resultType="com.jcpress.domain.projection.DailyPvUvRef">
+        SELECT stat_date, pv, uv
+        FROM visit_daily
+        WHERE stat_date BETWEEN #{from} AND #{to}
+        ORDER BY stat_date
+    </select>
+
+    <select id="countSumPvBetween" resultType="java.lang.Integer">
+        SELECT COALESCE(SUM(pv), 0)
+        FROM visit_daily
+        WHERE stat_date BETWEEN #{from} AND #{to}
+    </select>
+
+    <!-- 热门页面：后台路径不进榜（spec: 采集与统计都不含 /admin）。
+         二级排序按 path —— 同 PV 时顺序必须稳定，否则每次刷新榜单会跳。 -->
+    <select id="listPathTop" resultType="com.jcpress.domain.projection.PathStatRef">
+        SELECT path, SUM(pv) AS pv
+        FROM visit_path_daily
+        WHERE stat_date BETWEEN #{from} AND #{to}
+          AND path NOT LIKE '/admin%'
+        GROUP BY path
+        ORDER BY pv DESC, path ASC
+        LIMIT #{limit}
+    </select>
+</mapper>

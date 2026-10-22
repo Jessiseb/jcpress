@@ -40,6 +40,7 @@ public class ArticleViewManager {
 
     private final StringRedisTemplate redis;
     private final ArticleMapper articleMapper;
+    private final VisitStatManager visitStatManager;
 
     /** 幂等计数：同指纹同一天只加一次 */
     public void saveView(Long articleId, String clientIp, String userAgent) {
@@ -49,6 +50,8 @@ public class ArticleViewManager {
         redis.expire(dedupeKey, Duration.ofDays(RedisKeyConstant.VIEW_DEDUPE_TTL_DAYS));
         if (added != null && added > 0) {
             redis.opsForValue().increment(RedisKeyConstant.VIEW_PENDING.formatted(articleId));
+            // 日维度与累计同源：都只在「本次是新访客」这一支里累加，两边的数才不会打架
+            visitStatManager.saveArticleView(articleId);
         }
     }
 

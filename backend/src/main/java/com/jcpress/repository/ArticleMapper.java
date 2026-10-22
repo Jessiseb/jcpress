@@ -3,6 +3,7 @@ package com.jcpress.repository;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jcpress.domain.dataobject.ArticleDO;
+import com.jcpress.domain.projection.ArticleCountRef;
 import com.jcpress.domain.query.AdminArticleQuery;
 import com.jcpress.domain.query.ArticleQuery;
 import org.apache.ibatis.annotations.Param;
@@ -38,4 +39,10 @@ public interface ArticleMapper extends BaseMapper<ArticleDO> {
 
     /** 浏览量回写：把 Redis 里攒的增量刷进 DB */
     int updateViewCountIncrement(@Param("id") Long id, @Param("delta") long delta);
+
+    /** 全部文章的累计阅读数（看板「累计阅读」卡） */
+    Integer countTotalView();
+
+    /** 内容总数与已发布数（看板底部上下文）；{@code type} 传 null 表示不限类型 */
+    ArticleCountRef countByType(@Param("type") String type);
 }

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import { ApiError } from '@/api/client'
 import { useAdminAuth } from '@/hooks/useAdminAuth'
+import { ADMIN_HOME } from './adminMenu'
 import styles from './admin.module.css'
 
 interface FromState {
@@ -26,7 +27,7 @@ export default function AdminLoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
 
-  const from = (location.state as FromState | null)?.from ?? '/admin/articles'
+  const from = (location.state as FromState | null)?.from ?? ADMIN_HOME
 
   const onSubmit = (event: React.FormEvent) => {
     event.preventDefault()

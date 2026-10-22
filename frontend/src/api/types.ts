@@ -158,3 +158,43 @@ export interface AiFormatVO {
   tags: string[]
   slug: string | null
 }
+
+/* ---------------- 第四期：站点统计 ---------------- */
+
+/**
+ * 看板总览。
+ *
+ * **没有 `last7Uv`**，后端也没有：每天的 UV 是按日去重结果，7 天相加会把同一个人算 7 次
+ * （openspec design D-H）。要那个数就得先改存储，不是改这里一行字段的事。
+ */
+export interface StatsOverviewVO {
+  todayPv: number
+  todayUv: number
+  yesterdayPv: number
+  yesterdayUv: number
+  last7Pv: number
+  totalView: number
+  articleCount: number
+  publishedCount: number
+}
+
+/** 趋势图的一个点。日期是 `yyyy-MM-dd`，且后端保证**每一天都在**（缺的补 0） */
+export interface VisitTrendVO {
+  date: string
+  pv: number
+  uv: number
+}
+
+export interface ArticleStatsVO {
+  id: string
+  /** 文章被删掉后后端会补「（已删除）」，不会是空串 */
+  title: string
+  slug: string | null
+  periodView: number
+  totalView: number
+}
+
+export interface PathStatsVO {
+  path: string
+  pv: number
+}

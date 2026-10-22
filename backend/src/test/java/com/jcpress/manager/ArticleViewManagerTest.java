@@ -8,8 +8,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,6 +35,12 @@ class ArticleViewManagerTest {
 
     @Autowired
     StringRedisTemplate redis;
+
+    @Autowired
+    JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    VisitStatManager visitStatManager;
 
     private Long articleId;
 
@@ -59,6 +67,7 @@ class ArticleViewManagerTest {
         redis.delete("view:count:" + articleId);
         redis.delete("view:count:" + articleId + ":flushing");
         redis.delete(redis.keys("view:article:" + articleId + ":*"));
+        jdbcTemplate.update("DELETE FROM article_view_daily WHERE article_id = ?", articleId);
     }
 
     @Test
@@ -87,5 +96,37 @@ class ArticleViewManagerTest {
         assertThat(articleMapper.selectById(articleId).getViewCount()).isEqualTo(2);
         assertThat(redis.hasKey("view:count:" + articleId)).isFalse();
         assertThat(redis.hasKey("view:count:" + articleId + ":flushing")).isFalse();
+    }
+
+    /**
+     * 第四期新增：日维度与累计同源。
+     *
+     * 这里同时钉住两件事 —— 同一天重复打开只记 1 次（与 view_count 同口径），
+     * 以及日表回写落在 VisitStatManager 那一轮（不另开定时任务）。
+     */
+    @Test
+    void sameFingerprintCountsOneDailyView() {
+        articleViewManager.saveView(articleId, "127.0.0.5", "E");
+        articleViewManager.saveView(articleId, "127.0.0.5", "E");
+
+        visitStatManager.flushDaily();
+
+        assertThat(dailyViewCount()).isEqualTo(1);
+    }
+
+    @Test
+    void differentFingerprintsCountSeparateDailyViews() {
+        articleViewManager.saveView(articleId, "127.0.0.6", "F");
+        articleViewManager.saveView(articleId, "127.0.0.7", "G");
+
+        visitStatManager.flushDaily();
+
+        assertThat(dailyViewCount()).isEqualTo(2);
+    }
+
+    private Integer dailyViewCount() {
+        return jdbcTemplate.queryForObject(
+                "SELECT view_count FROM article_view_daily WHERE article_id = ? AND stat_date = ?",
+                Integer.class, articleId, LocalDate.now());
     }
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import { ADMIN_HOME, resolveAdminRoute } from '@/pages/admin/adminMenu'
+import { ADMIN_HOME, ADMIN_HOME_TITLE, resolveAdminRoute } from '@/pages/admin/adminMenu'
 
 const STORAGE_KEY = 'jcpress.admin.tabs'
 
@@ -12,7 +12,8 @@ export interface AdminTab {
   closable: boolean
 }
 
-const HOME_TAB: AdminTab = { path: ADMIN_HOME, title: '文章列表', closable: false }
+/** 常驻标签：第四期起是「数据看板」（跟 `ADMIN_HOME` 走，不再写死文章列表） */
+const HOME_TAB: AdminTab = { path: ADMIN_HOME, title: ADMIN_HOME_TITLE, closable: false }
 
 /**
  * 读回上次的标签。两层防御：

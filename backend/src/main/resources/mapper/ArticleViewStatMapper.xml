@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jcpress.repository.ArticleViewStatMapper">
+
+    <insert id="saveArticleDay">
+        INSERT INTO article_view_daily (article_id, stat_date, view_count)
+        VALUES (#{articleId}, #{statDate}, #{viewCount})
+        ON DUPLICATE KEY UPDATE view_count = VALUES(view_count)
+    </insert>
+
+    <!-- 排行：期间阅读数降序，并列时用累计数破平（spec「并列时用累计数破平」）。
+         LEFT JOIN article —— 文章删除后日表行仍在，不能让它们整条消失；
+         此时 title/slug 为 null，由 Service 补成「（已删除）」占位。 -->
+    <select id="listArticleTop" resultType="com.jcpress.domain.projection.ArticleStatRef">
+        SELECT v.article_id        AS article_id,
+               a.title             AS title,
+               a.slug              AS slug,
+               SUM(v.view_count)   AS period_view,
+               COALESCE(a.view_count, 0) AS total_view
+        FROM article_view_daily v
+        LEFT JOIN article a ON a.id = v.article_id
+        WHERE v.stat_date BETWEEN #{from} AND #{to}
+        GROUP BY v.article_id, a.title, a.slug, a.view_count
+        ORDER BY period_view DESC, total_view DESC, v.article_id ASC
+        LIMIT #{limit}
+    </select>
+</mapper>

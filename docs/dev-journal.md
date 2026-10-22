@@ -3974,3 +3974,177 @@ React 把它当渲染期异常往上抛，整个页面渲染失败 —— 所以
 那时候这句话恰恰是最有用的。留着。
 
 页脚「基于 React + Vite 构建」同理，那是个人站常见的一句署名，不是待办。
+
+---
+
+## 69. 第四期：站点数据看板（2026-10-22，SDD 全程）
+
+> 本期按 OpenSpec（spec-driven）流程走：proposal → design → specs → tasks → apply → archive。
+> 纪律沿用前几期：**每完成一步就补记本节，不攒到最后**。
+
+### 69.1 需求原话与现状盘点（12:16）
+
+**用户关键原话**
+- 「项目第四期: 后台需要能可视化网站的情况 比如访问量,某个文章的点击量,等」
+- 「全流程使用SDD规范开发,并且记录我的开发过程,不得完成后再记录」
+
+**现状盘点（动手前读到的实况）**
+| 项 | 实况 | 对本期的影响 |
+| :-- | :-- | :-- |
+| 访问量 | **完全没有**。后端没有任何页面级统计；nginx 直出静态，后端看不到页面请求 | 得新增一条采集链路 + 一张日聚合表 |
+| 文章点击量 | 有 `article.view_count`（总量），由 `ArticleViewManager` 用 Redis `SADD` 去重 + `INCR` 累加、每 5 分钟 `RENAME` 回写 | **只有总量、没有日维度**；「某个文章最近 7 天被点了几次」现在答不出来 |
+| 后台 | 只有 `/admin/login`、`/admin/articles`、`/admin/articles/:id`；菜单里「站点设置 / 操作日志」等一律置灰 | 看板要新增一页，并成为后台落地页 |
+| 图表 | 无任何图表库（`package.json` 里没有 echarts/recharts） | 要么引库，要么手写 SVG |
+| 数据库 | Flyway V1 + V2；测试连真库 `jcpress_test`（MySQL 3306 / Redis 6379 db15 均在线） | 走 V3 迁移，测试可跑真 DB |
+
+**起手判断（待 proposal 定稿）**
+1. 采集必须在前端做：SPA 切路由不会产生新的后端请求之外的信号，nginx 也不转发页面请求。
+2. 存储只留**日聚合**，不留原始事件流：2G 服务器、单人站，原始表只会变成最大且无人查的表。
+3. 文章日维度复用现有去重口径（同指纹同一天只算一次），否则「点击量」与 `view_count` 两套口径会打架。
+
+### 69.2 SDD 提案与设计定稿（12:24）
+
+**产出**：`openspec/changes/phase-4-site-analytics/` —— `proposal.md` / `design.md` / `tasks.md` / 三份 spec delta（`stats-collection`、`site-analytics`、`admin-dashboard`）。
+`openspec validate phase-4-site-analytics` → **valid**，`openspec status` → 4/4 artifacts complete。
+
+**这一节拍板的几件事（都是取舍，不是顺手）**
+
+| 决策 | 取值 | 否决了什么 |
+| :-- | :-- | :-- |
+| 采集点 | 前端路由落定后 `sendBeacon` 上报 | 后端过滤器：nginx 只转 `/api/**`，页面请求根本不到 Java；记出来的会是「接口调用量」 |
+| 存储 | 三张日聚合表 | 原始事件表：单人站日 PV 以百计，原始表一年几万行，**没人会查** |
+| 站点回写 | 日内累计 + 快照覆盖（幂等） | 照抄 `RENAME` 搬走：那是给 `view_count = view_count + delta` 这种增量用的，站点总量用覆盖更省事且重复跑无害 |
+| 文章日维度 | 复用既有去重判定 | 另开一套「点击次数」：会跟卡片上的 `view_count` 打架，两个数不一致时用户只认为有一个是错的 |
+| 图表 | 手写 SVG | echarts/recharts：为 30 个点的两条折线引 100–300KB，且颜色接不上 `--adm-*` |
+| 7 日 UV | **不给这个数** | 把每天去重的 UV 加起来，既不是「7 天来了多少人」也不是任何真实量 |
+| 看板位置 | 后台落地页 | 只加菜单项：落地仍是文章列表，看板就成了没人点开的一页 |
+
+**一处自我克制**：`proposal` 里把「按小时」「来源站点」「设备/地域」全部写进 not-in-scope。理由是本期要解决的是「有没有数、数对不数」，不是「数得多细」；粒度一开，行数 ×24 而决策不变。
+
+**留痕说明**：从这一节起，W1/W2/W3 每段跑完就补一条，不攒到验收时一起写。
+
+### 69.3 W1+W2 后端：采集、日聚合、四条查询（12:33）
+
+**落地顺序与计划有一处偏差**：计划里 W1（采集）与 W2（查询）分开做，实际是**一趟写完**的。原因是两者共用同一套 Mapper 与 Manager，先写完查询再回头改表结构等于返工。偏差记在这里，不算违规。
+
+**新增文件**
+- `V3__add_site_stats.sql`：`visit_daily` / `visit_path_daily` / `article_view_daily`
+- 投影 4 个（`DailyPvUvRef` / `ArticleStatRef` / `PathStatRef` / `ArticleCountRef`）、VO 4 个、DTO 1 个
+- `VisitStatMapper` + `ArticleViewStatMapper`（各配一份 XML，SQL 全自写）
+- `VisitStatManager`（`saveVisit` / `saveArticleView` / `flushDaily`）
+- `StatsService` + `StatsServiceImpl`、`StatsController`（公开采集）、`AdminStatsController`（四条查询）
+
+**一个落地时改掉的设计**：原计划给三张聚合表各建一个 DO。写的时候发现它们是**纯读模型** —— 没有业务身份、不用 `selectById`、不用 `updateById`，唯一的字典就是「日期 + 维度」。建 DO 只会让 XML 的 `resultType` 多绕一层，所以改成**直接用投影**，Mapper 也不继承 `BaseMapper`。这条已经同步改到 `tasks.md` 1.2 的措辞里。
+
+**Redis 键的设计（回写只需要扫一个模式）**
+```
+stat:day:{yyyyMMdd}  hash → pv=总数, uv=总数, "p:/tech"=该路径次数, "a:12"=该文章阅读数
+stat:uv:{yyyyMMdd}   set  → 访客指纹（只用 SCARD 外的 add 返回值判断是否新访客）
+```
+一个 key 装全部，回写时只 `SCAN stat:day:*`。分开存要扫三个 pattern，还得处理「一半存在一半不存在」的中间态。
+
+**两处容易写错、已经在测试里钉住的地方**
+1. **站点统计必须覆盖写，不能增量写**。`upsertVisit(day, pv, uv)` 用的是 `ON DUPLICATE KEY UPDATE pv = VALUES(pv)`；写成 `pv = pv + VALUES(pv)` 的话定时任务每跑一次数字就翻倍。`flushIsIdempotent` 那条连刷两次断言值不变，就是钉这个。
+2. **文章日表与 `view_count` 必须同源**。`saveArticleView` 只在 `SADD` 返回 1（本次是新访客）时被调用，所以「同一个人一天点开 5 次」两个数都记 1，不会出现卡片说 3、排行说 5。
+
+**验证**
+| 项 | 结果 |
+| :-- | :-- |
+| `VisitStatManagerTest` | 4/4（PV 每次算 / UV 去重 / 回写落库 / 回写幂等 / 无外键也能写日表） |
+| `ArticleViewManagerTest` | 5/5（原 3 条 + 日维度 2 条） |
+| `StatsServiceTest` | 7/7（补零、夹值、7 日窗口、已删除兜底、并列破平、排除 `/admin`、limit 夹值） |
+| `StatsControllerTest` | 6/6（正常计数 / 剥 query / 无斜杠拒 / 超长拒 / 空路径拒 / 第 121 次 429） |
+| `AdminStatsControllerTest` | 3/3（四条都 401 / 计数是数字且没有 `last7Uv` / 登录后四条都能取） |
+| `FlywayMigrationTest` | 3/3（含新表存在） |
+| 合计 | **28/28，BUILD SUCCESS**（51s） |
+
+### 69.4 W3 前端：埋点、看板、图表（12:41）
+
+**新增**：`api/stats.ts`、`hooks/usePageView.ts`、`hooks/useDashboardStats.ts`、`components/admin/TrendChart.tsx` + `trendChart.module.css`、`pages/admin/AdminDashboardPage.tsx` + `dashboard.module.css`。
+**改动**：`App.tsx`（`/admin/dashboard` 懒加载路由 + `usePageView()` 挂根组件 + `/admin` 跳 `ADMIN_HOME`）、`adminMenu.ts`（新增「概览 / 数据看板」分组、`ADMIN_HOME` 改为看板、导出 `ADMIN_HOME_TITLE`）、`useAdminTabs.ts`（常驻标签跟常量走）、`AdminLoginPage.tsx`（登录后默认回 `ADMIN_HOME`）、`api/types.ts`。
+
+**一处架构卡口真的抓到了我（这次它是好事）**
+后端全量测试第一次跑出来 `ArchitectureTest.serviceAndRepositoryMethodsUseVerbPrefix` 红了，报三个方法：
+`VisitStatMapper.upsertVisit / upsertPath`、`ArticleViewStatMapper.upsertDay`。
+`upsert` 不在 `get/list/count/save/insert/remove/delete/update` 里。**我没有去给白名单加 `upsert`**，而是把三个方法改成 `saveDaily / savePath / saveArticleDay` —— 这条规则的用意是「方法名要能一眼看出读写什么」，`save` 恰好覆盖「有则更新无则插入」的语义（`AdminArticleService.saveArticle` 就是同一用法）。改完 134/134 全绿。
+
+**三个前端细节**
+1. **埋点用 `sendBeacon`**：路由跳转正是「上一个页面正在销毁」的时刻，`fetch` 可能被取消；`sendBeacon` 不占主线程也不怕卸载。兜底 `fetch keepalive`。`Blob` 必须显式 `type: 'application/json'`，否则后端 `@RequestBody` 直接 415。
+2. **`useId()` 生成的 id 带冒号**（`:r0:`），`url(#:r0:)` 能用但 CSS 选择器不能用，统一去掉冒号再做渐变 id。
+3. **图表全零时不出坐标系**：一块空坐标系看起来像图挂了，直接给一句「这几天还没有访问记录」。另外「前 29 天为 0、今天才有数」这种情况会额外补一行「从 X 开始有记录」—— 否则首屏看着像坏了一半。
+
+**测试里踩的小坑**：`screen.getByText('30')` 直接红了 —— 指标卡的「近 7 日访问 = 30」和排行里的「累计 30」撞在一起，Testing Library 报「命中多处」。没有改成 `getAllByText`，而是给指标卡加了 `data-kpi-value={metric}`，按指标键取值。**测页面的断言要能指名到具体那一块**，否则以后改文案时这条测试会莫名其妙地红。
+
+**验证**
+| 项 | 结果 |
+| :-- | :-- |
+| `usePageView.test.tsx` | 5/5（剥 query/hash、去尾斜杠、后台不上报、前台只报一次） |
+| `TrendChart.test.tsx` | 4/4（两条折线 + 面积、全零空态、起始日说明、空区间） |
+| `AdminDashboardPage.test.tsx` | 4/4（四卡 + 口径小字、排行可点、失败不伪装空态、真空态文案） |
+| 前端全量 | **135/135**（17 个文件） |
+| `tsc --noEmit` | 0 错误 |
+| 后端全量 | **134/134**（含 ArchUnit 13 条与源码扫描） |
+
+### 69.5 端到端：真的上报、真的回写、真的在浏览器里看（12:58）
+
+**① 采集链路（真后端 + 真 MySQL + 真 Redis）**
+
+起后端（dev profile，注意端口是 **8080**，不是 8091 —— `SERVER__PORT` 这个沙箱变量一 unset，`server.port` 就回落到 8080；8091 是 nginx 反代那一侧的约定），然后按「两个访客、五个页面」上报：
+
+| 动作 | 结果 |
+| :-- | :-- |
+| `POST /api/v1/stats/pageview` × 5（A 访客 4 次、B 访客 1 次） | 全部 `code=0` |
+| 同一请求里发一次 `{"path":"/admin/dashboard"}` | 也是 `code=0`，但**没有计数**（前后端各挡一道） |
+| `{"path":"tech"}`（不带斜杠） | `40001 路径格式不正确`，HTTP 400 |
+| 等 90 秒（`initialDelay`）后看日志 | `站点统计回写完成：待回写 1 天，成功 1 天` |
+| `SELECT stat_date, pv, uv FROM visit_daily` | **2026-10-22 / 5 / 2** |
+| `SELECT path, pv FROM visit_path_daily` | `/` = 4、`/tech` = 1，**没有 `/admin/dashboard`** |
+
+五个上报 → PV=5；两个指纹 → UV=2；路径分布也对得上。**这条链路不需要任何假数据就成立。**
+
+**② 浏览器（`vite preview` + 固定数据 + Playwright，`.tmp/tools/probe-dashboard.cjs`）**
+
+jsdom 验不了布局与 SVG，所以另起一份探针：`/api/**` 全部 route 拦成固定数据，真浏览器跑构建产物。
+
+| 项 | light | dark | 窄屏 375 |
+| :-- | :-- | :-- | :-- |
+| 图表 + 悬停 tooltip | ok | ok | ok |
+| 排行 / 热门页面行数 | 5 / 5 | 5 / 5 | — |
+| 指标值对比度 | 13.02 | 13.83 | — |
+| 口径小字对比度 | 4.83 | 5.21 | — |
+| 横向溢出 | — | — | 无（375 = 375） |
+
+**这轮探针改了两处真问题（都是截图才看得见的）**
+1. **区间按钮在暗色下几乎读不出来**：第一版用 `--adm-primary` 当底色 + 白字，明色是深蓝没问题，**暗色下 primary 变成浅蓝 `#79bbff`，白字只有 1.9:1**。改用 `--adm-solid`（明暗都是深蓝）。已记进 decisions #144。
+2. **tooltip 顶到上面那张指标卡上**，正好盖住「累计阅读」的数字。改成挂在图内顶部，并把左右夹在 6%–94%（首尾两点不再飘出画布）。
+
+**探针自己也错了两次，都是「看着像产品问题」的那种错**
+- 量轴文字色读的是 `getComputedStyle().color`，而 SVG 用的是 `fill` —— 拿到的是继承来的 `#303133`，误报「轴文字色不对」。改读 `fill` 得到真的 `#5e636b`。
+- 暗色截图和明色一模一样：`index.html` 的首帧脚本会用 `localStorage['jcpress-theme']` **覆盖** `data-theme`，直接改属性无效。改用存储键。已记进 decisions #145。
+
+### 69.6 收口（13:01）
+
+**最终验证（一次跑完，数字都是最后一次的）**
+
+| 项 | 结果 |
+| :-- | :-- |
+| 后端 `mvn test` | **135/135**（含 ArchUnit 13 条、源码扫描 3 条） |
+| 前端 `npx vitest run` | **135/135**（17 个文件） |
+| `npx tsc --noEmit` | 0 错误 |
+| `vite build`（`--configLoader runner --minify false`） | 通过，看板 chunk **26.06 kB / gzip 5.99 kB**，首屏 chunk 不受影响（看板走懒加载） |
+| `openspec validate` | valid；4/4 artifacts；tasks 21/22（只留 4.4 归档待确认） |
+
+**交付清单**
+- 采集：`POST /v1/stats/pageview`（公开、限流、路径校验、后台路径不计数）
+- 存储：`V3` 三张日聚合表 + Redis 日内累计（一个 key 装 pv/uv/路径/文章四类字段）
+- 查询：`/v1/admin/stats/{overview,trend,articles,paths}`
+- 看板：`/admin/dashboard`（四张指标卡 + 30 天趋势 + 文章排行 + 热门页面 + 区间切换 7/30/90）
+- 后台落地页改为看板；文章列表退为普通标签
+- 文档：`decisions.md` #135–#145、`RUNBOOK.md` 第 8 节（统计没数怎么查）
+
+**我没做、也写清了的**
+1. **历史回填不了**：日维度从今天开始，看板前 29 天是 0。趋势图会补一行「从 X 开始有记录」解释这件事。
+2. **不给 7 日 UV**（decisions #138）：按日去重的集合不能相加。
+3. **不做小时粒度 / 来源站点 / 设备地域**：本期要解决「有没有数、数对不数」，不是「数得多细」。
+4. **本地看到的 PV 是 2 倍**：React 18 StrictMode 会把 effect 跑两遍，生产构建不会（RUNBOOK 8.2 记了这条，免得下次当成 bug 查）。
+5. **归档没做**：按项目惯例，`openspec archive` 需要你先确认。

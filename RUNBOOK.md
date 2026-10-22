@@ -248,3 +248,47 @@ bash /root/jcpress/deploy/deploy-server.sh --backend # 只更后端
 **换行符**：本机 `core.autocrlf=true`，脚本 checkout 出来是 CRLF，传到 Linux 报 `\r: command not found`。仓库已加 `.gitattributes` 把 `*.sh` / `*.conf` / `*.yml` 钉成 `eol=lf`。
 
 **安全**：仓库是 public。`V2__seed_data.sql` 里 admin 账号的 BCrypt 哈希、旧版 `application-prod.yml` 里的公网 IP，都已经在提交历史里，删文件消不掉。上线第一件事是改后台密码为强口令；要彻底解决只能把仓库转 private。
+
+## 8. 站点统计（第四期）：看板没数怎么查
+
+统计链路是「浏览器上报 → Redis 日内累计 → 每 5 分钟落一次 MySQL → 后台看板」。按这个顺序往下查，**别一上来就翻表**。
+
+### 8.1 先分清是「没人来」还是「没记上」
+
+```bash
+# 后端在跑吗（dev 环境默认端口，注意不是 8091）
+curl -s http://127.0.0.1:8080/api/health
+
+# 手动上报一次（模拟浏览器）
+curl -s -X POST http://127.0.0.1:8080/api/v1/stats/pageview \
+  -H 'Content-Type: application/json' -H 'X-Forwarded-For: 1.2.3.4' \
+  -d '{"path":"/tech"}'
+```
+
+`code=0` 说明接口通。想立刻看到这条，别等 5 分钟 —— 先查 Redis：
+
+```bash
+# 键名：stat:day:{yyyyMMdd}，字段：pv / uv / p:{path} / a:{articleId}
+redis-cli -n 0 HGETALL stat:day:20261022
+```
+
+- **Redis 有数、看板没数** → 回写没跑起来。看日志里有没有 `站点统计回写完成`（这是 `VisitStatManager.flushDaily`，启动后 90 秒第一次，之后每 5 分钟一次）。没有这一行，先确认 `SchedulingConfig` 的 profile 条件没把调度关掉（`--spring.profiles.active=importer` 会关）。
+- **Redis 没数** → 上报没到。三条常见原因：① 前端跑的是旧产物（埋点没进去）；② 路径是 `/admin/**`（**前后端都会丢**，这是有意的，后台访问不计入统计）；③ 报的是 `40001 路径格式不正确`（path 不以 `/` 开头）。
+
+### 8.2 数字对不对
+
+```bash
+curl -s http://127.0.0.1:8080/api/v1/admin/stats/overview -H "jcpress-token: <登录后的 token>"
+```
+
+- **今日 PV 比你以为的少**：数据最多滞后 5 分钟，先等一轮再看。
+- **UV 一直是 1**：说明所有请求的 `X-Forwarded-For` / UA 相同（本地 curl、或者 nginx 没覆盖 `X-Forwarded-For`）。
+- **本地开发时 PV 是两倍**：React 18 的 StrictMode 会把 effect 跑两遍，生产构建不会。**不要为此在埋点里加「上报过就跳过」的缓存** —— 那会让「回到同一页」永远记不上。
+
+### 8.3 文章阅读日维度
+
+```sql
+SELECT * FROM article_view_daily WHERE article_id = 12 ORDER BY stat_date DESC;
+```
+
+它是**按天去重的阅读数**，与 `article.view_count` 同口径（同一个人同一天只算一次）。如果这张表空但 `article.view_count` 在涨：说明那批阅读是在本期上线**之前**发生的 —— 历史没有日维度，从上线那天起才有。

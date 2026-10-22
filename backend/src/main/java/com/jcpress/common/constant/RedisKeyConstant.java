@@ -26,6 +26,45 @@ public final class RedisKeyConstant {
     /** 后台登录失败计数：login:fail:{username} */
     public static final String LOGIN_FAIL = "login:fail:%s";
 
+    /**
+     * 站点统计的日内累计（hash，一个自然日一个 key）：stat:day:{yyyyMMdd}
+     *
+     * 字段约定：
+     * · {@link #STAT_FIELD_PV} / {@link #STAT_FIELD_UV} —— 当天总 PV / UV；
+     * · {@code p:} + path —— 该路径当天 PV；
+     * · {@code a:} + articleId —— 该文章当天阅读数。
+     *
+     * 一个 key 装全部，是为了回写时**只扫一个模式**（`stat:day:*`）。分开存会让
+     * 定时任务要扫 3 个 pattern，还得处理其中一半存在、一半不存在的中间态。
+     */
+    public static final String STAT_DAY = "stat:day:%s";
+
+    /** 站点日 UV 去重集合：stat:uv:{yyyyMMdd}，成员是访客指纹 */
+    public static final String STAT_UV = "stat:uv:%s";
+
+    public static final String STAT_FIELD_PV = "pv";
+    public static final String STAT_FIELD_UV = "uv";
+
+    /** 路径字段前缀（path 一定以 / 开头，不会与 pv/uv/a: 冲突） */
+    public static final String STAT_PATH_PREFIX = "p:";
+
+    /** 文章字段前缀 */
+    public static final String STAT_ARTICLE_PREFIX = "a:";
+
+    /** 回写时扫描的模式 */
+    public static final String STAT_DAY_PATTERN = "stat:day:*";
+
+    /**
+     * 统计键的 TTL：7 天。
+     *
+     * 比回写间隔（5 分钟）长得多，是为了让「定时任务停了几小时 / 进程重启」这类空窗
+     * 在恢复后仍能补齐；同时保证 Redis 里不会长期留着哪天的累计值。
+     */
+    public static final long STAT_TTL_DAYS = 7L;
+
+    /** 采集接口的限流：每个 IP 每分钟最多记多少次（正常访问远低于此） */
+    public static final int PAGEVIEW_RATE_LIMIT_PER_MINUTE = 120;
+
     /** 接口限流：rate:{ip}:{route} */
     public static final String RATE_LIMIT = "rate:%s:%s";
 

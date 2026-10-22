@@ -20,6 +20,12 @@ export interface AdminMenuGroup {
 
 export const ADMIN_MENU: AdminMenuGroup[] = [
   {
+    // 第四期：看板排在最前 —— 后台的第一屏应该是「我的站现在怎么样」，
+    // 而不是文章列表。菜单顺序与落地页顺序必须一致，否则一进后台就有一种「进错页」的错觉。
+    label: '概览',
+    items: [{ label: '数据看板', to: '/admin/dashboard', enabled: true }],
+  },
+  {
     label: '内容管理',
     items: [
       { label: '文章列表', to: '/admin/articles', enabled: true },
@@ -38,7 +44,10 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
 ]
 
 /** 后台根路径（登录后默认落地、标签栏里的常驻标签）。 */
-export const ADMIN_HOME = '/admin/articles'
+export const ADMIN_HOME = '/admin/dashboard'
+
+/** 常驻标签的名字 —— 与菜单项同源，改一处即可，不要在标签系统里另写字面量。 */
+export const ADMIN_HOME_TITLE = '数据看板'
 
 export interface AdminRouteMeta {
   /** 标签栏里这一页显示的名字；空串表示该路由不进标签栏 */

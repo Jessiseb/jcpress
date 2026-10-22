@@ -31,7 +31,9 @@ class FlywayMigrationTest {
 
         assertThat(tables).contains(
                 "article", "article_content", "category", "tag", "article_tag",
-                "admin_user", "admin_audit_log");
+                "admin_user", "admin_audit_log",
+                // 第四期：站点统计的三张日聚合表
+                "visit_daily", "visit_path_daily", "article_view_daily");
     }
 
     @Test

@@ -1,0 +1,128 @@
+.wrap {
+  position: relative;
+  width: 100%;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.gridLine {
+  stroke: var(--adm-border);
+  stroke-width: 1;
+}
+
+.axisText {
+  fill: var(--adm-text-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pvLine {
+  fill: none;
+  stroke: var(--adm-primary);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.uvLine {
+  fill: none;
+  stroke: var(--adm-warning);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-dasharray: 5 4;
+}
+
+.hoverBand {
+  fill: var(--adm-text);
+  opacity: 0.06;
+}
+
+.hoverDot {
+  stroke: var(--adm-card);
+  stroke-width: 2;
+}
+
+.legend {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--adm-text-3);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legendMark {
+  display: inline-block;
+  width: 1.1rem;
+  height: 0;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+
+.legendMarkPv {
+  border-top-color: var(--adm-primary);
+}
+
+.legendMarkUv {
+  border-top-color: var(--adm-warning);
+  border-top-style: dashed;
+}
+
+.tooltip {
+  position: absolute;
+  /* 挂在图内顶部而不是图外：`translateY(-100%)` 会把它顶到上面那张指标卡上，
+     正好盖住「累计阅读」的数字 */
+  top: 2px;
+  transform: translate(-50%, 0);
+  z-index: 2;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--adm-border-strong);
+  border-radius: 6px;
+  background: var(--adm-card);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 12%);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--adm-text-2);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tooltipDate {
+  display: block;
+  color: var(--adm-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.tooltipValue {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  margin: 0;
+  padding: 2.5rem 0.5rem;
+  text-align: center;
+  font-size: 0.88rem;
+  line-height: 1.9;
+  color: var(--adm-text-3);
+}
+
+.note {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  color: var(--adm-text-4, var(--adm-text-3));
+}
