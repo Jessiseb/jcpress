@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { reportArticleView } from '@/api/articles'
 import MarkdownBody from '@/components/markdown/MarkdownBody'
@@ -8,6 +8,7 @@ import { Skeleton, SkeletonRegion, SkeletonText } from '@/components/common/Skel
 import { usePublishPageToc } from '@/components/tech/pageTocContext'
 import { useArticleDetail } from '@/hooks/useArticleDetail'
 import { describeLoadError } from '@/utils/loadError'
+import { matchedTagKeys } from './articleSearch'
 // 文章页专用字体子集（GB2312 一级字，独立 family）。放在**详情页** import，
 // Vite 会把它并进详情页 chunk —— 首页既不加载这份 CSS，也不下载那两个字体文件。
 // @font-face 本身不触发下载，浏览器只在字形真正被用到时才取。
@@ -46,6 +47,9 @@ const stripDuplicateTitle = (markdown: string, title: string) => {
  */
 export default function ArticleDetailPage() {
   const { slug = '' } = useParams()
+  // 列表页搜索后点进来的文章会带 `?q=关键词`，这里用它决定哪个标签高亮
+  const [searchParams] = useSearchParams()
+  const searchKeyword = searchParams.get('q') ?? ''
   const { data, isPending, isError, error, refetch } = useArticleDetail(slug)
   const [headings, setHeadings] = useState<TocItem[]>([])
   const publishPageToc = usePublishPageToc()
@@ -127,6 +131,9 @@ export default function ArticleDetailPage() {
     )
   }
 
+  // 命中的标签（slug 集合）：只在带 ?q= 进来时非空，直接打开文章时一个都不亮
+  const matchedTags = matchedTagKeys(data.tags, searchKeyword)
+
   return (
     <article className={styles.wrap}>
       <header className={styles.header}>
@@ -144,7 +151,25 @@ export default function ArticleDetailPage() {
           {data.tags.length > 0 && (
             <>
               <span aria-hidden="true">·</span>
-              <span>{data.tags.map((tag) => tag.name).join(' / ')}</span>
+              {/* 标签做成可点的胶囊：点一下 = 按这个标签搜一次（回到列表页并带上 ?q=）。
+                  从搜索结果点进来时，命中的那几个标签用强调色底高亮 —— 这样用户能确认
+                  「我搜的词落在这一篇的哪个标签上」。 */}
+              <span className={styles.tags}>
+                {data.tags.map((tag) => {
+                  const active = matchedTags.has(tag.slug)
+                  return (
+                    <Link
+                      key={tag.slug}
+                      to={`/tech?q=${encodeURIComponent(tag.name)}`}
+                      className={active ? `${styles.tag} ${styles.tagActive}` : styles.tag}
+                      data-active={active ? 'true' : undefined}
+                      title={`查看「${tag.name}」相关的文章`}
+                    >
+                      {tag.name}
+                    </Link>
+                  )
+                })}
+              </span>
             </>
           )}
         </p>

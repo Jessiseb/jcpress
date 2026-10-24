@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -110,5 +110,49 @@ describe('TechListPage', () => {
     expect(screen.getByRole('heading', { level: 2, name: /AI Agent/ })).toBeInTheDocument()
     // 三篇各一行，每行一个可点链接
     expect(screen.getAllByRole('link')).toHaveLength(3)
+  })
+
+  it('按标题搜到只剩一篇，计数改成「匹配」', async () => {
+    fetchArticles.mockResolvedValue(
+      page([
+        { ...card('a', 'Redis 分布式锁的三个坑'), tags: [{ name: 'Redis', slug: 'redis' }] },
+        { ...card('b', 'Spring Boot 分层'), tags: [{ name: '架构', slug: 'architecture' }] },
+      ]),
+    )
+    renderPage()
+
+    const input = await screen.findByLabelText('搜索文章')
+    fireEvent.change(input, { target: { value: '分层' } })
+
+    expect(await screen.findByText(/匹配 1 篇/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Spring Boot 分层/ })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Redis 分布式锁/ })).toBeNull()
+  })
+
+  it('按标签搜：标签命中的文章留下，并把关键词带进详情链接', async () => {
+    fetchArticles.mockResolvedValue(
+      page([
+        { ...card('a', '一篇标题里没有关键词的文章'), tags: [{ name: 'Redis', slug: 'redis' }] },
+        { ...card('b', '另一篇'), tags: [{ name: '架构', slug: 'architecture' }] },
+      ]),
+    )
+    renderPage()
+
+    fireEvent.change(await screen.findByLabelText('搜索文章'), { target: { value: 'redis' } })
+
+    const link = await screen.findByRole('link', { name: /一篇标题里没有关键词的文章/ })
+    // 详情页靠这个参数决定高亮哪个标签
+    expect(link.getAttribute('href')).toBe('/tech/a?q=redis')
+    expect(screen.queryByRole('link', { name: /另一篇/ })).toBeNull()
+  })
+
+  it('搜不到时给空态与「清空搜索」，不是一片空白', async () => {
+    fetchArticles.mockResolvedValue(page([card('a', 'Redis 分布式锁')]))
+    renderPage()
+
+    fireEvent.change(await screen.findByLabelText('搜索文章'), { target: { value: '不存在的词' } })
+
+    expect(await screen.findByText(/没有匹配「不存在的词」的文章/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '清空搜索' })).toBeInTheDocument()
   })
 })

@@ -279,3 +279,15 @@
   flex-direction: column;
   gap: 0.35rem;
 }
+
+/* ── 搜索（第四期加）── */
+.searchBar {
+  margin: var(--ds-space-4) 0 var(--ds-space-2);
+  max-width: 28rem;
+}
+
+.searchHint {
+  margin: 0.45rem 0 0;
+  font-size: 0.8rem;
+  color: var(--ds-c-text-subtle);
+}

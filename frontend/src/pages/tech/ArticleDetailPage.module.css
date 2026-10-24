@@ -149,3 +149,38 @@
   gap: var(--ds-space-3);
   max-width: 828px;
 }
+
+/* ── 标签胶囊（第四期搜后加）──
+   位置在「N 次阅读」后面：阅读数交代「这篇有多少人看」，标签交代「它属于哪些主题」，
+   两者都是档案信息，放同一行。 */
+.tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  vertical-align: middle;
+}
+
+.tag {
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  background: var(--ds-c-accent-soft);
+  color: var(--ds-c-accent);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  text-decoration: none;
+  transition:
+    background-color 140ms var(--ds-ease-out),
+    color 140ms var(--ds-ease-out);
+}
+
+.tag:hover {
+  background: color-mix(in srgb, var(--ds-c-accent) 22%, transparent);
+}
+
+/* 搜索命中的标签：实底强调色。别用「加粗 + 下划线」——
+   标签本身已经很小，加粗会让整行基线抖动，实底最稳。 */
+.tagActive,
+.tagActive:hover {
+  background: var(--ds-c-accent-bg);
+  color: var(--ds-c-accent-text);
+}

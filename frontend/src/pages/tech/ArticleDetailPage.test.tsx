@@ -23,7 +23,11 @@ const detail: ArticleDetailVO = {
   coverUrl: null,
   categoryName: 'Java 后端',
   categorySlug: 'java-backend',
-  tags: [{ name: 'Redis', slug: 'redis' }],
+  // 两个标签：用来验证「只高亮命中的那一个」，整篇都亮等于没高亮
+  tags: [
+    { name: 'Redis', slug: 'redis' },
+    { name: '架构', slug: 'architecture' },
+  ],
   readingMinutes: 7,
   viewCount: 12,
   top: 0,
@@ -39,10 +43,14 @@ const detail: ArticleDetailVO = {
  * 它把收集到的小节通过 `PageTocContext` 推给外壳左栏，所以这里用一个假的
  * 收集器顶替外壳，`onPublish` 传 undefined 时就是「没有外壳」的常态。
  */
-const renderPage = (slug = 'phase-3-backend-retro', onPublish?: (items: TocItem[]) => void) =>
+const renderPage = (
+  slug = 'phase-3-backend-retro',
+  onPublish?: (items: TocItem[]) => void,
+  search = '',
+) =>
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <MemoryRouter initialEntries={[`/tech/${slug}`]}>
+      <MemoryRouter initialEntries={[`/tech/${slug}${search}`]}>
         <PageTocContext.Provider value={onPublish ?? null}>
           <Routes>
             <Route path="/tech/:slug" element={<ArticleDetailPage />} />
@@ -120,5 +128,29 @@ describe('ArticleDetailPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('文章不存在')
     expect(screen.queryByRole('table')).toBeNull()
+  })
+
+  it('标签渲染成可点的胶囊，点一下回到列表页按该标签搜索', async () => {
+    fetchArticleDetail.mockResolvedValue(detail)
+    renderPage()
+
+    await screen.findByText('Redis')
+    const tagLink = screen.getByText('Redis').closest('a')
+    expect(tagLink?.getAttribute('href')).toBe('/tech?q=Redis')
+    // 没有搜索词进来时一个都不高亮
+    expect(tagLink?.getAttribute('data-active')).toBeNull()
+  })
+
+  it('从搜索结果点进来时，命中的那个标签高亮', async () => {
+    fetchArticleDetail.mockResolvedValue(detail)
+    renderPage('phase-3-backend-retro', undefined, '?q=redis')
+
+    await screen.findByText('Redis')
+    // 用文本定位再取最近的 a：标签上带了 title，可访问名不一定是纯文本
+    const redisTag = screen.getByText('Redis').closest('a')
+    const archTag = screen.getByText('架构').closest('a')
+    expect(redisTag?.getAttribute('data-active')).toBe('true')
+    // 只亮命中的那个：整篇文章的标签都亮等于没高亮
+    expect(archTag?.getAttribute('data-active')).toBeNull()
   })
 })

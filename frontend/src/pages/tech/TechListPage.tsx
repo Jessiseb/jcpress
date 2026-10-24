@@ -1,10 +1,12 @@
-import { Empty } from 'antd'
-import { Link } from 'react-router-dom'
+import { Empty, Input } from 'antd'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import type { ArticleCardVO } from '@/api/types'
 import { Skeleton, SkeletonRegion } from '@/components/common/Skeleton'
 import { CATALOG_SIZE, useTechCatalog } from '@/hooks/useTechCatalog'
 import { describeLoadError } from '@/utils/loadError'
+import { filterCatalog } from './articleSearch'
 import styles from './TechListPage.module.css'
 
 const formatDate = (value: string) => value.slice(0, 10).replace(/-/g, '.')
@@ -16,10 +18,12 @@ const formatDate = (value: string) => value.slice(0, 10).replace(/-/g, '.')
  * 消失；② 一行里有个固定的方形锚点，扫读时眼睛有落点，比纯文字清单更容易"一眼不乱"。
  * 但它**不再是主角** —— 从原来通栏大图缩到 56px，视觉权重让给标题与分组。
  */
-function ArticleRow({ article }: { article: ArticleCardVO }) {
+function ArticleRow({ article, keyword }: { article: ArticleCardVO; keyword: string }) {
+  // 把搜索词带进详情页：那边据此把命中的标签高亮（`?q=redis`）
+  const to = keyword === '' ? `/tech/${article.slug}` : `/tech/${article.slug}?q=${encodeURIComponent(keyword)}`
   return (
     <Link
-      to={`/tech/${article.slug}`}
+      to={to}
       className={styles.row}
       data-card={article.slug}
       title={article.title}
@@ -68,7 +72,38 @@ function ArticleRow({ article }: { article: ArticleCardVO }) {
  */
 export default function TechListPage() {
   const { data, isPending, isError, error, refetch, isFetching } = useTechCatalog()
+
+  // 关键词放在 URL 上（`/tech?q=redis`）：刷新、分享、从详情页的标签点回来都能还原，
+  // 而且浏览器的前进后退天然可用。本地 state 只负责输入框的即时输入。
+  const [params, setParams] = useSearchParams()
+  const queryString = params.get('q') ?? ''
+  const [keyword, setKeyword] = useState(queryString)
+
+  // 外部改动 URL（浏览器后退、详情页标签链接）时同步输入框
+  useEffect(() => {
+    setKeyword(queryString)
+  }, [queryString])
+
+  const commitKeyword = (next: string) => {
+    setKeyword(next)
+    const trimmed = next.trim()
+    const nextParams = new URLSearchParams(params)
+    if (trimmed === '') {
+      nextParams.delete('q')
+    } else {
+      nextParams.set('q', trimmed)
+    }
+    // replace：搜一次不该在历史里堆一条记录，否则后退要按很多下才出得去
+    setParams(nextParams, { replace: true })
+  }
+
+  const filtered = useMemo(
+    () => (data === undefined ? undefined : filterCatalog(data, keyword)),
+    [data, keyword],
+  )
+  const searching = keyword.trim() !== ''
   const empty = !isPending && !isError && data.groups.length === 0
+  const noMatch = !isPending && !isError && !empty && filtered !== undefined && filtered.total === 0
 
   return (
     <section className={styles.wrap} aria-labelledby="tech-title">
@@ -78,6 +113,21 @@ export default function TechListPage() {
         技术分享
       </h1>
       <p className={styles.lead}>把踩过的坑写清楚：Java 后端、AI Agent 工程、数据库与中间件。</p>
+
+      {/* 搜索：标题、标签名、标签 slug 三者任一命中即算（规则见 articleSearch.ts）。
+          数据本来就在内存里（整份目录一次取全），所以这里是即时过滤，没有请求。 */}
+      <div className={styles.searchBar}>
+        <Input.Search
+          allowClear
+          size="large"
+          value={keyword}
+          placeholder="搜标题或标签，例如 Redis"
+          aria-label="搜索文章"
+          onChange={(event) => commitKeyword(event.target.value)}
+          onSearch={(value) => commitKeyword(value)}
+        />
+
+      </div>
 
       {/* 加载态用 antd 的 Skeleton（这一页已改懒加载，antd 不会进首屏包）。
           chunk 还没到的那一段由 App 的 Suspense 兜底（零依赖 TechListSkeleton），
@@ -141,14 +191,32 @@ export default function TechListPage() {
         </div>
       )}
 
-      {!isPending && !isError && !empty && (
+      {noMatch && (
+        <div className={styles.empty}>
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={
+              <span className={styles.emptyText}>
+                没有匹配「{keyword.trim()}」的文章。
+                <span className={styles.emptyHint}>换个关键词，或清空搜索看全部。</span>
+              </span>
+            }
+          />
+          <button type="button" className="btn btnGhost" onClick={() => commitKeyword('')}>
+            清空搜索
+          </button>
+        </div>
+      )}
+
+      {!isPending && !isError && !empty && !noMatch && filtered !== undefined && (
         <>
           <p className={styles.count}>
-            共 {data.total} 篇 · 更新至 {formatDate(data.latest)}
+            {searching ? `匹配 ${filtered.total} 篇 · ` : `共 ${data.total} 篇 · `}
+            更新至 {formatDate(data.latest)}
           </p>
 
           <div className={styles.index}>
-            {data.groups.map((group, index) => (
+            {filtered.groups.map((group, index) => (
               <section key={group.name} className={styles.group} aria-labelledby={`tech-g-${index}`}>
                 <h2 id={`tech-g-${index}`} className={styles.groupName}>
                   {group.name}
@@ -157,7 +225,7 @@ export default function TechListPage() {
                 <ul className={styles.rows}>
                   {group.articles.map((article) => (
                     <li key={article.slug}>
-                      <ArticleRow article={article} />
+                      <ArticleRow article={article} keyword={keyword.trim()} />
                     </li>
                   ))}
                 </ul>
@@ -167,7 +235,7 @@ export default function TechListPage() {
 
           {/* 一次只取 CATALOG_SIZE 篇（左栏要的是「一眼看得到整体」），超出的部分如实说一声。
               原文是「还有 N 篇 —— 分页与筛选留给下一期」：后半句是排期，不是访客要知道的事。 */}
-          {data.total > CATALOG_SIZE && (
+          {!searching && data.total > CATALOG_SIZE && (
             <p className={styles.more}>还有 {data.total - CATALOG_SIZE} 篇没在这里列出。</p>
           )}
         </>
