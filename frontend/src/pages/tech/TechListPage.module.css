@@ -34,14 +34,6 @@
   font-size: var(--ds-fs-lead);
 }
 
-/* 计数：弱化小字，不抢标题。含中文 → 不走等宽栈（decisions #41） */
-.count {
-  margin: var(--ds-space-5) 0 var(--ds-space-4);
-  font-size: var(--ds-fs-xs);
-  letter-spacing: 0.05em;
-  color: var(--ds-c-text-subtle);
-}
-
 /* ── 目录式索引：按分类分组，组内一行一篇 ── */
 .index {
   display: flex;
@@ -281,13 +273,102 @@
 }
 
 /* ── 搜索（第四期加）── */
-.searchBar {
-  margin: var(--ds-space-4) 0 var(--ds-space-2);
-  max-width: 28rem;
+/* ── 搜索栏 ──
+   一行两件：字段在左、计数在右。计数贴右端，与下方目录里的日期列落在同一条对齐线上。
+   窄屏换行时计数落到下一行右端，仍然不挤字段。 */
+.toolbar {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  /* 行间距 9px：窄屏计数换到下一行时，贴着那条底线太挤 */
+  gap: 0.55rem var(--ds-space-4);
+  /* 下边距比上边距大：那条底线已经是一条分隔线了，下面再紧贴分组标题会显得挤 */
+  margin: var(--ds-space-5) 0 var(--ds-space-5);
 }
 
-.searchHint {
-  margin: 0.45rem 0 0;
-  font-size: 0.8rem;
+.searchField {
+  flex: 0 1 26rem;
+  min-width: 0;
+}
+
+/*
+ * 字段外观：**只有一条底线**，没有方框、没有圆角、没有右侧独立按钮。
+ *
+ * 这一页的视觉语言是衬线标题 + 1px 发丝线目录，antd 默认的 `Input.Search`
+ * 是「带圆角的描边盒子 + 一个贴边蓝按钮」，摆在标题下面像从别的产品里抠过来的。
+ *
+ * `.searchField.searchField` 是刻意重复类名：antd 6 的样式是 `.hash.ant-input-affix-wrapper`
+ * （特异度 0,2,0），单类选择器与它平手，谁生效取决于运行时的样式注入顺序。
+ * 重复一次把特异度提到 0,3,0，就不用 `!important` 了。
+ */
+.searchField.searchField :global(.ant-input-affix-wrapper) {
+  padding: 0 0 0.5rem;
+  border: 0;
+  border-bottom: 1px solid var(--ds-c-hairline);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-family: var(--ds-font-sans);
+  transition: border-color 160ms var(--ds-ease-out);
+}
+
+.searchField.searchField :global(.ant-input-affix-wrapper:hover) {
+  border-bottom-color: color-mix(in srgb, var(--ds-c-text) 32%, transparent);
+}
+
+/* 聚焦只让那条线变强调色加粗。两样都要：
+   ① `outline: none` —— antd 6 在聚焦态给 wrapper 画的是 `outline: 1px solid #1677ff`，
+      它不受 border 覆盖影响，光改 border 会留下一圈蓝框（第一版就漏了它）；
+   ② 线从 1px 变 2px —— 只变色的话，聚焦提示只剩「颜色不同」这一条线索。 */
+.searchField.searchField :global(.ant-input-affix-wrapper-focused),
+.searchField.searchField :global(.ant-input-affix-wrapper:focus-within) {
+  border-bottom-color: var(--ds-c-accent);
+  /* 内阴影补那 1px，border 保持 1px —— 改 border-width 会让整行上下跳 1px */
+  box-shadow: inset 0 -1px 0 var(--ds-c-accent);
+  outline: none;
+}
+
+.searchField.searchField :global(.ant-input) {
+  padding: 0;
+  background: transparent;
+  font-family: var(--ds-font-sans);
+  /* 16px 不是随手定的：iOS Safari 对更小的字号会在聚焦时把整页放大 */
+  font-size: 1rem;
+  color: var(--ds-c-text);
+}
+
+.searchField.searchField :global(.ant-input::placeholder) {
+  color: var(--ds-c-text-subtle);
+}
+
+.searchField.searchField :global(.ant-input-prefix) {
+  margin-inline-end: 0.55rem;
+}
+
+.searchField.searchField :global(.ant-input-clear-icon) {
+  display: inline-flex;
+  color: var(--ds-c-text-subtle);
+}
+
+.searchField.searchField :global(.ant-input-clear-icon:hover) {
+  color: var(--ds-c-text);
+}
+
+.searchIcon {
+  display: inline-flex;
+  color: var(--ds-c-text-subtle);
+  transition: color 160ms var(--ds-ease-out);
+}
+
+/* 聚焦时放大镜跟着线一起变色，视线只需要看一处 */
+.searchField:focus-within .searchIcon {
+  color: var(--ds-c-accent);
+}
+
+.count {
+  flex: none;
+  margin: 0 0 0 auto;
+  font-size: var(--ds-fs-xs);
+  letter-spacing: 0.05em;
   color: var(--ds-c-text-subtle);
 }

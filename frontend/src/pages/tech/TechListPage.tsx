@@ -12,6 +12,41 @@ import styles from './TechListPage.module.css'
 const formatDate = (value: string) => value.slice(0, 10).replace(/-/g, '.')
 
 /**
+ * 两个图标手写 SVG，不用 antd 的图标包：这一页的线条是 1px 发丝线，
+ * antd 图标是 1024 画布实心描边，缩到 14px 会显得发糊。手写还能跟着 currentColor 变色。
+ */
+const SearchGlyph = () => (
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
+    <circle cx="10.5" cy="10.5" r="6.5" />
+    <path d="m20 20-4.8-4.8" />
+  </svg>
+)
+
+const ClearGlyph = () => (
+  <svg
+    width="13"
+    height="13"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
+    <path d="M6 6l12 12M18 6L6 18" />
+  </svg>
+)
+
+/**
  * 一条目录项：缩略图 + 标题 + 摘要 + 档案行。
  *
  * 保留缩略图（而不是纯文字链接）有两个理由：① 封面是既有功能，纯文字会让它在列表里
@@ -105,6 +140,14 @@ export default function TechListPage() {
   const empty = !isPending && !isError && data.groups.length === 0
   const noMatch = !isPending && !isError && !empty && filtered !== undefined && filtered.total === 0
 
+  // 计数文案在工具栏里（与搜索框同一行），所以先算出来。
+  // 「匹配 0 篇」不显示：下面已经有专门的空态说这件事，两处同时说反而是噪音。
+  const countLabel =
+    filtered !== undefined && data !== undefined && filtered.total > 0
+      ? `${searching ? `匹配 ${filtered.total} 篇 · ` : `共 ${data.total} 篇 · `}更新至 ${formatDate(data.latest)}`
+      : null
+  const showCount = countLabel !== null && !isError && !noMatch
+
   return (
     <section className={styles.wrap} aria-labelledby="tech-title">
       <span className={styles.badge} data-ring="" aria-hidden="true" />
@@ -114,19 +157,34 @@ export default function TechListPage() {
       </h1>
       <p className={styles.lead}>把踩过的坑写清楚：Java 后端、AI Agent 工程、数据库与中间件。</p>
 
-      {/* 搜索：标题、标签名、标签 slug 三者任一命中即算（规则见 articleSearch.ts）。
-          数据本来就在内存里（整份目录一次取全），所以这里是即时过滤，没有请求。 */}
-      <div className={styles.searchBar}>
-        <Input.Search
-          allowClear
-          size="large"
-          value={keyword}
-          placeholder="搜标题或标签，例如 Redis"
-          aria-label="搜索文章"
-          onChange={(event) => commitKeyword(event.target.value)}
-          onSearch={(value) => commitKeyword(value)}
-        />
+      {/* 搜索栏：字段与计数同一行（计数右端与下方列表的日期列对齐）。
+          不摆按钮 —— 输入即筛选，「搜索」这两个字点了也没有额外动作。
+          外观不用 antd 的方框：站内这一页是衬线标题 + 发丝线目录，
+          一个带圆角和蓝色描边的表单控件会显得是外挂上去的（样式见 .searchField）。 */}
+      <div className={styles.toolbar}>
+        <div className={styles.searchField}>
+          <Input
+            allowClear={{ clearIcon: <ClearGlyph /> }}
+            variant="borderless"
+            value={keyword}
+            placeholder="搜标题或标签，例如 Redis"
+            aria-label="搜索文章"
+            prefix={
+              <span className={styles.searchIcon} aria-hidden="true">
+                <SearchGlyph />
+              </span>
+            }
+            onChange={(event) => commitKeyword(event.target.value)}
+            onKeyDown={(event) => {
+              // 清空按钮用鼠标才点得到，键盘用户给一条 Esc
+              if (event.key === 'Escape') {
+                commitKeyword('')
+              }
+            }}
+          />
+        </div>
 
+        {showCount && <p className={styles.count}>{countLabel}</p>}
       </div>
 
       {/* 加载态用 antd 的 Skeleton（这一页已改懒加载，antd 不会进首屏包）。
@@ -210,11 +268,6 @@ export default function TechListPage() {
 
       {!isPending && !isError && !empty && !noMatch && filtered !== undefined && (
         <>
-          <p className={styles.count}>
-            {searching ? `匹配 ${filtered.total} 篇 · ` : `共 ${data.total} 篇 · `}
-            更新至 {formatDate(data.latest)}
-          </p>
-
           <div className={styles.index}>
             {filtered.groups.map((group, index) => (
               <section key={group.name} className={styles.group} aria-labelledby={`tech-g-${index}`}>
