@@ -30,7 +30,9 @@
 
 **首页**：个人经历内容展示：实习、项目、个人经历。
 
-**技术分享**：技术分享文章列表，点击文章可查看详情页。
+**技术分享**：技术分享文章列表，可按标题与标签搜索，点击文章可查看详情页。
+
+<img src="docs/assets/tech-list-light.webp" alt="技术分享列表（含搜索）" width="880">
 
 <img src="docs/assets/tech-detail-light.webp" alt="技术分享详情页" width="880">
 
