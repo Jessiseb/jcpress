@@ -167,20 +167,14 @@
   color: var(--ds-c-accent);
   font-size: 0.78rem;
   line-height: 1.6;
-  text-decoration: none;
-  transition:
-    background-color 140ms var(--ds-ease-out),
-    color 140ms var(--ds-ease-out);
-}
-
-.tag:hover {
-  background: color-mix(in srgb, var(--ds-c-accent) 22%, transparent);
+  /* 标签不可点：光标保持文本样式。这里**不给** pointer、也不做 hover 变色 ——
+     一个没有任何动作的胶囊，一动就会让人以为点得开 */
+  cursor: auto;
 }
 
 /* 搜索命中的标签：实底强调色。别用「加粗 + 下划线」——
    标签本身已经很小，加粗会让整行基线抖动，实底最稳。 */
-.tagActive,
-.tagActive:hover {
+.tagActive {
   background: var(--ds-c-accent-bg);
   color: var(--ds-c-accent-text);
 }

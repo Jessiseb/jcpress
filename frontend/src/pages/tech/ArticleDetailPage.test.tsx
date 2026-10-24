@@ -130,27 +130,26 @@ describe('ArticleDetailPage', () => {
     expect(screen.queryByRole('table')).toBeNull()
   })
 
-  it('标签渲染成可点的胶囊，点一下回到列表页按该标签搜索', async () => {
+  it('标签是纯标注，不挂跳转（点它不会离开这篇文章）', async () => {
     fetchArticleDetail.mockResolvedValue(detail)
     renderPage()
 
-    await screen.findByText('Redis')
-    const tagLink = screen.getByText('Redis').closest('a')
-    expect(tagLink?.getAttribute('href')).toBe('/tech?q=Redis')
+    const redisTag = await screen.findByText('Redis')
+    // 不是 <a>、没有 href：标签只交代「这篇属于哪些主题」，不是入口
+    expect(redisTag.closest('a')).toBeNull()
+    expect(redisTag.hasAttribute('href')).toBe(false)
     // 没有搜索词进来时一个都不高亮
-    expect(tagLink?.getAttribute('data-active')).toBeNull()
+    expect(redisTag.getAttribute('data-active')).toBeNull()
   })
 
   it('从搜索结果点进来时，命中的那个标签高亮', async () => {
     fetchArticleDetail.mockResolvedValue(detail)
     renderPage('phase-3-backend-retro', undefined, '?q=redis')
 
-    await screen.findByText('Redis')
-    // 用文本定位再取最近的 a：标签上带了 title，可访问名不一定是纯文本
-    const redisTag = screen.getByText('Redis').closest('a')
-    const archTag = screen.getByText('架构').closest('a')
-    expect(redisTag?.getAttribute('data-active')).toBe('true')
+    const redisTag = await screen.findByText('Redis')
+    const archTag = screen.getByText('架构')
+    expect(redisTag.getAttribute('data-active')).toBe('true')
     // 只亮命中的那个：整篇文章的标签都亮等于没高亮
-    expect(archTag?.getAttribute('data-active')).toBeNull()
+    expect(archTag.getAttribute('data-active')).toBeNull()
   })
 })

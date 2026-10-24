@@ -151,22 +151,21 @@ export default function ArticleDetailPage() {
           {data.tags.length > 0 && (
             <>
               <span aria-hidden="true">·</span>
-              {/* 标签做成可点的胶囊：点一下 = 按这个标签搜一次（回到列表页并带上 ?q=）。
-                  从搜索结果点进来时，命中的那几个标签用强调色底高亮 —— 这样用户能确认
-                  「我搜的词落在这一篇的哪个标签上」。 */}
+              {/* 标签是**标注**，不是入口：这里不给它挂跳转。
+                  从搜索结果点进来时，命中的那几个标签用强调色底高亮 —— 作用是让读者
+                  确认「我搜的词落在这一篇的哪个标签上」，点它跳去列表等于把正在读的
+                  文章关掉，纯亏。要按标签找文章，列表页顶部有搜索框。 */}
               <span className={styles.tags}>
                 {data.tags.map((tag) => {
                   const active = matchedTags.has(tag.slug)
                   return (
-                    <Link
+                    <span
                       key={tag.slug}
-                      to={`/tech?q=${encodeURIComponent(tag.name)}`}
                       className={active ? `${styles.tag} ${styles.tagActive}` : styles.tag}
                       data-active={active ? 'true' : undefined}
-                      title={`查看「${tag.name}」相关的文章`}
                     >
                       {tag.name}
-                    </Link>
+                    </span>
                   )
                 })}
               </span>
