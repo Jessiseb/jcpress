@@ -1,5 +1,11 @@
 import { request } from './client'
-import type { ArticleStatsVO, PathStatsVO, StatsOverviewVO, VisitTrendVO } from './types'
+import type {
+  ArticleStatsVO,
+  HourStatsVO,
+  PathStatsVO,
+  StatsOverviewVO,
+  VisitTrendVO,
+} from './types'
 
 /** 站点统计的四个查询（后台，需登录）+ 一条公开的采集上报 */
 
@@ -10,6 +16,10 @@ export const fetchVisitTrend = (days: number) =>
 
 export const fetchArticleStats = (days: number, limit = 10) =>
   request<ArticleStatsVO[]>('/api/v1/admin/stats/articles', { auth: true, query: { days, limit } })
+
+/** 访问时段：固定 24 条（0–23 点），没有数据的小时由后端补 0 */
+export const fetchHourStats = (days: number) =>
+  request<HourStatsVO[]>('/api/v1/admin/stats/hours', { auth: true, query: { days } })
 
 export const fetchPathStats = (days: number, limit = 10) =>
   request<PathStatsVO[]>('/api/v1/admin/stats/paths', { auth: true, query: { days, limit } })

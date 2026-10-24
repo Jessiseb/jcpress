@@ -2,6 +2,7 @@ package com.jcpress.web.admin.controller;
 
 import com.jcpress.common.result.Result;
 import com.jcpress.domain.vo.ArticleStatsVO;
+import com.jcpress.domain.vo.HourStatsVO;
 import com.jcpress.domain.vo.PathStatsVO;
 import com.jcpress.domain.vo.StatsOverviewVO;
 import com.jcpress.domain.vo.VisitTrendVO;
@@ -47,6 +48,12 @@ public class AdminStatsController {
     public Result<List<ArticleStatsVO>> articles(@RequestParam(defaultValue = "30") int days,
                                                  @RequestParam(defaultValue = "10") int limit) {
         return Result.success(statsService.listArticleStats(days, limit));
+    }
+
+    @GetMapping("/hours")
+    @Operation(summary = "访问时段分布（近 N 天各小时的访问次数，固定 24 条）")
+    public Result<List<HourStatsVO>> hours(@RequestParam(defaultValue = "7") int days) {
+        return Result.success(statsService.listHourStats(days));
     }
 
     @GetMapping("/paths")

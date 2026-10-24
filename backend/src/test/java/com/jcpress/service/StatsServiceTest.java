@@ -2,6 +2,7 @@ package com.jcpress.service;
 
 import com.jcpress.domain.dataobject.ArticleDO;
 import com.jcpress.domain.vo.ArticleStatsVO;
+import com.jcpress.domain.vo.HourStatsVO;
 import com.jcpress.domain.vo.PathStatsVO;
 import com.jcpress.domain.vo.StatsOverviewVO;
 import com.jcpress.domain.vo.VisitTrendVO;
@@ -57,6 +58,7 @@ class StatsServiceTest {
         jdbcTemplate.update("DELETE FROM visit_daily");
         jdbcTemplate.update("DELETE FROM visit_path_daily");
         jdbcTemplate.update("DELETE FROM article_view_daily");
+        jdbcTemplate.update("DELETE FROM visit_hourly");
     }
 
     @AfterEach
@@ -135,6 +137,33 @@ class StatsServiceTest {
 
         List<Long> ids = stats.stream().map(ArticleStatsVO::getId).toList();
         assertThat(ids.indexOf(hotArticleId)).isLessThan(ids.indexOf(tieArticleId));
+    }
+
+    @Test
+    void hourDistributionFillsAll24Hours() {
+        // 只写 9 点与 21 点，其余 22 个小时必须补 0（而不是缺席）
+        visitStatMapper.saveHour(TODAY, 9, 4);
+        visitStatMapper.saveHour(TODAY.minusDays(1), 9, 3);
+        visitStatMapper.saveHour(TODAY, 21, 7);
+
+        List<HourStatsVO> hours = statsService.listHourStats(7);
+
+        assertThat(hours).hasSize(24);
+        assertThat(hours.get(9).getPv()).isEqualTo(7);
+        assertThat(hours.get(21).getPv()).isEqualTo(7);
+        assertThat(hours.get(3).getPv()).isZero();
+        assertThat(hours).extracting(HourStatsVO::getHour)
+                .containsExactlyElementsOf(java.util.stream.IntStream.range(0, 24).boxed().toList());
+    }
+
+    @Test
+    void hourDistributionIgnoresDaysOutsideRange() {
+        visitStatMapper.saveHour(TODAY.minusDays(10), 9, 100);
+        visitStatMapper.saveHour(TODAY, 9, 2);
+
+        List<HourStatsVO> hours = statsService.listHourStats(7);
+
+        assertThat(hours.get(9).getPv()).isEqualTo(2);
     }
 
     @Test

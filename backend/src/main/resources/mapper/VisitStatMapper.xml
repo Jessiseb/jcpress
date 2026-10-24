@@ -15,6 +15,22 @@
         ON DUPLICATE KEY UPDATE pv = VALUES(pv)
     </insert>
 
+    <insert id="saveHour">
+        INSERT INTO visit_hourly (stat_date, stat_hour, pv)
+        VALUES (#{statDate}, #{statHour}, #{pv})
+        ON DUPLICATE KEY UPDATE pv = VALUES(pv)
+    </insert>
+
+    <!-- 小时分布：区间内按小时汇总。补零不在 SQL 里做（生成 24 行序列是 Service 的事，
+         SQL 里造序列既难读又依赖版本特性）。 -->
+    <select id="listHourBetween" resultType="com.jcpress.domain.projection.HourStatRef">
+        SELECT stat_hour AS stat_hour, SUM(pv) AS pv
+        FROM visit_hourly
+        WHERE stat_date BETWEEN #{from} AND #{to}
+        GROUP BY stat_hour
+        ORDER BY stat_hour
+    </select>
+
     <select id="getDaily" resultType="com.jcpress.domain.projection.DailyPvUvRef">
         SELECT stat_date, pv, uv
         FROM visit_daily

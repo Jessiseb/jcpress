@@ -43,6 +43,8 @@ class AdminStatsControllerTest {
                 .andExpect(status().isUnauthorized());
         mockMvc.perform(get("/v1/admin/stats/articles"))
                 .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/v1/admin/stats/hours"))
+                .andExpect(status().isUnauthorized());
         mockMvc.perform(get("/v1/admin/stats/paths"))
                 .andExpect(status().isUnauthorized());
     }
@@ -80,5 +82,13 @@ class AdminStatsControllerTest {
                         .header("jcpress-token", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0));
+
+        // 访问时段：固定 24 条（0–23 点），前端据此画柱子
+        mockMvc.perform(get("/v1/admin/stats/hours").param("days", "7")
+                        .header("jcpress-token", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(24))
+                .andExpect(jsonPath("$.data[0].hour").value(0))
+                .andExpect(jsonPath("$.data[23].hour").value(23));
     }
 }

@@ -4,8 +4,15 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import type { ArticleStatsVO, PathStatsVO } from '@/api/types'
+import HourBars from '@/components/admin/HourBars'
 import TrendChart from '@/components/admin/TrendChart'
-import { useArticleStats, usePathStats, useStatsOverview, useVisitTrend } from '@/hooks/useDashboardStats'
+import {
+  useArticleStats,
+  useHourStats,
+  usePathStats,
+  useStatsOverview,
+  useVisitTrend,
+} from '@/hooks/useDashboardStats'
 import { describeLoadError } from '@/utils/loadError'
 import AdminLayout from './AdminLayout'
 import styles from './dashboard.module.css'
@@ -70,12 +77,14 @@ export default function AdminDashboardPage() {
 
   const overview = useStatsOverview()
   const trend = useVisitTrend(days)
+  const hours = useHourStats(days)
   const articles = useArticleStats(days)
   const paths = usePathStats(days)
 
   const retryAll = () => {
     void overview.refetch()
     void trend.refetch()
+    void hours.refetch()
     void articles.refetch()
     void paths.refetch()
   }
@@ -204,6 +213,30 @@ export default function AdminDashboardPage() {
           />
         ) : (
           trend.data !== undefined && <TrendChart points={trend.data} />
+        )}
+      </Card>
+
+      {/* 访问时段：回答「几点有人来」—— 日趋势看不出来这件事 */}
+      <Card
+        size="small"
+        title="访问时段"
+        extra={<span className={styles.panelHint}>近 {days} 天 · 按小时看</span>}
+        style={{ marginTop: 14 }}
+        loading={hours.isPending}
+      >
+        {hours.isError ? (
+          <Alert
+            type="error"
+            showIcon
+            message={`时段分布暂时打不开：${describeLoadError(hours.error)}`}
+            action={
+              <Button size="small" onClick={() => void hours.refetch()}>
+                再试一次
+              </Button>
+            }
+          />
+        ) : (
+          hours.data !== undefined && <HourBars points={hours.data} days={days} />
         )}
       </Card>
 

@@ -14,6 +14,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +62,7 @@ class VisitStatManagerTest {
         jdbcTemplate.update("DELETE FROM visit_daily WHERE stat_date = ?", TODAY);
         jdbcTemplate.update("DELETE FROM visit_path_daily WHERE stat_date = ?", TODAY);
         jdbcTemplate.update("DELETE FROM article_view_daily WHERE stat_date = ?", TODAY);
+        jdbcTemplate.update("DELETE FROM visit_hourly WHERE stat_date = ?", TODAY);
     }
 
     @Test
@@ -99,6 +101,24 @@ class VisitStatManagerTest {
         DailyPvUvRef daily = visitStatMapper.getDaily(TODAY);
         assertThat(daily.getPv()).isEqualTo(1);
         assertThat(daily.getUv()).isEqualTo(1);
+    }
+
+    @Test
+    void hourIsAccumulatedAndFlushed() {
+        // 小时维度的口径是「这个小时里发生了几次访问」（PV），不是独立访客
+        int hour = LocalTime.now().getHour();
+        visitStatManager.saveVisit("/", "10.0.0.9", "JUnit");
+        visitStatManager.saveVisit("/tech", "10.0.0.10", "JUnit");
+
+        assertThat(redis.opsForHash().get(statKey(), RedisKeyConstant.STAT_HOUR_PREFIX + hour))
+                .isEqualTo("2");
+
+        visitStatManager.flushDaily();
+
+        Integer pv = jdbcTemplate.queryForObject(
+                "SELECT pv FROM visit_hourly WHERE stat_date = ? AND stat_hour = ?",
+                Integer.class, TODAY, hour);
+        assertThat(pv).isEqualTo(2);
     }
 
     @Test

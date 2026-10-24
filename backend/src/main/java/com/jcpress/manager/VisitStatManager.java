@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +57,9 @@ public class VisitStatManager {
             redis.opsForHash().increment(statKey, RedisKeyConstant.STAT_FIELD_UV, 1L);
         }
         redis.opsForHash().increment(statKey, RedisKeyConstant.STAT_PATH_PREFIX + path, 1L);
+        // 小时维度：只累加 PV（「几点有人来」看的是次数，不是人数 —— 见 V4 迁移注释）
+        int hour = LocalTime.now().getHour();
+        redis.opsForHash().increment(statKey, RedisKeyConstant.STAT_HOUR_PREFIX + hour, 1L);
         redis.expire(statKey, Duration.ofDays(RedisKeyConstant.STAT_TTL_DAYS));
     }
 
@@ -112,7 +116,11 @@ public class VisitStatManager {
         for (Map.Entry<Object, Object> entry : entries.entrySet()) {
             String field = String.valueOf(entry.getKey());
             int value = readInt(entry.getValue());
-            if (field.startsWith(RedisKeyConstant.STAT_PATH_PREFIX)) {
+            if (field.startsWith(RedisKeyConstant.STAT_HOUR_PREFIX)) {
+                visitStatMapper.saveHour(day,
+                        Integer.parseInt(field.substring(RedisKeyConstant.STAT_HOUR_PREFIX.length())),
+                        value);
+            } else if (field.startsWith(RedisKeyConstant.STAT_PATH_PREFIX)) {
                 visitStatMapper.savePath(day,
                         field.substring(RedisKeyConstant.STAT_PATH_PREFIX.length()), value);
             } else if (field.startsWith(RedisKeyConstant.STAT_ARTICLE_PREFIX)) {

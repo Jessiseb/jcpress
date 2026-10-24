@@ -1,6 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { fetchArticleStats, fetchPathStats, fetchStatsOverview, fetchVisitTrend } from '@/api/stats'
+import {
+  fetchArticleStats,
+  fetchHourStats,
+  fetchPathStats,
+  fetchStatsOverview,
+  fetchVisitTrend,
+} from '@/api/stats'
 
 /**
  * 看板的四条数据。
@@ -26,6 +32,15 @@ export function useVisitTrend(days: number) {
   return useQuery({
     queryKey: ['admin', 'stats', 'trend', days],
     queryFn: () => fetchVisitTrend(days),
+    staleTime: STALE_MS,
+    retry: false,
+  })
+}
+
+export function useHourStats(days: number) {
+  return useQuery({
+    queryKey: ['admin', 'stats', 'hours', days],
+    queryFn: () => fetchHourStats(days),
     staleTime: STALE_MS,
     retry: false,
   })

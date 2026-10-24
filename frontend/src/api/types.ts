@@ -194,6 +194,13 @@ export interface ArticleStatsVO {
   totalView: number
 }
 
+/** 访问时段分布的一小时。**只有 pv**：小时独立访客相加没有意义（同一个人会在多个小时出现） */
+export interface HourStatsVO {
+  /** 0–23 */
+  hour: number
+  pv: number
+}
+
 export interface PathStatsVO {
   path: string
   pv: number

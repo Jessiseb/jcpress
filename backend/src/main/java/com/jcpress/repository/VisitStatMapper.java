@@ -1,6 +1,7 @@
 package com.jcpress.repository;
 
 import com.jcpress.domain.projection.DailyPvUvRef;
+import com.jcpress.domain.projection.HourStatRef;
 import com.jcpress.domain.projection.PathStatRef;
 import org.apache.ibatis.annotations.Param;
 
@@ -27,11 +28,19 @@ public interface VisitStatMapper {
                     @Param("path") String path,
                     @Param("pv") int pv);
 
+    /** 小时聚合（只记 PV，见 V4 迁移注释） */
+    void saveHour(@Param("statDate") LocalDate statDate,
+                  @Param("statHour") int statHour,
+                  @Param("pv") int pv);
+
     DailyPvUvRef getDaily(@Param("statDate") LocalDate statDate);
 
     List<DailyPvUvRef> listDailyBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
 
     Integer countSumPvBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
+
+    /** 区间内按小时汇总（只返回有数据的小时，补零在 Service 里做） */
+    List<HourStatRef> listHourBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
 
     List<PathStatRef> listPathTop(@Param("from") LocalDate from,
                                   @Param("to") LocalDate to,

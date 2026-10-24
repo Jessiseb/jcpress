@@ -4,19 +4,27 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ApiError } from '@/api/client'
-import type { ArticleStatsVO, PathStatsVO, StatsOverviewVO, VisitTrendVO } from '@/api/types'
+import type {
+  ArticleStatsVO,
+  HourStatsVO,
+  PathStatsVO,
+  StatsOverviewVO,
+  VisitTrendVO,
+} from '@/api/types'
 import AdminDashboardPage from './AdminDashboardPage'
 
 const fetchStatsOverview = vi.fn()
 const fetchVisitTrend = vi.fn()
 const fetchArticleStats = vi.fn()
 const fetchPathStats = vi.fn()
+const fetchHourStats = vi.fn()
 
 vi.mock('@/api/stats', () => ({
   fetchStatsOverview: () => fetchStatsOverview(),
   fetchVisitTrend: (days: number) => fetchVisitTrend(days),
   fetchArticleStats: (days: number, limit: number) => fetchArticleStats(days, limit),
   fetchPathStats: (days: number, limit: number) => fetchPathStats(days, limit),
+  fetchHourStats: (days: number) => fetchHourStats(days),
   reportPageView: vi.fn(),
 }))
 
@@ -71,6 +79,12 @@ const articleStats: ArticleStatsVO[] = [
 
 const pathStats: PathStatsVO[] = [{ path: '/tech', pv: 11 }]
 
+/** 固定 24 条，21 点最高（与后端补零后的形状一致） */
+const hourStats: HourStatsVO[] = Array.from({ length: 24 }, (_, hour) => ({
+  hour,
+  pv: hour === 21 ? 34 : hour === 9 ? 12 : 0,
+}))
+
 const renderPage = () =>
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -84,6 +98,8 @@ describe('AdminDashboardPage', () => {
   beforeEach(() => {
     fetchStatsOverview.mockReset()
     fetchVisitTrend.mockReset()
+    fetchHourStats.mockReset()
+    fetchHourStats.mockResolvedValue(hourStats)
     fetchArticleStats.mockReset()
     fetchPathStats.mockReset()
 
@@ -120,6 +136,17 @@ describe('AdminDashboardPage', () => {
     const link = await screen.findByRole('link', { name: 'Redis 分布式锁' })
     expect(link).toHaveAttribute('href', '/admin/articles/42')
     expect(screen.getByText('/tech')).toBeInTheDocument()
+  })
+
+  it('访问时段：给出 24 根柱子和最忙的小时', async () => {
+    renderPage()
+
+    // 注意：`Card loading` 时标题就已经在 DOM 里，必须等**汇总行**出现再数柱子，
+    // 否则断言发生在数据到达之前（第一版就是这么红的：0 根）
+    expect(await screen.findByText(/最忙的是/)).toBeInTheDocument()
+    expect(document.querySelectorAll('[data-hour]').length).toBe(24)
+    expect(screen.getByText('21:00')).toBeInTheDocument()
+    expect(screen.getByText('访问时段')).toBeInTheDocument()
   })
 
   it('接口失败时给出原因与重试，且不伪装成空态', async () => {

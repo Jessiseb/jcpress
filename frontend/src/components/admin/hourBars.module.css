@@ -1,0 +1,70 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 132px;
+  padding-top: 4px;
+}
+
+.col {
+  position: relative;
+  flex: 1 1 0;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  cursor: default;
+}
+
+/* 柱子最低留 2px：0 次的那一小时也要有「这里有个格子」的痕迹，
+   完全没有柱子会让人以为数据缺了 */
+.bar {
+  display: block;
+  width: 100%;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+  background: color-mix(in srgb, var(--adm-primary) 42%, transparent);
+  transition: background-color 120ms ease;
+}
+
+.col:hover .bar {
+  background: var(--adm-primary);
+}
+
+/* 峰值那一根实心：一眼能看出「几点人最多」 */
+.barPeak {
+  background: var(--adm-primary);
+}
+
+.axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--adm-text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.summary {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--adm-text-3);
+}
+
+.peak {
+  color: var(--adm-text-2);
+  font-weight: 600;
+}
+
+.empty {
+  margin: 0;
+  padding: 1.6rem 0;
+  text-align: center;
+  font-size: 0.82rem;
+  line-height: 1.9;
+  color: var(--adm-text-3);
+}

@@ -51,6 +51,14 @@ public final class RedisKeyConstant {
     /** 文章字段前缀 */
     public static final String STAT_ARTICLE_PREFIX = "a:";
 
+    /**
+     * 小时字段前缀：`h:` + 小时（0–23）—— 与日总量共用同一个 hash。
+     *
+     * 为什么小时维度只记 PV：小时 UV 是「这一小时里的独立访客」，24 个小时相加
+     * 会把人算 24 次。真要问「几点有人来」，看的是次数分布（见 V4 迁移的注释）。
+     */
+    public static final String STAT_HOUR_PREFIX = "h:";
+
     /** 回写时扫描的模式 */
     public static final String STAT_DAY_PATTERN = "stat:day:*";
 

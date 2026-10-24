@@ -6,8 +6,10 @@ import com.jcpress.common.exception.ErrorCodeEnum;
 import com.jcpress.domain.projection.ArticleCountRef;
 import com.jcpress.domain.projection.ArticleStatRef;
 import com.jcpress.domain.projection.DailyPvUvRef;
+import com.jcpress.domain.projection.HourStatRef;
 import com.jcpress.domain.projection.PathStatRef;
 import com.jcpress.domain.vo.ArticleStatsVO;
+import com.jcpress.domain.vo.HourStatsVO;
 import com.jcpress.domain.vo.PathStatsVO;
 import com.jcpress.domain.vo.StatsOverviewVO;
 import com.jcpress.domain.vo.VisitTrendVO;
@@ -40,6 +42,7 @@ public class StatsServiceImpl implements StatsService {
     private static final int MAX_PATH_LENGTH = 160;
     /** 路径被规范化后落库；没 IP 时 IpUtils 回这个常量 */
     private static final String UNKNOWN_IP = "unknown";
+    private static final int HOURS_PER_DAY = 24;
 
     private final VisitStatManager visitStatManager;
     private final RateLimitManager rateLimitManager;
@@ -152,6 +155,26 @@ public class StatsServiceImpl implements StatsService {
             stats.add(vo);
         }
         return stats;
+    }
+
+    @Override
+    public List<HourStatsVO> listHourStats(int days) {
+        int span = clamp(days, MAX_DAYS);
+        LocalDate today = LocalDate.now();
+        Map<Integer, Integer> byHour = new HashMap<>();
+        for (HourStatRef row : visitStatMapper.listHourBetween(today.minusDays(span - 1L), today)) {
+            byHour.put(row.getStatHour(), readCount(row.getPv()));
+        }
+        // 固定返回 24 条：横向的「凌晨 3 点没人来」和「这一小时不存在」必须区分开，
+        // 缺项补齐才能让柱子之间的间距稳定（否则空小时会被挤掉，看起来像数据错位）
+        List<HourStatsVO> hours = new ArrayList<>(HOURS_PER_DAY);
+        for (int hour = 0; hour < HOURS_PER_DAY; hour++) {
+            HourStatsVO vo = new HourStatsVO();
+            vo.setHour(hour);
+            vo.setPv(byHour.getOrDefault(hour, 0));
+            hours.add(vo);
+        }
+        return hours;
     }
 
     /**

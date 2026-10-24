@@ -1,6 +1,7 @@
 package com.jcpress.service;
 
 import com.jcpress.domain.vo.ArticleStatsVO;
+import com.jcpress.domain.vo.HourStatsVO;
 import com.jcpress.domain.vo.PathStatsVO;
 import com.jcpress.domain.vo.StatsOverviewVO;
 import com.jcpress.domain.vo.VisitTrendVO;
@@ -29,4 +30,7 @@ public interface StatsService {
 
     /** 期间热门页面 */
     List<PathStatsVO> listPathStats(int days, int limit);
+
+    /** 近 days 天的**访问时段分布**：固定 24 条（0–23 点），没有数据的小时补 0 */
+    List<HourStatsVO> listHourStats(int days);
 }
